@@ -23,13 +23,13 @@
     .btn-blue { background: #0066cc; border-color: #0088ff; }
     .btn-purple { background: #6f42c1; border-color: #8553e6; }
     .btn-green { background: #28a745; border-color: #34ce57; }
-    .btn-cyan { background: #17a2b8; border-color: #1fc8e3; }
+    .btn-dark { background: #444; border-color: #666; }
     .btn-danger { background: #d9534f; border-color: #e2706c; }
     .btn-warning { background: #ffc107; color: #000; border-color: #ffcd39; }
 
-    select, input[type="range"], input[type="number"], input[type="text"] { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
+    select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
 
-    /* 状態・アラート表示バー */
+    /* 状態表示バー */
     #status-bar { background: #181818; border-bottom: 1px solid #333; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; color: #aaa; }
     #storage-alert { color: #ffbe3b; font-weight: bold; }
 
@@ -54,11 +54,11 @@
     canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
     /* 左側フローティングツールパネル */
-    #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.85); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+    #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.88); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
 
     /* モーダルダイアログ各種 */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100; }
-    .modal-card { background: #2c2c2c; border: 1px solid #555; border-radius: 8px; width: 340px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-card { background: #2c2c2c; border: 1px solid #555; border-radius: 8px; width: 360px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .modal-card h3 { font-size: 14px; border-bottom: 1px solid #444; padding-bottom: 6px; color: #0088ff; }
     .modal-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
@@ -75,12 +75,12 @@
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
     <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
-    <button class="btn btn-green" id="btn-open-file">📄 写真ファイル選択</button>
-    <button class="btn btn-purple" id="btn-film-code">🏷️ フィルムNo.</button>
+    <button class="btn btn-green" id="btn-open-file">📄 写真選択</button>
+    <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
-    <button class="btn btn-cyan" id="btn-img-adjust">☀️ 輝度・濃淡</button>
+    <button class="btn btn-dark" id="btn-invert-color">🌗 白黒反転</button>
+    <button class="btn btn-blue" id="btn-zoom-100">📐 実測100%</button>
     <button class="btn" id="btn-fit">全体表示</button>
-    <button class="btn" id="btn-zoom-100">100%</button>
     
     <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
       ズーム:
@@ -91,13 +91,13 @@
     <button class="btn btn-danger" id="btn-save-pdf">💾 罫書きPDF保存</button>
     <button class="btn btn-danger" id="btn-save-batch-pdf">📦 PDF一括保存</button>
     <button class="btn btn-warning" id="btn-report">📋 報告書作成</button>
-    <button class="btn" id="btn-gdrive-settings">☁️ GDrive設定</button>
+    <button class="btn" id="btn-cloud-settings">☁️ クラウド保存先</button>
   </header>
 
   <!-- サブステータスバー -->
   <div id="status-bar">
     <span id="file-info">📄 編集中: なし</span>
-    <span id="mode-info">モード: 選択・パニング</span>
+    <span id="mode-info">モード: 選択・変形・移動</span>
     <span id="storage-alert">残り約 -- 枚作業可能</span>
   </div>
 
@@ -120,11 +120,12 @@
 
     <!-- 左浮き出し描画ツールパネル -->
     <div id="floating-toolbar">
-      <button class="btn active" id="tool-select" title="選択・移動・変形">👈 選択</button>
+      <button class="btn active" id="tool-select" title="選択・移動・変形・回転">👈 選択</button>
       <button class="btn" id="tool-viewer" title="ビューアモード(移動専用)">👁️ Viewer</button>
       <button class="btn" id="tool-measure" title="2点間測定">📏 測定</button>
-      <button class="btn" id="tool-right-measure" title="直角3点測定">📐 直角測定</button>
+      <button class="btn" id="tool-right-measure" title="直角3点測定 (スナップ付)">📐 直角測定</button>
       <button class="btn btn-warning" id="tool-signature" title="確認サイン用太ペン">✍️ サイン</button>
+      <button class="btn btn-warning" id="tool-confirm-stamp" title="確認印スタンプ">印 確認印</button>
       
       <select id="pen-style-select" style="width:75px;">
         <option value="実線">実線</option>
@@ -132,13 +133,12 @@
         <option value="破線中">破線中</option>
         <option value="破線大">破線大</option>
         <option value="一点鎖線">一点鎖線</option>
-        <option value="直線">直線</option>
       </select>
-      <button class="btn" id="tool-pen" title="ペン描画">✏️ ペン</button>
+      <button class="btn" id="tool-pen" title="ペン描画 (2秒静止で直線化)">✏️ ペン</button>
 
-      <button class="btn" id="tool-stamp" title="検出物・スタンプ">🏷️ 検出物</button>
-      <button class="btn" id="tool-shape" title="図形挿入">🔲 図形</button>
-      <button class="btn" id="tool-text" title="テキスト">📝 文字</button>
+      <button class="btn" id="tool-stamp" title="タップ位置に検出物配置">🏷️ 検出物</button>
+      <button class="btn" id="tool-shape" title="タップ位置に図形配置">🔲 図形</button>
+      <button class="btn" id="tool-text" title="タップ位置に文字配置">📝 文字</button>
       <button class="btn" id="tool-eraser" title="消しゴム">🧹 消しゴム</button>
       <hr style="border-color:#444;">
       <button class="btn" id="btn-undo">↩ 戻る</button>
@@ -154,10 +154,10 @@
 
 <!-- モーダル各種 -->
 
-<!-- 1. フィルムNo.・撮影箇所ダイアログ -->
+<!-- 1. フィルム№・撮影箇所ダイアログ -->
 <div class="modal-overlay" id="modal-film">
   <div class="modal-card">
-    <h3>フィルムNo.・撮影箇所入力</h3>
+    <h3>フィルム№・撮影箇所設定</h3>
     <div class="modal-row">
       <span>種別:</span>
       <label><input type="radio" name="film-type" value="開口"> 開口</label>
@@ -169,8 +169,25 @@
       <input type="text" id="film-opening-num" placeholder="例: 1">
     </div>
     <div class="modal-row">
-      <span>フィルムNo.:</span>
+      <span>フィルム№:</span>
       <input type="text" id="film-code-input" placeholder="例: 1F-F1">
+    </div>
+    <div class="modal-row">
+      <span>配置位置:</span>
+      <select id="film-pos-select">
+        <option value="bottom" selected>下部（デフォルト）</option>
+        <option value="top">上部</option>
+        <option value="bottom-right">右下</option>
+        <option value="bottom-left">左下</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <span>文字色:</span>
+      <input type="color" id="film-color-input" value="#ffffff">
+    </div>
+    <div class="modal-row">
+      <span>文字サイズ:</span>
+      <input type="number" id="film-size-input" value="140" min="20" max="400">
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-film-cancel">キャンセル</button>
@@ -206,58 +223,56 @@
       <label><input type="radio" name="stamp-orient" value="horiz" checked> 横書き</label>
       <label><input type="radio" name="stamp-orient" value="vert"> 縦書き</label>
     </div>
+    <p style="font-size:11px; color:#aaa;">※選択後、キャンバスの配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-stamp-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-stamp-ok">配置</button>
+      <button class="btn btn-green" id="modal-stamp-ok">次へ（タップ配置）</button>
     </div>
   </div>
 </div>
 
-<!-- 3. 画像階調 (輝度・濃淡) 調整ダイアログ -->
-<div class="modal-overlay" id="modal-adjust">
+<!-- 3. クラウド保存先設定ダイアログ -->
+<div class="modal-overlay" id="modal-cloud">
   <div class="modal-card">
-    <h3>画質調整 (輝度・濃淡)</h3>
+    <h3>☁️ クラウド保存先設定</h3>
     <div class="modal-row">
-      <span>輝度 (明るさ):</span>
-      <input type="range" id="adjust-bright" min="-100" max="100" value="0">
+      <span>自動同期:</span>
+      <input type="checkbox" id="cloud-enable" checked>
     </div>
     <div class="modal-row">
-      <span>濃淡 (コントラスト):</span>
-      <input type="range" id="adjust-contrast" min="-100" max="100" value="0">
-    </div>
-    <div class="modal-buttons">
-      <button class="btn" id="modal-adjust-reset">リセット</button>
-      <button class="btn btn-green" id="modal-adjust-close">閉じる</button>
-    </div>
-  </div>
-</div>
-
-<!-- 4. Googleドライブ移送設定ダイアログ -->
-<div class="modal-overlay" id="modal-gdrive">
-  <div class="modal-card">
-    <h3>Googleドライブ自動移送設定</h3>
-    <div class="modal-row">
-      <span>自動移送:</span>
-      <input type="checkbox" id="gdrive-enable" checked>
+      <span>参照先URL/パス:</span>
+      <input type="text" id="cloud-path-input" placeholder="例: gdrive://JustCore/納品フィルム" style="width:180px;">
     </div>
     <div class="modal-row">
       <span>移送対象:</span>
-      <select id="gdrive-target">
+      <select id="cloud-target">
         <option value="pdf">罫書きPDFのみ</option>
         <option value="raw">元画像のみ</option>
         <option value="both">両方 (元画像 + PDF)</option>
       </select>
     </div>
-    <div class="modal-row">
-      <span>保持期間:</span>
-      <select id="gdrive-period">
-        <option value="3">3日間</option>
-        <option value="7" selected>7日間</option>
-        <option value="30">30日間</option>
-      </select>
-    </div>
     <div class="modal-buttons">
-      <button class="btn btn-green" id="modal-gdrive-save">保存</button>
+      <button class="btn btn-green" id="modal-cloud-save">プリセット保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 報告書作成ダイアログ -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal-card">
+    <h3>📋 報告書PDF作成設定</h3>
+    <div class="modal-row">
+      <span>添付画像品質:</span>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label><input type="radio" name="report-quality" value="low"> 軽量化 (高圧縮/小容量)</label>
+        <label><input type="radio" name="report-quality" value="normal" checked> 通常 (バランス)</label>
+        <label><input type="radio" name="report-quality" value="high"> 高品質 (印刷用/高精細)</label>
+      </div>
+    </div>
+    <p style="font-size:11px; color:#aaa;">※「納品フィルム」フォルダ内の実測100%画像を使用して報告書PDFを作成します。</p>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-report-cancel">キャンセル</button>
+      <button class="btn btn-warning" id="modal-report-make">報告書PDF生成</button>
     </div>
   </div>
 </div>
@@ -267,8 +282,8 @@
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
-  // --- アプリケーション状態変数 ---
-  let imagesList = []; // { id, name, src, imgObj, objects: [], dpi: 96, brightness: 0, contrast: 0, filmCode: '' }
+  // --- アプリケーション状態変数 & プリセット初期化 ---
+  let imagesList = []; // { id, name, src, imgObj, objects: [], dpi: 96, isInverted: false, filmCode: '' }
   let currentImgIndex = -1;
 
   // キャンバスおよび描画系
@@ -278,27 +293,47 @@
 
   let scale = 1.0;
   let panX = 0, panY = 0;
-  let currentMode = 'select'; // select, viewer, measure, right_measure, pen, signature, stamp, shape, text, eraser, calibrate
+  let currentMode = 'select'; // select, viewer, measure, right_measure, pen, signature, stamp, shape, text, eraser, calibrate, pending_stamp, pending_text, pending_shape
 
   // 描画オブジェクト保持用
   let objects = []; 
   let selectedObj = null;
   let undoStack = [], redoStack = [];
 
-  // 入力状態
+  // 入力 & 直線化タイマー
   let isDrawing = false;
   let currentPath = [];
   let startPt = null, secondPt = null;
   let isPanning = false, startPan = { x: 0, y: 0 };
+  let straightTimer = null;
 
-  // 測定・スタンプ用設定
+  // 変形・回転ハンドル状態
+  let activeTransformHandle = null; // 'br', 'rot'
+  let transformStart = { x: 0, y: 0, w: 0, h: 0, rot: 0 };
+
+  // ピンチズーム
+  let initialPinchDist = null;
+  let initialPinchScale = 1.0;
+
+  // 設定プリセット (LocalStorage)
+  let filmPreset = JSON.parse(localStorage.getItem('filmPreset')) || { pos: 'bottom', color: '#ffffff', size: 140 };
+  let calibratedPMM = parseFloat(localStorage.getItem('calibratedPMM')) || (96.0 / 25.4); // ピクセル/mm
+  let cloudPreset = JSON.parse(localStorage.getItem('cloudPreset')) || { path: 'gdrive://JustCore/納品フィルム', target: 'pdf' };
+
   let penStyle = '実線';
   let penColor = '#ff0000';
   let penWidth = 6;
-  let currentDPI = 96.0;
+  let pendingStampData = null;
+
+  // フォーム初期セット
+  document.getElementById('film-pos-select').value = filmPreset.pos;
+  document.getElementById('film-color-input').value = filmPreset.color;
+  document.getElementById('film-size-input').value = filmPreset.size;
+  document.getElementById('cloud-path-input').value = cloudPreset.path;
+  document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB';
+  const DB_NAME = 'XRayKagakiDB_v2';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -313,7 +348,6 @@
     };
   };
 
-  // ★修正箇所: HTMLImageElement を除外して純粋データのみ IndexedDB に保存
   const saveToDB = (item) => {
     if (!db) return;
     const tx = db.transaction('images', 'readwrite');
@@ -322,9 +356,8 @@
       name: item.name,
       src: item.src,
       objects: item.objects || [],
-      dpi: item.dpi || 96.0,
-      brightness: item.brightness || 0,
-      contrast: item.contrast || 0,
+      dpi: item.dpi || (calibratedPMM * 25.4),
+      isInverted: item.isInverted || false,
       filmCode: item.filmCode || ''
     };
     tx.objectStore('images').put(dataToSave);
@@ -347,12 +380,11 @@
     };
   };
 
-  // ストレージ残量監視 & 「残り約〇枚作業可能」計算
   const checkStorageCapacity = async () => {
     if (navigator.storage && navigator.storage.estimate) {
       const { quota, usage } = await navigator.storage.estimate();
       const remainingMB = (quota - usage) / (1024 * 1024);
-      const estCount = Math.max(0, Math.floor(remainingMB / 5)); // 1枚約5MB換算
+      const estCount = Math.max(0, Math.floor(remainingMB / 5));
       document.getElementById('storage-alert').innerText = `残り約 ${estCount} 枚作業可能`;
     }
   };
@@ -371,14 +403,9 @@
     const scrollTop = thumbContainer.scrollTop;
     const clientHeight = thumbContainer.clientHeight;
 
-    // 前後5枚のバッファを含めた描画範囲
-    let startIndex = Math.floor(scrollTop / ITEM_HEIGHT) - 5;
-    let endIndex = Math.ceil((scrollTop + clientHeight) / ITEM_HEIGHT) + 5;
+    let startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - 5);
+    let endIndex = Math.min(imagesList.length - 1, Math.ceil((scrollTop + clientHeight) / ITEM_HEIGHT) + 5);
 
-    startIndex = Math.max(0, startIndex);
-    endIndex = Math.min(imagesList.length - 1, endIndex);
-
-    // 既存の要素をリセット
     const existing = thumbSpacer.querySelectorAll('.thumb-item');
     existing.forEach(el => el.remove());
 
@@ -407,17 +434,14 @@
   const selectImage = (index) => {
     if (index < 0 || index >= imagesList.length) return;
     
-    // 直前の画像を保存
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       imagesList[currentImgIndex].objects = JSON.parse(JSON.stringify(objects));
-      imagesList[currentImgIndex].dpi = currentDPI;
       saveToDB(imagesList[currentImgIndex]);
     }
 
     currentImgIndex = index;
     const cur = imagesList[index];
     objects = cur.objects ? JSON.parse(JSON.stringify(cur.objects)) : [];
-    currentDPI = cur.dpi || 96.0;
     document.getElementById('file-info').innerText = `📄 編集中: ${cur.name}`;
 
     fitToView();
@@ -425,7 +449,7 @@
     pushUndo();
   };
 
-  // --- ★修正箇所: ファイル・フォルダ読み込み処理の完全安定化 ---
+  // --- ファイル・フォルダ読み込み処理 ---
   const folderInput = document.getElementById('folder-input');
   const fileInput = document.getElementById('file-input');
 
@@ -436,15 +460,9 @@
 
   const handleFilesRead = (files) => {
     const fileArray = Array.from(files);
-    // 画像ファイルのみを抽出 (JPEG, PNG, WebP, GIF, BMP)
     const validFiles = fileArray.filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(f.name));
-    
-    if (validFiles.length === 0) {
-      alert("読み込める画像ファイル（JPG, PNGなど）が見つかりませんでした。");
-      return;
-    }
+    if (validFiles.length === 0) return;
 
-    // ファイル名（数値順）で並び替え
     validFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     validFiles.forEach(file => {
@@ -459,20 +477,15 @@
             src: srcData,
             imgObj: imgObj,
             objects: [],
-            dpi: 96.0,
-            brightness: 0,
-            contrast: 0,
+            dpi: calibratedPMM * 25.4,
+            isInverted: false,
             filmCode: ''
           };
           imagesList.push(item);
           saveToDB(item);
           updateVirtualScroll();
-          
-          if (currentImgIndex === -1 && imagesList.length > 0) {
-            selectImage(0);
-          } else {
-            redraw();
-          }
+          if (currentImgIndex === -1 && imagesList.length > 0) selectImage(0);
+          else redraw();
           checkStorageCapacity();
         };
         imgObj.src = srcData;
@@ -480,15 +493,22 @@
       reader.readAsDataURL(file);
     });
 
-    // 入力要素リセット（同じファイルを再選択できるようにする）
-    folderInput.value = '';
-    fileInput.value = '';
+    folderInput.value = ''; fileInput.value = '';
   };
 
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
   fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
 
-  // --- ズーム & フィット処理 ---
+  // --- 白黒反転機能 ---
+  document.getElementById('btn-invert-color').onclick = () => {
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+      imagesList[currentImgIndex].isInverted = !imagesList[currentImgIndex].isInverted;
+      saveToDB(imagesList[currentImgIndex]);
+      redraw();
+    }
+  };
+
+  // --- ズーム・実測100%・フィット処理 ---
   const fitToView = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const img = imagesList[currentImgIndex].imgObj;
@@ -504,18 +524,22 @@
     updateCanvasTransform();
   };
 
-  const setZoom100 = () => {
+  // 実測100%表示（サブモニター・DPR自動検知）
+  const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
-    scale = 1.0;
+    const dpr = window.devicePixelRatio || 1.0;
+    // 補正されたピクセル/mmをもとに、モニター上の1mmが手元の定規で1mmになるスケールを計算
+    scale = (calibratedPMM / (96.0 / 25.4)) / dpr;
+    
     const img = imagesList[currentImgIndex].imgObj;
-    panX = (container.clientWidth - img.width) / 2;
-    panY = (container.clientHeight - img.height) / 2;
+    panX = (container.clientWidth - img.width * scale) / 2;
+    panY = (container.clientHeight - img.height * scale) / 2;
     updateCanvasTransform();
   };
 
   const updateCanvasTransform = () => {
     const zoomPct = Math.round(scale * 100);
-    document.getElementById('zoom-slider').value = zoomPct;
+    document.getElementById('zoom-slider').value = Math.min(400, Math.max(10, zoomPct));
     document.getElementById('zoom-text').innerText = zoomPct + '%';
     redraw();
   };
@@ -526,9 +550,9 @@
   });
 
   document.getElementById('btn-fit').onclick = fitToView;
-  document.getElementById('btn-zoom-100').onclick = setZoom100;
+  document.getElementById('btn-zoom-100').onclick = setActualSize100;
 
-  // --- メインレンダリング (描画ロジック) ---
+  // --- メイン描画エンジン ---
   const redraw = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
@@ -540,24 +564,23 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
-    // パニング & ズーム適用
     ctx.translate(panX, panY);
     ctx.scale(scale, scale);
 
-    // 画像フィルタ（輝度・濃淡）適用
-    if (item.brightness !== 0 || item.contrast !== 0) {
-      ctx.filter = `brightness(${100 + item.brightness}%) contrast(${100 + item.contrast}%)`;
+    // 白黒反転フィルタ適用
+    if (item.isInverted) {
+      ctx.filter = 'invert(100%)';
     } else {
       ctx.filter = 'none';
     }
 
     ctx.drawImage(img, 0, 0);
-    ctx.filter = 'none'; // オブジェクトにはフィルタを適用しない
+    ctx.filter = 'none';
 
     // オブジェクト描画
     objects.forEach(obj => drawObject(obj));
 
-    // 現在描画中の要素
+    // 描画中プレビュー
     if (isDrawing && currentPath.length > 1) {
       drawPath({ type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
     }
@@ -567,20 +590,22 @@
 
   const drawObject = (obj) => {
     ctx.save();
-    if (obj.type === 'pen') {
-      drawPath(obj);
-    } else if (obj.type === 'measure') {
-      drawMeasure(obj);
-    } else if (obj.type === 'text') {
-      drawText(obj);
-    } else if (obj.type === 'stamp') {
-      drawStamp(obj);
+    if (obj.rotation) {
+      const b = getRawBounds(obj);
+      const cx = b.x + b.w/2;
+      const cy = b.y + b.h/2;
+      ctx.translate(cx, cy);
+      ctx.rotate(obj.rotation * Math.PI / 180);
+      ctx.translate(-cx, -cy);
     }
 
-    // 選択中の場合、バウンディングボックスとハンドルを表示
-    if (obj === selectedObj) {
-      drawSelectionBounds(obj);
-    }
+    if (obj.type === 'pen') drawPath(obj);
+    else if (obj.type === 'measure') drawMeasure(obj);
+    else if (obj.type === 'text') drawText(obj);
+    else if (obj.type === 'stamp') drawStamp(obj);
+    else if (obj.type === 'confirm_stamp') drawConfirmStamp(obj);
+
+    if (obj === selectedObj) drawSelectionBounds(obj);
     ctx.restore();
   };
 
@@ -591,24 +616,16 @@
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // 線種（破線・一点鎖線など）の設定
     if (obj.style === '破線小') ctx.setLineDash([4, 4]);
     else if (obj.style === '破線中') ctx.setLineDash([8, 8]);
     else if (obj.style === '破線大') ctx.setLineDash([16, 16]);
     else if (obj.style === '一点鎖線') ctx.setLineDash([12, 4, 3, 4]);
     else ctx.setLineDash([]);
 
-    if (obj.style === '直線' && obj.path.length >= 2) {
-      const p1 = obj.path[0];
-      const p2 = obj.path[obj.path.length - 1];
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-    } else {
-      obj.path.forEach((pt, idx) => {
-        if (idx === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      });
-    }
+    obj.path.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
     ctx.stroke();
     ctx.setLineDash([]);
   };
@@ -617,24 +634,20 @@
     ctx.strokeStyle = obj.color || '#ff0000';
     ctx.lineWidth = 3;
     ctx.fillStyle = obj.color || '#ff0000';
-    ctx.font = 'bold 16px Arial';
+    ctx.font = 'bold 18px Arial';
 
-    // L1描画
     ctx.beginPath();
     ctx.moveTo(obj.p1.x, obj.p1.y);
     ctx.lineTo(obj.p2.x, obj.p2.y);
     ctx.stroke();
 
-    // 目盛り線
-    drawTick(obj.p1, obj.p2);
-    drawTick(obj.p2, obj.p1);
+    drawTick(obj.p1, obj.p2); drawTick(obj.p2, obj.p1);
 
     const dist1 = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
-    const mm1 = (dist1 / currentDPI) * 25.4;
+    const mm1 = dist1 / calibratedPMM;
     const txt1 = obj.isCalibration ? `[補正基準] ${obj.knownMM.toFixed(1)} mm` : `L1: ${mm1.toFixed(1)} mm`;
     ctx.fillText(txt1, (obj.p1.x + obj.p2.x) / 2 + 5, (obj.p1.y + obj.p2.y) / 2 - 5);
 
-    // L2 (直角/3点測定)
     if (obj.p3) {
       ctx.beginPath();
       ctx.moveTo(obj.p2.x, obj.p2.y);
@@ -643,10 +656,9 @@
 
       drawTick(obj.p3, obj.p2);
       const dist2 = Math.hypot(obj.p3.x - obj.p2.x, obj.p3.y - obj.p2.y);
-      const mm2 = (dist2 / currentDPI) * 25.4;
+      const mm2 = dist2 / calibratedPMM;
       ctx.fillText(`L2: ${mm2.toFixed(1)} mm`, (obj.p2.x + obj.p3.x) / 2 + 5, (obj.p2.y + obj.p3.y) / 2 - 5);
 
-      // 角度計算
       const ang1 = Math.atan2(obj.p1.y - obj.p2.y, obj.p1.x - obj.p2.x);
       const ang2 = Math.atan2(obj.p3.y - obj.p2.y, obj.p3.x - obj.p2.x);
       let deg = Math.abs(ang1 - ang2) * (180 / Math.PI);
@@ -659,79 +671,80 @@
   const drawTick = (pA, pB) => {
     const len = Math.hypot(pB.x - pA.x, pB.y - pA.y);
     if (len === 0) return;
-    const dx = (pB.x - pA.x) / len;
-    const dy = (pB.y - pA.y) / len;
-    const nx = -dy * 10;
-    const ny = dx * 10;
-    ctx.beginPath();
-    ctx.moveTo(pA.x - nx, pA.y - ny);
-    ctx.lineTo(pA.x + nx, pA.y + ny);
-    ctx.stroke();
+    const dx = (pB.x - pA.x) / len, dy = (pB.y - pA.y) / len;
+    const nx = -dy * 10, ny = dx * 10;
+    ctx.beginPath(); ctx.moveTo(pA.x - nx, pA.y - ny); ctx.lineTo(pA.x + nx, pA.y + ny); ctx.stroke();
   };
 
   const drawText = (obj) => {
     ctx.fillStyle = obj.color || '#ffffff';
-    ctx.font = `bold ${obj.size || 24}px Arial`;
+    ctx.font = `bold ${obj.size || 140}px Arial`;
     ctx.fillText(obj.text, obj.x, obj.y);
   };
 
   const drawStamp = (obj) => {
-    ctx.strokeStyle = '#00a8ff';
-    ctx.fillStyle = '#00a8ff';
-    ctx.lineWidth = 4;
-    const s = obj.size || 40;
+    ctx.strokeStyle = '#00a8ff'; ctx.fillStyle = '#00a8ff'; ctx.lineWidth = 4;
+    const s = obj.size || 60;
 
     if (obj.shape === '□') ctx.strokeRect(obj.x - s/2, obj.y - s/2, s, s);
-    else if (obj.shape === '〇') {
-      ctx.beginPath(); ctx.arc(obj.x, obj.y, s/2, 0, Math.PI*2); ctx.stroke();
-    } else if (obj.shape === '△') {
-      ctx.beginPath();
-      ctx.moveTo(obj.x, obj.y - s/2);
-      ctx.lineTo(obj.x - s/2, obj.y + s/2);
-      ctx.lineTo(obj.x + s/2, obj.y + s/2);
-      ctx.closePath(); ctx.stroke();
+    else if (obj.shape === '〇') { ctx.beginPath(); ctx.arc(obj.x, obj.y, s/2, 0, Math.PI*2); ctx.stroke(); }
+    else if (obj.shape === '△') {
+      ctx.beginPath(); ctx.moveTo(obj.x, obj.y - s/2); ctx.lineTo(obj.x - s/2, obj.y + s/2); ctx.lineTo(obj.x + s/2, obj.y + s/2); ctx.closePath(); ctx.stroke();
     } else if (obj.shape === '☓') {
-      ctx.beginPath();
-      ctx.moveTo(obj.x - s/2, obj.y - s/2); ctx.lineTo(obj.x + s/2, obj.y + s/2);
-      ctx.moveTo(obj.x + s/2, obj.y - s/2); ctx.lineTo(obj.x - s/2, obj.y + s/2);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(obj.x - s/2, obj.y - s/2); ctx.lineTo(obj.x + s/2, obj.y + s/2);
+      ctx.moveTo(obj.x + s/2, obj.y - s/2); ctx.lineTo(obj.x - s/2, obj.y + s/2); ctx.stroke();
     } else {
       ctx.font = `bold ${s*0.8}px Arial`;
       ctx.fillText(obj.text, obj.x, obj.y);
     }
   };
 
+  const drawConfirmStamp = (obj) => {
+    ctx.strokeStyle = '#d9534f'; ctx.fillStyle = '#d9534f'; ctx.lineWidth = 4;
+    const r = obj.size || 50;
+    ctx.beginPath(); ctx.arc(obj.x, obj.y, r, 0, Math.PI*2); ctx.stroke();
+    ctx.font = `bold ${r*0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(obj.text || "確認", obj.x, obj.y);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  };
+
+  // 変形・回転ハンドルの描画
   const drawSelectionBounds = (obj) => {
-    ctx.strokeStyle = '#ffff00';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    const b = getBounds(obj);
+    const b = getRawBounds(obj);
+    ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
     ctx.strokeRect(b.x, b.y, b.w, b.h);
     ctx.setLineDash([]);
 
-    // 回転・変形ハンドル
+    // 右下拡大縮小ハンドル
     ctx.fillStyle = '#00ff00';
-    ctx.fillRect(b.x + b.w - 6, b.y + b.h - 6, 12, 12); // 右下スケール
+    ctx.fillRect(b.x + b.w - 10, b.y + b.h - 10, 20, 20);
+
+    // 上部回転ハンドル
     ctx.fillStyle = '#ffff00';
-    ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 15, 6, 0, Math.PI*2); ctx.fill(); // 回転
+    ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 25, 10, 0, Math.PI*2); ctx.fill();
   };
 
-  const getBounds = (obj) => {
+  const getRawBounds = (obj) => {
     if (obj.type === 'pen') {
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       obj.path.forEach(p => {
         if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
         if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
       });
-      return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+      return { x: minX, y: minY, w: Math.max(30, maxX - minX), h: Math.max(30, maxY - minY) };
+    } else if (obj.type === 'text') {
+      const fontSize = obj.size || 140;
+      const w = Math.max(100, (obj.text ? obj.text.length : 1) * fontSize * 0.7);
+      return { x: obj.x, y: obj.y - fontSize, w: w, h: fontSize * 1.2 };
     } else if (obj.type === 'measure') {
       const minX = Math.min(obj.p1.x, obj.p2.x, obj.p3 ? obj.p3.x : obj.p2.x);
       const maxX = Math.max(obj.p1.x, obj.p2.x, obj.p3 ? obj.p3.x : obj.p2.x);
       const minY = Math.min(obj.p1.y, obj.p2.y, obj.p3 ? obj.p3.y : obj.p2.y);
       const maxY = Math.max(obj.p1.y, obj.p2.y, obj.p3 ? obj.p3.y : obj.p2.y);
-      return { x: minX - 10, y: minY - 10, w: maxX - minX + 20, h: maxY - minY + 20 };
+      return { x: minX - 10, y: minY - 10, w: Math.max(40, maxX - minX + 20), h: Math.max(40, maxY - minY + 20) };
     } else {
-      return { x: obj.x - 20, y: obj.y - 20, w: 100, h: 40 };
+      const s = obj.size || 60;
+      return { x: obj.x - s, y: obj.y - s, w: s*2, h: s*2 };
     }
   };
 
@@ -759,7 +772,7 @@
     }
   };
 
-  // --- Pointer Events (ペン・タッチ・マウス完全自動識別) ---
+  // --- タッチ/ペン操作 & パームリジェクション & ピンチズーム ---
   const getCanvasCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -770,17 +783,47 @@
     };
   };
 
+  // パーム（手刀部接触）検知関数
+  const isPalmTouch = (e) => {
+    if (e.pointerType === 'pen') return false; // ペン入力は正常
+    if (e.width > 25 || e.height > 25) return true; // 接地面積が大きい場合は手刀と判定
+    return false;
+  };
+
   canvas.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'touch' && !e.isPrimary) {
-      isPanning = true;
-      startPan = { x: e.clientX - panX, y: e.clientY - panY };
+    if (isPalmTouch(e)) return; // 手刀部の誤作動防止
+
+    // 2本指ピンチズームの開始
+    if (e.touches && e.touches.length === 2) {
+      initialPinchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialPinchScale = scale;
       return;
     }
 
     const pt = getCanvasCoords(e);
 
     if (e.pointerType === 'pen' && e.pressure) {
-      penWidth = Math.max(2, e.pressure * 12);
+      penWidth = Math.max(3, e.pressure * 14);
+    }
+
+    // 選択ツール時の変形・回転ハンドル判定
+    if (currentMode === 'select' && selectedObj) {
+      const b = getRawBounds(selectedObj);
+      const brHandle = { x: b.x + b.w, y: b.y + b.h };
+      const rotHandle = { x: b.x + b.w/2, y: b.y - 25 };
+
+      if (Math.hypot(pt.x - brHandle.x, pt.y - brHandle.y) < 20) {
+        activeTransformHandle = 'br';
+        transformStart = { x: pt.x, y: pt.y, w: b.w, h: b.h, size: selectedObj.size || 140 };
+        return;
+      } else if (Math.hypot(pt.x - rotHandle.x, pt.y - rotHandle.y) < 20) {
+        activeTransformHandle = 'rot';
+        transformStart = { x: pt.x, y: pt.y, rot: selectedObj.rotation || 0 };
+        return;
+      }
     }
 
     if (currentMode === 'viewer' || (e.pointerType === 'touch' && currentMode === 'select' && !hitTest(pt))) {
@@ -795,63 +838,147 @@
     } else if (currentMode === 'pen' || currentMode === 'signature') {
       isDrawing = true;
       currentPath = [pt];
+      
+      // 2秒静止で自動直線化タイマーセット
+      clearTimeout(straightTimer);
+      straightTimer = setTimeout(() => {
+        if (isDrawing && currentPath.length > 2) {
+          const first = currentPath[0];
+          const last = currentPath[currentPath.length - 1];
+          currentPath = [first, last]; // 直線化
+          redraw();
+        }
+      }, 2000);
     } else if (currentMode === 'measure' || currentMode === 'calibrate') {
       startPt = pt;
       isDrawing = true;
     } else if (currentMode === 'right_measure') {
       if (!startPt) {
-        startPt = pt;
+        startPt = pt; isDrawing = true;
       } else if (!secondPt) {
-        secondPt = pt;
-      } else {
-        objects.push({ type: 'measure', p1: startPt, p2: secondPt, p3: pt, color: '#0088ff' });
-        startPt = null; secondPt = null;
-        pushUndo();
-        redraw();
+        secondPt = pt; isDrawing = true;
       }
     } else if (currentMode === 'eraser') {
       const hit = hitTest(pt);
       if (hit) {
         objects = objects.filter(o => o !== hit);
-        pushUndo();
-        redraw();
+        pushUndo(); redraw();
       }
+    } else if (currentMode === 'pending_stamp') {
+      objects.push({ type: 'stamp', ...pendingStampData, x: pt.x, y: pt.y });
+      currentMode = 'select'; pushUndo(); redraw();
+    } else if (currentMode === 'pending_text') {
+      const txt = prompt("表示する文字を入力してください:");
+      if (txt) {
+        objects.push({ type: 'text', text: txt, x: pt.x, y: pt.y, size: filmPreset.size, color: filmPreset.color });
+        pushUndo(); redraw();
+      }
+      currentMode = 'select';
+    } else if (currentMode === 'pending_shape') {
+      objects.push({ type: 'stamp', shape: '□', x: pt.x, y: pt.y });
+      currentMode = 'select'; pushUndo(); redraw();
     }
   });
 
   canvas.addEventListener('pointermove', e => {
+    if (isPalmTouch(e)) return;
+
+    // 2本指ピンチズーム処理
+    if (e.touches && e.touches.length === 2 && initialPinchDist) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      scale = Math.min(4.0, Math.max(0.1, initialPinchScale * (currentDist / initialPinchDist)));
+      updateCanvasTransform();
+      return;
+    }
+
     if (isPanning) {
       panX = e.clientX - startPan.x;
       panY = e.clientY - startPan.y;
-      redraw();
-      return;
+      redraw(); return;
     }
 
     const pt = getCanvasCoords(e);
 
+    // 変形・回転操作中
+    if (activeTransformHandle && selectedObj) {
+      if (activeTransformHandle === 'br') {
+        const scaleFactor = Math.max(0.2, (pt.x - selectedObj.x) / (transformStart.w || 100));
+        if (selectedObj.type === 'text' || selectedObj.type === 'stamp') {
+          selectedObj.size = Math.max(20, Math.round(transformStart.size * scaleFactor));
+        }
+      } else if (activeTransformHandle === 'rot') {
+        const b = getRawBounds(selectedObj);
+        const cx = b.x + b.w/2, cy = b.y + b.h/2;
+        let deg = Math.atan2(pt.y - cy, pt.x - cx) * (180 / Math.PI);
+        selectedObj.rotation = Math.round(deg);
+      }
+      redraw(); return;
+    }
+
     if (isDrawing && (currentMode === 'pen' || currentMode === 'signature')) {
       currentPath.push(pt);
+      // 移動があった場合は直線化タイマーをリセットして再起動
+      clearTimeout(straightTimer);
+      straightTimer = setTimeout(() => {
+        if (isDrawing && currentPath.length > 2) {
+          const first = currentPath[0];
+          const last = currentPath[currentPath.length - 1];
+          currentPath = [first, last];
+          redraw();
+        }
+      }, 2000);
       redraw();
     } else if (isDrawing && (currentMode === 'measure' || currentMode === 'calibrate')) {
       redraw();
-      ctx.save();
-      ctx.translate(panX, panY);
-      ctx.scale(scale, scale);
-      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
-      ctx.lineWidth = 2;
+      ctx.save(); ctx.translate(panX, panY); ctx.scale(scale, scale);
+      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(startPt.x, startPt.y); ctx.lineTo(pt.x, pt.y); ctx.stroke();
+      ctx.restore();
+    } else if (currentMode === 'right_measure' && startPt) {
+      redraw();
+      ctx.save(); ctx.translate(panX, panY); ctx.scale(scale, scale);
+      ctx.strokeStyle = '#0088ff'; ctx.lineWidth = 2;
+      
+      let targetPt = pt;
+      if (secondPt) {
+        // 直角(90°) および 10°スナップ計算
+        const baseAng = Math.atan2(secondPt.y - startPt.y, secondPt.x - startPt.x);
+        let currAng = Math.atan2(pt.y - secondPt.y, pt.x - secondPt.x);
+        let diffDeg = (currAng - baseAng) * (180 / Math.PI);
+        
+        // 90°スナップまたは10°ステップスナップ
+        if (Math.abs(Math.abs(diffDeg) - 90) < 5) {
+          diffDeg = diffDeg > 0 ? 90 : -90;
+        } else {
+          diffDeg = Math.round(diffDeg / 10) * 10;
+        }
+        
+        const snapAng = baseAng + (diffDeg * Math.PI / 180);
+        const dist = Math.hypot(pt.x - secondPt.x, pt.y - secondPt.y);
+        targetPt = { x: secondPt.x + Math.cos(snapAng) * dist, y: secondPt.y + Math.sin(snapAng) * dist };
+      }
+
       ctx.beginPath();
       ctx.moveTo(startPt.x, startPt.y);
-      ctx.lineTo(pt.x, pt.y);
+      ctx.lineTo(secondPt ? secondPt.x : targetPt.x, secondPt ? secondPt.y : targetPt.y);
+      if (secondPt) ctx.lineTo(targetPt.x, targetPt.y);
       ctx.stroke();
       ctx.restore();
     }
   });
 
   canvas.addEventListener('pointerup', e => {
-    if (isPanning) {
-      isPanning = false;
-      return;
+    clearTimeout(straightTimer);
+    initialPinchDist = null;
+
+    if (activeTransformHandle) {
+      activeTransformHandle = null; pushUndo(); return;
     }
+
+    if (isPanning) { isPanning = false; return; }
 
     const pt = getCanvasCoords(e);
 
@@ -861,33 +988,48 @@
       const color = currentMode === 'signature' ? '#ff0000' : penColor;
       const width = currentMode === 'signature' ? 8 : penWidth;
       objects.push({ type: 'pen', path: currentPath, style, color, width });
-      currentPath = [];
-      pushUndo();
-      redraw();
+      currentPath = []; pushUndo(); redraw();
     } else if (isDrawing && currentMode === 'measure') {
       isDrawing = false;
       objects.push({ type: 'measure', p1: startPt, p2: pt, color: '#ff0000' });
-      startPt = null;
-      pushUndo();
-      redraw();
+      startPt = null; pushUndo(); redraw();
     } else if (isDrawing && currentMode === 'calibrate') {
       isDrawing = false;
       const dist = Math.hypot(pt.x - startPt.x, pt.y - startPt.y);
-      const knownMM = parseFloat(prompt(`引いた線の長さ: ${dist.toFixed(1)} px\n既知の寸法(mm)を入力してください:`, "100.0"));
+      const knownMM = parseFloat(prompt(`引いた線の長さ: ${dist.toFixed(1)} px\n画面の実測寸法(mm)を入力してください:`, "100.0"));
       if (knownMM && knownMM > 0) {
-        currentDPI = (dist / knownMM) * 25.4;
+        calibratedPMM = dist / knownMM;
+        localStorage.setItem('calibratedPMM', calibratedPMM); // DPI校正値をプリセット保存
         objects.push({ type: 'measure', p1: startPt, p2: pt, isCalibration: true, knownMM, color: '#00ff00' });
-        alert(`寸法補正完了\n新解像度: ${currentDPI.toFixed(1)} DPI`);
+        alert(`寸法補正完了！\n100%ボタンを押すと実測1:1表示になります。`);
         pushUndo();
       }
-      startPt = null;
-      redraw();
+      startPt = null; redraw();
+    } else if (currentMode === 'right_measure') {
+      if (startPt && !secondPt) {
+        secondPt = pt;
+      } else if (startPt && secondPt) {
+        // スナップを適用して3点目確定
+        const baseAng = Math.atan2(secondPt.y - startPt.y, secondPt.x - startPt.x);
+        let currAng = Math.atan2(pt.y - secondPt.y, pt.x - secondPt.x);
+        let diffDeg = (currAng - baseAng) * (180 / Math.PI);
+        if (Math.abs(Math.abs(diffDeg) - 90) < 5) diffDeg = diffDeg > 0 ? 90 : -90;
+        else diffDeg = Math.round(diffDeg / 10) * 10;
+        
+        const snapAng = baseAng + (diffDeg * Math.PI / 180);
+        const dist = Math.hypot(pt.x - secondPt.x, pt.y - secondPt.y);
+        const targetPt = { x: secondPt.x + Math.cos(snapAng) * dist, y: secondPt.y + Math.sin(snapAng) * dist };
+
+        objects.push({ type: 'measure', p1: startPt, p2: secondPt, p3: targetPt, color: '#0088ff' });
+        startPt = null; secondPt = null; isDrawing = false;
+        pushUndo(); redraw();
+      }
     }
   });
 
   const hitTest = (pt) => {
     for (let i = objects.length - 1; i >= 0; i--) {
-      const b = getBounds(objects[i]);
+      const b = getRawBounds(objects[i]);
       if (pt.x >= b.x && pt.x <= b.x + b.w && pt.y >= b.y && pt.y <= b.y + b.h) {
         return objects[i];
       }
@@ -897,12 +1039,12 @@
 
   // --- モード切替・ボタンバインド ---
   const tools = [
-    { id: 'tool-select', mode: 'select', label: 'モード: 選択・移動' },
+    { id: 'tool-select', mode: 'select', label: 'モード: 選択・変形・移動・回転' },
     { id: 'tool-viewer', mode: 'viewer', label: 'モード: ビューア(移動専用)' },
     { id: 'tool-measure', mode: 'measure', label: 'モード: 2点間測定' },
-    { id: 'tool-right-measure', mode: 'right_measure', label: 'モード: 直角3点測定 (3点タップ)' },
+    { id: 'tool-right-measure', mode: 'right_measure', label: 'モード: 直角3点測定 (1点目ドラッグ, 3点目スナップ)' },
     { id: 'tool-signature', mode: 'signature', label: 'モード: 確認サイン用太ペン' },
-    { id: 'tool-pen', mode: 'pen', label: 'モード: フリーハンド・直線' },
+    { id: 'tool-pen', mode: 'pen', label: 'モード: ペン (2秒静止で直線化)' },
     { id: 'tool-eraser', mode: 'eraser', label: 'モード: 消しゴム' }
   ];
 
@@ -917,60 +1059,71 @@
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
 
-  // スタンプ・検出物ダイアログ
+  // 確認印スタンプ
+  document.getElementById('tool-confirm-stamp').onclick = () => {
+    const txt = prompt("確認印の文字を入力してください:", "確認");
+    if (txt) {
+      const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
+      objects.push({ type: 'confirm_stamp', text: txt, x: imgCenter.x, y: imgCenter.y, size: 50 });
+      pushUndo(); redraw();
+    }
+  };
+
+  // 検出物・スタンプ (タップ位置配置)
   document.getElementById('tool-stamp').onclick = () => document.getElementById('modal-stamp').style.display = 'flex';
   document.getElementById('modal-stamp-cancel').onclick = () => document.getElementById('modal-stamp').style.display = 'none';
   document.getElementById('modal-stamp-ok').onclick = () => {
     const preset = document.getElementById('stamp-preset-select').value;
     const isShape = ['□', '△', '〇', '☓'].includes(preset);
-    const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
-    
-    if (isShape) {
-      objects.push({ type: 'stamp', shape: preset, x: imgCenter.x, y: imgCenter.y });
-    } else {
-      objects.push({ type: 'stamp', text: preset, x: imgCenter.x, y: imgCenter.y });
-    }
+    pendingStampData = isShape ? { shape: preset } : { text: preset };
+    currentMode = 'pending_stamp';
+    document.getElementById('mode-info').innerText = 'モード: 検出物の配置位置をタップしてください';
     document.getElementById('modal-stamp').style.display = 'none';
-    pushUndo();
-    redraw();
   };
 
-  // 文字入力
+  // 文字入力 (タップ位置配置)
   document.getElementById('tool-text').onclick = () => {
-    const txt = prompt("表示する文字を入力してください:");
-    if (txt) {
-      const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
-      objects.push({ type: 'text', text: txt, x: imgCenter.x, y: imgCenter.y, size: 28, color: '#ffffff' });
-      pushUndo();
-      redraw();
-    }
+    currentMode = 'pending_text';
+    document.getElementById('mode-info').innerText = 'モード: 文字の配置位置をタップしてください';
   };
 
-  // 図形挿入
+  // 図形挿入 (タップ位置配置)
   document.getElementById('tool-shape').onclick = () => {
-    const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
-    objects.push({ type: 'stamp', shape: '□', x: imgCenter.x, y: imgCenter.y });
-    pushUndo();
-    redraw();
+    currentMode = 'pending_shape';
+    document.getElementById('mode-info').innerText = 'モード: 図形の配置位置をタップしてください';
   };
 
-  // フィルムNo.ダイアログ
+  // フィルム№ダイアログ（プリセット自動更新）
   document.getElementById('btn-film-code').onclick = () => document.getElementById('modal-film').style.display = 'flex';
   document.getElementById('modal-film-cancel').onclick = () => document.getElementById('modal-film').style.display = 'none';
   document.getElementById('modal-film-ok').onclick = () => {
     const type = document.querySelector('input[name="film-type"]:checked').value;
     const num = document.getElementById('film-opening-num').value.trim();
     const code = document.getElementById('film-code-input').value.trim();
-    
+    const pos = document.getElementById('film-pos-select').value;
+    const color = document.getElementById('film-color-input').value;
+    const size = parseInt(document.getElementById('film-size-input').value) || 140;
+
+    // プリセット保存
+    filmPreset = { pos, color, size };
+    localStorage.setItem('filmPreset', JSON.stringify(filmPreset));
+
     let full = code;
     if (num) full = (type !== 'なし' ? type + num : num) + '_' + code;
-    
+
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+      const img = imagesList[currentImgIndex].imgObj;
       imagesList[currentImgIndex].filmCode = full;
-      const imgCenter = { x: 50, y: 50 };
-      objects.push({ type: 'text', text: full, x: imgCenter.x, y: imgCenter.y, size: 36, color: '#00a8ff' });
-      pushUndo();
-      redraw();
+
+      // 配置位置計算
+      let posX = 100, posY = img.height - 100;
+      if (pos === 'top') { posX = img.width/2 - 200; posY = 180; }
+      else if (pos === 'bottom') { posX = img.width/2 - 200; posY = img.height - 100; }
+      else if (pos === 'bottom-right') { posX = img.width - 450; posY = img.height - 100; }
+      else if (pos === 'bottom-left') { posX = 100; posY = img.height - 100; }
+
+      objects.push({ type: 'text', text: full, x: posX, y: posY, size: size, color: color });
+      pushUndo(); redraw();
     }
     document.getElementById('modal-film').style.display = 'none';
   };
@@ -978,56 +1131,41 @@
   // 寸法補正モード起動
   document.getElementById('btn-calibrate').onclick = () => {
     currentMode = 'calibrate';
-    document.getElementById('mode-info').innerText = 'モード: 寸法補正基準線を引いてください';
+    document.getElementById('mode-info').innerText = 'モード: 寸法補正の基準線を引いてください';
   };
 
-  // 輝度・濃淡ダイアログ
-  document.getElementById('btn-img-adjust').onclick = () => document.getElementById('modal-adjust').style.display = 'flex';
-  document.getElementById('adjust-bright').oninput = e => {
-    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) { imagesList[currentImgIndex].brightness = parseInt(e.target.value); redraw(); }
-  };
-  document.getElementById('adjust-contrast').oninput = e => {
-    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) { imagesList[currentImgIndex].contrast = parseInt(e.target.value); redraw(); }
-  };
-  document.getElementById('modal-adjust-reset').onclick = () => {
-    document.getElementById('adjust-bright').value = 0;
-    document.getElementById('adjust-contrast').value = 0;
-    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) { imagesList[currentImgIndex].brightness = 0; imagesList[currentImgIndex].contrast = 0; redraw(); }
-  };
-  document.getElementById('modal-adjust-close').onclick = () => document.getElementById('modal-adjust').style.display = 'none';
-
-  // Googleドライブ設定
-  document.getElementById('btn-gdrive-settings').onclick = () => document.getElementById('modal-gdrive').style.display = 'flex';
-  document.getElementById('modal-gdrive-save').onclick = () => {
-    alert("Googleドライブ自動移送設定を更新しました。");
-    document.getElementById('modal-gdrive').style.display = 'none';
+  // クラウド保存先設定ダイアログ
+  document.getElementById('btn-cloud-settings').onclick = () => document.getElementById('modal-cloud').style.display = 'flex';
+  document.getElementById('modal-cloud-save').onclick = () => {
+    cloudPreset = {
+      path: document.getElementById('cloud-path-input').value.trim(),
+      target: document.getElementById('cloud-target').value
+    };
+    localStorage.setItem('cloudPreset', JSON.stringify(cloudPreset));
+    alert("☁️ クラウド参照先設定をプリセット保存しました。");
+    document.getElementById('modal-cloud').style.display = 'none';
   };
 
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // --- PDF保存・一括保存・報告書作成機能 ---
+  // --- PDF保存（「納品フィルム」フォルダ参照機能付） ---
   document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex);
 
   const savePDF = (index) => {
     if (index < 0 || !imagesList[index]) return;
     const { jsPDF } = window.jspdf;
     
-    // 一時描画用オフスクリーンキャンバス
     const item = imagesList[index];
     const offCanvas = document.createElement('canvas');
     offCanvas.width = item.imgObj.width;
     offCanvas.height = item.imgObj.height;
     const offCtx = offCanvas.getContext('2d');
 
-    // フィルター & 画像描画
-    if (item.brightness !== 0 || item.contrast !== 0) {
-      offCtx.filter = `brightness(${100 + item.brightness}%) contrast(${100 + item.contrast}%)`;
-    }
+    if (item.isInverted) offCtx.filter = 'invert(100%)';
     offCtx.drawImage(item.imgObj, 0, 0);
     offCtx.filter = 'none';
 
-    // オブジェクト焼き付け描画 (スケール1.0)
     const savedScale = scale, savedPanX = panX, savedPanY = panY;
     scale = 1.0; panX = 0; panY = 0;
     objects.forEach(obj => drawObject(obj));
@@ -1037,44 +1175,69 @@
     const pdf = new jsPDF({
       orientation: item.imgObj.width > item.imgObj.height ? 'l' : 'p',
       unit: 'pt',
-      format: [item.imgObj.width * (72/currentDPI), item.imgObj.height * (72/currentDPI)]
+      format: [item.imgObj.width * (72 / (calibratedPMM * 25.4)), item.imgObj.height * (72 / (calibratedPMM * 25.4))]
     });
 
     pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-    pdf.save(`罫書きPDF_${item.name.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_')}.pdf`);
+    // 納品フィルム フォルダ名付与保存
+    pdf.save(`納品フィルム_罫書き_${item.name.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_')}.pdf`);
   };
 
   // 一括PDF保存
   document.getElementById('btn-save-batch-pdf').onclick = () => {
     if (imagesList.length === 0) return;
-    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「罫書きPDF」として順次出力しますか？`)) {
+    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「納品フィルム」用罫書きPDFとして保存しますか？`)) {
       imagesList.forEach((_, idx) => savePDF(idx));
     }
   };
 
-  // 報告書作成機能 (簡易レポートダイアログ生成)
-  document.getElementById('btn-report').onclick = () => {
+  // --- 報告書作成機能 (品質選択：軽量化 / 通常 / 高品質) ---
+  document.getElementById('btn-report').onclick = () => document.getElementById('modal-report').style.display = 'flex';
+  document.getElementById('modal-report-cancel').onclick = () => document.getElementById('modal-report').style.display = 'none';
+  
+  document.getElementById('modal-report-make').onclick = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
+    const qualityMode = document.querySelector('input[name="report-quality"]:checked').value;
+    
+    let qualityRatio = 0.75; // 通常
+    if (qualityMode === 'low') qualityRatio = 0.4; // 軽量化
+    else if (qualityMode === 'high') qualityRatio = 0.98; // 高品質
+
+    const { jsPDF } = window.jspdf;
     const item = imagesList[currentImgIndex];
-    let reportTxt = `======================================\n`;
-    reportTxt += `  探査コア部 エックス線探査報告書  \n`;
-    reportTxt += `======================================\n`;
-    reportTxt += `対象ファイル: ${item.name}\n`;
-    reportTxt += `フィルムNo.  : ${item.filmCode || '未設定'}\n`;
-    reportTxt += `設定DPI      : ${currentDPI.toFixed(1)} DPI\n`;
-    reportTxt += `--------------------------------------\n`;
-    reportTxt += `【検出物・アノテーション一覧】\n`;
 
-    objects.forEach((obj, idx) => {
-      if (obj.type === 'stamp') reportTxt += `${idx + 1}. 検出物/スタンプ: ${obj.text || obj.shape}\n`;
-      else if (obj.type === 'measure') {
-        const d1 = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
-        const mm1 = (d1 / currentDPI) * 25.4;
-        reportTxt += `${idx + 1}. 測定L1: ${mm1.toFixed(1)} mm\n`;
-      } else if (obj.type === 'text') reportTxt += `${idx + 1}. テキスト: "${obj.text}"\n`;
-    });
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = item.imgObj.width;
+    offCanvas.height = item.imgObj.height;
+    const offCtx = offCanvas.getContext('2d');
 
-    alert(reportTxt);
+    if (item.isInverted) offCtx.filter = 'invert(100%)';
+    offCtx.drawImage(item.imgObj, 0, 0);
+    offCtx.filter = 'none';
+
+    const savedScale = scale, savedPanX = panX, savedPanY = panY;
+    scale = 1.0; panX = 0; panY = 0;
+    objects.forEach(obj => drawObject(obj));
+    scale = savedScale; panX = savedPanX; panY = savedPanY;
+
+    // 指定された品質圧縮率で画像生成
+    const imgData = offCanvas.toDataURL('image/jpeg', qualityRatio);
+
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    pdf.setFontSize(16);
+    pdf.text("エックス線探査 調査報告書", 40, 40);
+    pdf.setFontSize(10);
+    pdf.text(`対象ファイル: ${item.name}`, 40, 60);
+    pdf.text(`フィルム№: ${item.filmCode || '未設定'}`, 40, 75);
+    pdf.text(`実測100%校正DPI: ${(calibratedPMM * 25.4).toFixed(1)} DPI`, 40, 90);
+
+    // 報告書内へ実測100%精度の添付画像を埋め込み
+    const imgWidth = 515;
+    const imgHeight = (item.imgObj.height / item.imgObj.width) * imgWidth;
+    pdf.addImage(imgData, 'JPEG', 40, 110, imgWidth, Math.min(650, imgHeight));
+
+    pdf.save(`探査報告書_${qualityMode}_${item.name.split('.')[0]}.pdf`);
+    document.getElementById('modal-report').style.display = 'none';
   };
 
   // アプリ初期化
