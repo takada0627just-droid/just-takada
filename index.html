@@ -80,7 +80,7 @@
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
     <button class="btn btn-dark" id="btn-invert-color">🌗 白黒反転</button>
     <button class="btn btn-blue" id="btn-zoom-100">📐 100%表示(実測)</button>
-    <button class="btn btn-dark" id="btn-screen-calibrate" title="モニターの物理表示補正">📏 画面定規合わせ</button>
+    <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
     <button class="btn" id="btn-fit">全体表示</button>
     
     <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
@@ -271,17 +271,17 @@
   </div>
 </div>
 
-<!-- 5. 画面定規合わせ (モニター表示物理キャリブレーション) ダイアログ -->
+<!-- 5. 画面定規合わせ (モニター物理校正) ダイアログ -->
 <div class="modal-overlay" id="modal-screen-calib">
   <div class="modal-card">
-    <h3>📏 画面定規合わせ (モニター校正)</h3>
-    <p style="font-size:11px; color:#ccc;">画面下の【青色の基準バー】に手持ちの物差し（定規）をあて、定規の目盛りとぴったり重なるように長さを調整してください。</p>
+    <h3>📏 画面定規合わせ (モニター物理校正)</h3>
+    <p style="font-size:11px; color:#ccc;">下青色の基準バーに手物の定規（物差し）を当て、定規の100mm目盛りとバーの長さを一致させてください。</p>
     <div id="gauge-bar" style="width: 100mm; height: 16px; background: #0088ff; border: 2px solid #fff; margin: 8px 0; border-radius: 2px;"></div>
     <div class="modal-row">
-      <span>基準バー長 (物理ミリ):</span>
+      <span>基準バーの画面実測値:</span>
       <input type="number" id="gauge-mm-input" value="100" style="width:80px;"> mm
     </div>
-    <p style="font-size:10px; color:#aaa;">※この補正を行うことで、どんな液晶モニター/iPadでも100%表示時に実測1:1になります。</p>
+    <p style="font-size:10px; color:#aaa;">※校正記憶すればどの液晶モニター/iPadでも100%表示時に実測1:1になります。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-screen-cancel">キャンセル</button>
       <button class="btn btn-green" id="modal-screen-ok">画面校正を記憶</button>
@@ -377,8 +377,8 @@
 
   // 設定プリセット (LocalStorage)
   let filmPreset = JSON.parse(localStorage.getItem('filmPreset')) || { pos: 'bottom', color: '#ffffff', size: 140 };
-  let calibratedPMM = parseFloat(localStorage.getItem('calibratedPMM')) || (96.0 / 25.4); // 画像用 px/mm
-  let screenPMM = parseFloat(localStorage.getItem('screenPMM')) || (96.0 / 25.4); // モニター物理校正用 px/mm
+  let calibratedPMM = parseFloat(localStorage.getItem('calibratedPMM')) || (96.0 / 25.4); // デフォルト px/mm
+  let screenPMM = parseFloat(localStorage.getItem('screenPMM')) || (96.0 / 25.4); // モニター物理校正 px/mm
   let cloudPreset = JSON.parse(localStorage.getItem('cloudPreset')) || { path: 'gdrive://JustCore/納品フィルム', target: 'pdf' };
 
   let penStyle = '実線';
@@ -386,6 +386,8 @@
   let penWidth = 6;
   let pendingStampData = null;
   let pendingConfirmData = null;
+
+  let isTouchActive = false;
 
   // フォーム初期セット
   document.getElementById('film-pos-select').value = filmPreset.pos;
@@ -395,7 +397,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v7';
+  const DB_NAME = 'XRayKagakiDB_v8';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -594,7 +596,6 @@
     const item = imagesList[currentImgIndex];
     const activeImgPMM = item.pmm || calibratedPMM;
 
-    // モニターのCSSピクセル/mm比率との比から正確な1:1スケールを算出
     scale = screenPMM / activeImgPMM;
 
     const img = item.imgObj;
@@ -633,7 +634,7 @@
       const cssWidthPx = gaugeEl.getBoundingClientRect().width;
       screenPMM = cssWidthPx / gaugeInput;
       localStorage.setItem('screenPMM', screenPMM);
-      alert(`画面のミリ表示精度を校正記憶しました。\nこれでどのインチのモニターでも[100%表示]が手物の定規と1:1でピッタリ一致します。`);
+      alert(`画面ミリ表示精度を校正記憶しました。\nこれでどのインチのモニターでも[100%表示]が定規と1:1でピッタリ一致します。`);
     }
     document.getElementById('modal-screen-calib').style.display = 'none';
     setActualSize100();
@@ -897,12 +898,12 @@
   const isPalmTouch = (e) => {
     if (e.touches && e.touches.length > 0) {
       const t = e.touches[0];
-      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部（広面積接触）を判定・カット
+      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部（広面積接触）判定・カット
     }
     return false;
   };
 
-  // --- タッチ・Pointer 統一型イベントリスナーハンドラ ---
+  // --- タッチ・Pointer 統一ハンドラ ---
   const onPointerStart = (clientX, clientY) => {
     const pt = getCanvasCoordsFromClient(clientX, clientY);
 
@@ -1061,7 +1062,7 @@
       startPt = null; tempEndPt = null;
     } else if (currentMode === 'right_measure' && startPt && !secondPt) {
       if (pt && Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
-        secondPt = pt; // L1固定、次は3点目タップ待ち
+        secondPt = pt; // L1ドラッグ確定、次は3点目タップ待ち
         tempEndPt = null;
       }
     }
@@ -1069,6 +1070,7 @@
 
   // --- タッチイベントリスナー (iPad・スマホ向け) ---
   canvas.addEventListener('touchstart', e => {
+    isTouchActive = true;
     if (isPalmTouch(e)) { e.preventDefault(); return; }
 
     if (e.touches.length >= 2) {
@@ -1131,21 +1133,24 @@
     } else {
       onPointerEnd();
     }
+    setTimeout(() => { isTouchActive = false; }, 300);
   });
 
   // --- マウスイベントリスナー (PC向け) ---
   let isMouseDown = false;
   canvas.addEventListener('mousedown', e => {
-    isMouseDown = true;
-    onPointerStart(e.clientX, e.clientY);
+    if (!isTouchActive) {
+      isMouseDown = true;
+      onPointerStart(e.clientX, e.clientY);
+    }
   });
   canvas.addEventListener('mousemove', e => {
-    if (isMouseDown || isPanning) {
+    if (!isTouchActive && (isMouseDown || isPanning)) {
       onPointerMove(e.clientX, e.clientY);
     }
   });
   canvas.addEventListener('mouseup', e => {
-    if (isMouseDown || isPanning) {
+    if (!isTouchActive && (isMouseDown || isPanning)) {
       isMouseDown = false;
       onPointerEnd(e.clientX, e.clientY);
     }
@@ -1288,7 +1293,7 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // --- PDF焼き付け保存機能 (確実出力) ---
+  // --- PDF焼き付け保存機能 ---
   document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex);
 
   const savePDF = (index) => {
