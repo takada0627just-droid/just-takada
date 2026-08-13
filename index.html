@@ -49,7 +49,7 @@
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
 
-    /* メインキャンバスエリア (3倍超大型 96x96px 精密赤点照準カスタムカーソル) */
+    /* メインキャンバスエリア (超大型96x96px 精密赤点照準 SVG カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
       cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
@@ -59,7 +59,7 @@
     /* 左側フローティングツールパネル */
     #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.88); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
 
-    /* ★ Viewerモード専用 画面固定/解除フロートボタン */
+    /* Viewerモード専用 画面固定/解除フロートボタン */
     #viewer-lock-btn {
       position: absolute; top: 12px; right: 16px; z-index: 6; display: none;
       background: #0066cc; color: #fff; border: 2px solid #fff; border-radius: 20px;
@@ -170,7 +170,7 @@
       <button class="btn" id="btn-redo">↪ 進む</button>
     </div>
 
-    <!-- ★ Viewerモード専用 画面固定/解除フロートボタン -->
+    <!-- Viewerモード専用 画面固定/解除フロートボタン -->
     <button id="viewer-lock-btn">🔓 画面可動（タップで固定）</button>
 
     <!-- メインキャンバス -->
@@ -307,7 +307,6 @@
 <div class="modal-overlay" id="modal-screen-calib">
   <div class="modal-card">
     <h3>📏 画面定規合わせ (モニター物理校正)</h3>
-    <!-- ★追加変更指示: メッセージ文章の更新 & 白枠(border)削除青単色バー -->
     <p style="font-size:18px; color:#ccc; line-height:1.4;">基準バー長さを測って実測長さを入力してください</p>
     <div id="gauge-bar" style="width: 100mm; height: 30px; background: #0088ff; border: none; margin: 12px 0; border-radius: 0;"></div>
     <div class="modal-row">
@@ -441,18 +440,6 @@
   document.getElementById('film-size-input').value = filmPreset.size;
   document.getElementById('cloud-path-input').value = cloudPreset.path;
   document.getElementById('cloud-target').value = cloudPreset.target;
-
-  // 全テキスト入力欄の自動英大文字変換リスナー設定
-  document.querySelectorAll('input[type="text"]').forEach(input => {
-    input.addEventListener('input', e => {
-      const start = e.target.selectionStart;
-      const end = e.target.selectionEnd;
-      e.target.value = e.target.value.toUpperCase();
-      if (start !== null && end !== null) {
-        try { e.target.setSelectionRange(start, end); } catch (err) {}
-      }
-    });
-  });
 
   // --- IndexedDB 端末内一時保存 ---
   const DB_NAME = 'XRayKagakiDB_v17';
@@ -748,7 +735,7 @@
       drawPath(ctx, { type: 'pen', path: [startPt, tempEndPt], style: penStyle, color: penColor, width: penWidth });
     }
 
-    // 測定・寸法補正のドラッグ中線リアルタイムプレビュー表示
+    // ★測定・寸法補正のドラッグ中線リアルタイムプレビュー表示 (1点目ドラッグ中から表示)
     if (isDrawing && tempEndPt) {
       if (currentMode === 'calibrate' || currentMode === 'measure') {
         if (startPt) {
@@ -781,7 +768,7 @@
       }
     }
 
-    // ★変更指示2: 照準カーソルをペン/指先の真上（オフセット表示）に描画し視認性を向上
+    // ★測定系モード：照準カーソルをペン/指先の真上（画面上20pxオフセット）に表示
     if (['measure', 'right_measure', 'calibrate'].includes(currentMode) && tempEndPt) {
       drawLargeTargetCursor(ctx, tempEndPt);
     }
@@ -789,15 +776,14 @@
     ctx.restore();
   };
 
-  // ★キャンバス上オフセットオーバーレイ照準描画 (指先・ペン先から画面上で上方向60px浮かせ表示)
+  // ★キャンバス上オフセットオーバーレイ照準描画 (指先・ペン先から画面上で上方向20px浮かせ表示)
   const drawLargeTargetCursor = (targetCtx, pt) => {
     if (!pt) return;
     targetCtx.save();
     
-    // 指先より真上（画面上60px）にオフセットさせた照準表示位置
-    const offsetPx = 60 / scale;
+    // ptは既に上方向20pxオフセットされた確定ターゲット座標そのもの！
     const targetX = pt.x;
-    const targetY = pt.y - offsetPx;
+    const targetY = pt.y;
 
     const sz = 32 / scale;
     const gap = 10 / scale;
@@ -837,12 +823,13 @@
     targetCtx.arc(targetX, targetY, 3.5 / scale, 0, Math.PI * 2);
     targetCtx.stroke();
 
-    // 指先の実タッチ地点を示す小さな補助参照ライン
+    // 指先の実タッチ地点（画面上20px下）を示すガイド破線
+    const fingerY = targetY + (20 / scale);
     targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
     targetCtx.lineWidth = 1.5 / scale;
     targetCtx.setLineDash([3 / scale, 3 / scale]);
     targetCtx.beginPath();
-    targetCtx.moveTo(pt.x, pt.y);
+    targetCtx.moveTo(targetX, fingerY);
     targetCtx.lineTo(targetX, targetY + gap);
     targetCtx.stroke();
     targetCtx.setLineDash([]);
@@ -1065,20 +1052,24 @@
     }
   };
 
-  // --- 座標計算 & ★パームリジェクション感度強化 (10px超の接地判定で手刀カット) ---
+  // --- ★変更指示：測定系モードで20px上方にシフトされた「実際のドロップ座標」を返す座標計算 ---
   const getCanvasCoordsFromClient = (clientX, clientY) => {
     const rect = canvas.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left - panX) / scale,
-      y: (clientY - rect.top - panY) / scale
-    };
+    let cx = (clientX - rect.left - panX) / scale;
+    let cy = (clientY - rect.top - panY) / scale;
+
+    // 測定系ツール使用時、画面上で上方向20px分オフセットした位置を真ターゲット・固定位置とする
+    if (['measure', 'right_measure', 'calibrate'].includes(currentMode)) {
+      cy -= (20 / scale);
+    }
+
+    return { x: cx, y: cy };
   };
 
   const isPalmTouch = (e) => {
     if (e.touches && e.touches.length > 0) {
       const t = e.touches[0];
-      // ★感度向上: タッチ半径10px以上の接触面（手刀部）を強力カット
-      if (t.radiusX > 10 || t.radiusY > 10) return true;
+      if (t.radiusX > 10 || t.radiusY > 10) return true; // 手刀部（感度向上10px）カット
     }
     return false;
   };
@@ -1158,7 +1149,6 @@
       }
     }
 
-    // ★Viewerモード中の画面固定チェック
     if (currentMode === 'viewer') {
       if (!isViewerLocked) {
         isPanning = true;
@@ -1222,7 +1212,7 @@
 
   const handleInputMove = (clientX, clientY) => {
     if (isPanning) {
-      if (currentMode === 'viewer' && isViewerLocked) return; // 画面固定中は移動無効
+      if (currentMode === 'viewer' && isViewerLocked) return;
       panX = clientX - startPan.x;
       panY = clientY - startPan.y;
       redraw(); return;
@@ -1469,7 +1459,6 @@
     currentMode = newMode;
     measureStep = 0; startPt = null; secondPt = null; tempEndPt = null;
 
-    // ★Viewerモード用フロートボタンの表示切替
     if (newMode === 'viewer') {
       setActualSize100();
       viewerLockBtn.style.display = 'block';
@@ -1505,7 +1494,6 @@
     }
   };
 
-  // ★Viewerモード中の画面固定トグル切り替え
   viewerLockBtn.onclick = () => {
     isViewerLocked = !isViewerLocked;
     if (isViewerLocked) {
