@@ -49,22 +49,34 @@
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
 
-    /* メインキャンバスエリア (真ん中空き十字＋中心3px赤点カーソル設定) */
+    /* メインキャンバスエリア (大型64px・中心精密赤点カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><line x1="16" y1="2" x2="16" y2="10" stroke="%23ffffff" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="10" stroke="%23000000" stroke-width="1"/><line x1="16" y1="22" x2="16" y2="30" stroke="%23ffffff" stroke-width="2"/><line x1="16" y1="22" x2="16" y2="30" stroke="%23000000" stroke-width="1"/><line x1="2" y1="16" x2="10" y2="16" stroke="%23ffffff" stroke-width="2"/><line x1="2" y1="16" x2="10" y2="16" stroke="%23000000" stroke-width="1"/><line x1="22" y1="16" x2="30" y2="16" stroke="%23ffffff" stroke-width="2"/><line x1="22" y1="16" x2="30" y2="16" stroke="%23000000" stroke-width="1"/><circle cx="16" cy="16" r="1.5" fill="%23ff0000"/></svg>') 16 16, crosshair;
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><line x1="32" y1="4" x2="32" y2="20" stroke="%23ffffff" stroke-width="3"/><line x1="32" y1="4" x2="32" y2="20" stroke="%23000000" stroke-width="1.5"/><line x1="32" y1="44" x2="32" y2="60" stroke="%23ffffff" stroke-width="3"/><line x1="32" y1="44" x2="32" y2="60" stroke="%23000000" stroke-width="1.5"/><line x1="4" y1="32" x2="20" y2="32" stroke="%23ffffff" stroke-width="3"/><line x1="4" y1="32" x2="20" y2="32" stroke="%23000000" stroke-width="1.5"/><line x1="44" y1="32" x2="60" y2="32" stroke="%23ffffff" stroke-width="3"/><line x1="44" y1="32" x2="60" y2="32" stroke="%23000000" stroke-width="1.5"/><circle cx="32" cy="32" r="2.5" fill="%23ff0000"/><circle cx="32" cy="32" r="4" stroke="%23ffffff" stroke-width="1" fill="none"/></svg>') 32 32, crosshair;
     }
     canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
     /* 左側フローティングツールパネル */
     #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.88); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
 
-    /* モーダルダイアログ各種 */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100; }
-    .modal-card { background: #2c2c2c; border: 1px solid #555; border-radius: 8px; width: 360px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .modal-card h3 { font-size: 14px; border-bottom: 1px solid #444; padding-bottom: 6px; color: #0088ff; }
-    .modal-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
-    .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+    /* ★ モーダルダイアログ各種（ペン書き・タッチ操作向けに2.5倍大型化） */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-card { background: #2c2c2c; border: 2px solid #666; border-radius: 12px; width: 750px; max-width: 92vw; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .modal-card h3 { font-size: 26px; border-bottom: 2px solid #555; padding-bottom: 12px; color: #0088ff; font-weight: bold; }
+    .modal-row { display: flex; align-items: center; justify-content: space-between; font-size: 22px; gap: 12px; }
+    
+    /* 入力フォーム類の大型化（2.5倍スケール） */
+    .modal-card input[type="text"], 
+    .modal-card input[type="number"], 
+    .modal-card select { 
+      font-size: 24px; padding: 12px 16px; border-radius: 6px; border: 2px solid #666; background: #1a1a1a; color: #fff; min-height: 54px; 
+    }
+    .modal-card input[type="color"] { width: 80px; height: 54px; border: none; border-radius: 6px; cursor: pointer; }
+    .modal-card label { font-size: 22px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .modal-card input[type="radio"], .modal-card input[type="checkbox"] { transform: scale(1.8); margin: 0 6px; }
+    
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 16px; margin-top: 16px; }
+    .modal-buttons .btn { font-size: 22px; padding: 12px 28px; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -155,7 +167,7 @@
   </div>
 </div>
 
-<!-- モーダル各種 -->
+<!-- モーダル各種 (ペン書き・タップ向け2.5倍大型化) -->
 
 <!-- 1. フィルム№・撮影箇所ダイアログ -->
 <div class="modal-overlay" id="modal-film">
@@ -163,21 +175,23 @@
     <h3>フィルム№・撮影箇所設定</h3>
     <div class="modal-row">
       <span>種別:</span>
-      <label><input type="radio" name="film-type" value="開口"> 開口</label>
-      <label><input type="radio" name="film-type" value="No."> No.</label>
-      <label><input type="radio" name="film-type" value="なし" checked> なし</label>
+      <div style="display:flex; gap:16px;">
+        <label><input type="radio" name="film-type" value="開口"> 開口</label>
+        <label><input type="radio" name="film-type" value="No."> No.</label>
+        <label><input type="radio" name="film-type" value="なし" checked> なし</label>
+      </div>
     </div>
     <div class="modal-row">
       <span>No. (任意):</span>
-      <input type="text" id="film-opening-num" placeholder="例: 1">
+      <input type="text" id="film-opening-num" placeholder="例: 1" style="width:300px;">
     </div>
     <div class="modal-row">
       <span>フィルム№:</span>
-      <input type="text" id="film-code-input" placeholder="例: 1F-F1">
+      <input type="text" id="film-code-input" placeholder="例: 1F-F1" style="width:300px;">
     </div>
     <div class="modal-row">
       <span>配置位置:</span>
-      <select id="film-pos-select">
+      <select id="film-pos-select" style="width:300px;">
         <option value="bottom" selected>下部（デフォルト）</option>
         <option value="top">上部</option>
         <option value="bottom-right">右下</option>
@@ -190,7 +204,7 @@
     </div>
     <div class="modal-row">
       <span>文字サイズ:</span>
-      <input type="number" id="film-size-input" value="140" min="20" max="400">
+      <input type="number" id="film-size-input" value="140" min="20" max="400" style="width:200px;">
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-film-cancel">キャンセル</button>
@@ -205,7 +219,7 @@
     <h3>検出物・スタンプ選択</h3>
     <div class="modal-row">
       <span>項目:</span>
-      <select id="stamp-preset-select">
+      <select id="stamp-preset-select" style="width:360px;">
         <option value="障害物">障害物</option>
         <option value="電気配管">電気配管</option>
         <option value="CD管">CD管</option>
@@ -219,10 +233,12 @@
     </div>
     <div class="modal-row">
       <span>方向:</span>
-      <label><input type="radio" name="stamp-orient" value="horiz" checked> 横書き</label>
-      <label><input type="radio" name="stamp-orient" value="vert"> 縦書き</label>
+      <div style="display:flex; gap:20px;">
+        <label><input type="radio" name="stamp-orient" value="horiz" checked> 横書き</label>
+        <label><input type="radio" name="stamp-orient" value="vert"> 縦書き</label>
+      </div>
     </div>
-    <p style="font-size:11px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
+    <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-stamp-cancel">キャンセル</button>
       <button class="btn btn-green" id="modal-stamp-ok">確定（タップ配置）</button>
@@ -236,14 +252,14 @@
     <h3>🔲 図形選択</h3>
     <div class="modal-row">
       <span>形状:</span>
-      <select id="shape-select">
+      <select id="shape-select" style="width:360px;">
         <option value="□">□ (四角形)</option>
         <option value="△">△ (三角形)</option>
         <option value="〇">〇 (円形)</option>
         <option value="☓">☓ (バツ印)</option>
       </select>
     </div>
-    <p style="font-size:11px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
+    <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-shape-cancel">キャンセル</button>
       <button class="btn btn-green" id="modal-shape-ok">確定（タップ配置）</button>
@@ -257,16 +273,16 @@
     <h3>💮 確認印設定</h3>
     <div class="modal-row">
       <span>印影文字:</span>
-      <input type="text" id="confirm-stamp-text" value="確認" placeholder="例: 確認, 検印, 済">
+      <input type="text" id="confirm-stamp-text" value="確認" placeholder="例: 確認, 検印, 済" style="width:320px;">
     </div>
     <div class="modal-row">
       <span>形状:</span>
-      <select id="confirm-stamp-shape">
+      <select id="confirm-stamp-shape" style="width:320px;">
         <option value="circle">丸型</option>
         <option value="rect">角型</option>
       </select>
     </div>
-    <p style="font-size:11px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
+    <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-confirm-cancel">キャンセル</button>
       <button class="btn btn-green" id="modal-confirm-ok">確定（タップ配置）</button>
@@ -278,13 +294,15 @@
 <div class="modal-overlay" id="modal-screen-calib">
   <div class="modal-card">
     <h3>📏 画面定規合わせ (モニター物理校正)</h3>
-    <p style="font-size:11px; color:#ccc;">下青色の基準バーに手物の定規（物差し）を当て、定規の100mm目盛りとバーの長さを一致させてください。</p>
-    <div id="gauge-bar" style="width: 100mm; height: 16px; background: #0088ff; border: 2px solid #fff; margin: 8px 0; border-radius: 2px;"></div>
+    <p style="font-size:18px; color:#ccc; line-height:1.4;">下青色の基準バーに手物の定規（物差し）を当て、定規の100mm目盛りとバーの長さを一致させてください。</p>
+    <div id="gauge-bar" style="width: 100mm; height: 30px; background: #0088ff; border: 3px solid #fff; margin: 12px 0; border-radius: 4px;"></div>
     <div class="modal-row">
       <span>基準バーの画面実測値:</span>
-      <input type="number" id="gauge-mm-input" value="100" style="width:80px;"> mm
+      <div>
+        <input type="number" id="gauge-mm-input" value="100" style="width:140px;"> mm
+      </div>
     </div>
-    <p style="font-size:10px; color:#aaa;">※校正記憶すればどの液晶モニター/iPadでも100%表示時に実測1:1になります。</p>
+    <p style="font-size:16px; color:#aaa;">※校正記憶すればどの液晶モニター/iPadでも100%表示時に実測1:1になります。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-screen-cancel">キャンセル</button>
       <button class="btn btn-green" id="modal-screen-ok">画面校正を記憶</button>
@@ -302,11 +320,11 @@
     </div>
     <div class="modal-row">
       <span>参照先URL/パス:</span>
-      <input type="text" id="cloud-path-input" placeholder="例: gdrive://JustCore/納品フィルム" style="width:180px;">
+      <input type="text" id="cloud-path-input" placeholder="例: gdrive://JustCore/納品フィルム" style="width:380px;">
     </div>
     <div class="modal-row">
       <span>移送対象:</span>
-      <select id="cloud-target">
+      <select id="cloud-target" style="width:380px;">
         <option value="pdf">罫書きPDFのみ</option>
         <option value="raw">元画像のみ</option>
         <option value="both">両方 (元画像 + PDF)</option>
@@ -324,13 +342,13 @@
     <h3>📋 報告書PDF作成設定</h3>
     <div class="modal-row">
       <span>添付画像品質:</span>
-      <div style="display:flex; flex-direction:column; gap:4px;">
+      <div style="display:flex; flex-direction:column; gap:12px;">
         <label><input type="radio" name="report-quality" value="low"> 軽量化 (高圧縮/小容量)</label>
         <label><input type="radio" name="report-quality" value="normal" checked> 通常 (バランス)</label>
         <label><input type="radio" name="report-quality" value="high"> 高品質 (印刷用/高精細)</label>
       </div>
     </div>
-    <p style="font-size:11px; color:#aaa;">※「納品フィルム」状態の罫書き画像を使用して報告書PDFを作成します。</p>
+    <p style="font-size:18px; color:#aaa;">※「納品フィルム」状態の罫書き画像を使用して報告書PDFを作成します。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-report-cancel">キャンセル</button>
       <button class="btn btn-warning" id="modal-report-make">報告書PDF生成</button>
@@ -407,7 +425,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v11';
+  const DB_NAME = 'XRayKagakiDB_v12';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -772,13 +790,13 @@
     targetCtx.setLineDash([]);
   };
 
-  // ★測定線描画: 文字サイズ24px & 測定線からテキストを22pxオフセット表示
+  // ★測定線描画: 文字サイズ2.5倍 (60px) & 測定線からテキストをオフセット表示
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
     targetCtx.lineWidth = 3;
     targetCtx.fillStyle = obj.color || '#ff0000';
-    targetCtx.font = 'bold 24px Arial';
+    targetCtx.font = 'bold 60px Arial'; // 文字サイズ2.5倍拡大
 
     targetCtx.beginPath();
     targetCtx.moveTo(obj.p1.x, obj.p1.y);
@@ -796,8 +814,8 @@
     let nx1 = len1 > 0 ? -dy1 / len1 : 0;
     let ny1 = len1 > 0 ? dx1 / len1 : 0;
 
-    const midX1 = (obj.p1.x + obj.p2.x) / 2 + nx1 * 22;
-    const midY1 = (obj.p1.y + obj.p2.y) / 2 + ny1 * 22;
+    const midX1 = (obj.p1.x + obj.p2.x) / 2 + nx1 * 40;
+    const midY1 = (obj.p1.y + obj.p2.y) / 2 + ny1 * 40;
     targetCtx.fillText(txt1, midX1, midY1);
 
     if (obj.p3) {
@@ -815,8 +833,8 @@
       let nx2 = len2 > 0 ? -dy2 / len2 : 0;
       let ny2 = len2 > 0 ? dx2 / len2 : 0;
 
-      const midX2 = (obj.p2.x + obj.p3.x) / 2 + nx2 * 22;
-      const midY2 = (obj.p2.y + obj.p3.y) / 2 + ny2 * 22;
+      const midX2 = (obj.p2.x + obj.p3.x) / 2 + nx2 * 40;
+      const midY2 = (obj.p2.y + obj.p3.y) / 2 + ny2 * 40;
       targetCtx.fillText(`L2: ${mm2.toFixed(1)} mm`, midX2, midY2);
 
       const ang1 = Math.atan2(obj.p1.y - obj.p2.y, obj.p1.x - obj.p2.x);
@@ -824,7 +842,7 @@
       let deg = Math.abs(ang1 - ang2) * (180 / Math.PI);
       if (deg > 180) deg = 360 - deg;
       targetCtx.fillStyle = '#0056b3';
-      targetCtx.fillText(`∠ ${deg.toFixed(1)}°`, obj.p2.x + 20, obj.p2.y - 20);
+      targetCtx.fillText(`∠ ${deg.toFixed(1)}°`, obj.p2.x + 35, obj.p2.y - 35);
     }
   };
 
@@ -832,7 +850,7 @@
     const len = Math.hypot(pB.x - pA.x, pB.y - pA.y);
     if (len === 0) return;
     const dx = (pB.x - pA.x) / len, dy = (pB.y - pA.y) / len;
-    const nx = -dy * 10, ny = dx * 10;
+    const nx = -dy * 12, ny = dx * 12;
     targetCtx.beginPath(); targetCtx.moveTo(pA.x - nx, pA.y - ny); targetCtx.lineTo(pA.x + nx, pA.y + ny); targetCtx.stroke();
   };
 
@@ -874,7 +892,7 @@
     targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'alphabetic';
   };
 
-  // ★選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
+  // 選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
   const drawSelectionBounds = (obj) => {
     if (obj.type === 'measure') {
       ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
