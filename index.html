@@ -67,15 +67,15 @@
 <body>
 
 <!-- 非表示のファイル・フォルダ読み込み用input要素 -->
-<input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-<input type="file" id="file-input" multiple accept="image/*,.pdf" style="display:none;">
+<input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*" style="display:none;">
+<input type="file" id="file-input" multiple accept="image/*" style="display:none;">
 
 <div id="app-container">
   <!-- ヘッダーツールバー -->
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
     <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
-    <button class="btn" id="btn-open-file">📄 ファイル選択</button>
+    <button class="btn btn-green" id="btn-open-file">📄 写真ファイル選択</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルムNo.</button>
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
     <button class="btn btn-cyan" id="btn-img-adjust">☀️ 輝度・濃淡</button>
@@ -110,7 +110,7 @@
         </div>
         <div id="drawer-actions">
           <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">📂 フォルダ選択</button>
-          <button class="btn" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 ファイル追加</button>
+          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 写真選択</button>
         </div>
       </div>
       <div id="virtual-thumb-container">
@@ -313,10 +313,21 @@
     };
   };
 
+  // ★修正箇所: HTMLImageElement を除外して純粋データのみ IndexedDB に保存
   const saveToDB = (item) => {
     if (!db) return;
     const tx = db.transaction('images', 'readwrite');
-    tx.objectStore('images').put(item);
+    const dataToSave = {
+      id: item.id,
+      name: item.name,
+      src: item.src,
+      objects: item.objects || [],
+      dpi: item.dpi || 96.0,
+      brightness: item.brightness || 0,
+      contrast: item.contrast || 0,
+      filmCode: item.filmCode || ''
+    };
+    tx.objectStore('images').put(dataToSave);
   };
 
   const loadImagesFromDB = () => {
@@ -373,6 +384,7 @@
 
     for (let i = startIndex; i <= endIndex; i++) {
       const item = imagesList[i];
+      if (!item) continue;
       const div = document.createElement('div');
       div.className = `thumb-item ${i === currentImgIndex ? 'active' : ''}`;
       div.style.top = (i * ITEM_HEIGHT) + 'px';
@@ -413,7 +425,7 @@
     pushUndo();
   };
 
-  // --- 画像/フォルダ読み込みイベントバインド ---
+  // --- ★修正箇所: ファイル・フォルダ読み込み処理の完全安定化 ---
   const folderInput = document.getElementById('folder-input');
   const fileInput = document.getElementById('file-input');
 
@@ -423,21 +435,28 @@
   document.getElementById('btn-drawer-file').onclick = () => fileInput.click();
 
   const handleFilesRead = (files) => {
-    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/') || f.name.endsWith('.pdf'));
-    if (validFiles.length === 0) return;
+    const fileArray = Array.from(files);
+    // 画像ファイルのみを抽出 (JPEG, PNG, WebP, GIF, BMP)
+    const validFiles = fileArray.filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(f.name));
+    
+    if (validFiles.length === 0) {
+      alert("読み込める画像ファイル（JPG, PNGなど）が見つかりませんでした。");
+      return;
+    }
 
-    // ファイル名で並び替え
+    // ファイル名（数値順）で並び替え
     validFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = ev => {
+        const srcData = ev.target.result;
         const imgObj = new Image();
         imgObj.onload = () => {
           const item = {
-            id: Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
             name: file.webkitRelativePath || file.name,
-            src: ev.target.result,
+            src: srcData,
             imgObj: imgObj,
             objects: [],
             dpi: 96.0,
@@ -448,12 +467,22 @@
           imagesList.push(item);
           saveToDB(item);
           updateVirtualScroll();
-          if (imagesList.length === 1 || currentImgIndex === -1) selectImage(0);
+          
+          if (currentImgIndex === -1 && imagesList.length > 0) {
+            selectImage(0);
+          } else {
+            redraw();
+          }
+          checkStorageCapacity();
         };
-        imgObj.src = ev.target.result;
+        imgObj.src = srcData;
       };
       reader.readAsDataURL(file);
     });
+
+    // 入力要素リセット（同じファイルを再選択できるようにする）
+    folderInput.value = '';
+    fileInput.value = '';
   };
 
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
@@ -461,7 +490,7 @@
 
   // --- ズーム & フィット処理 ---
   const fitToView = () => {
-    if (currentImgIndex < 0) return;
+    if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const img = imagesList[currentImgIndex].imgObj;
     const cw = container.clientWidth;
     const ch = container.clientHeight;
@@ -476,7 +505,7 @@
   };
 
   const setZoom100 = () => {
-    if (currentImgIndex < 0) return;
+    if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     scale = 1.0;
     const img = imagesList[currentImgIndex].imgObj;
     panX = (container.clientWidth - img.width) / 2;
@@ -936,7 +965,7 @@
     let full = code;
     if (num) full = (type !== 'なし' ? type + num : num) + '_' + code;
     
-    if (currentImgIndex >= 0) {
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       imagesList[currentImgIndex].filmCode = full;
       const imgCenter = { x: 50, y: 50 };
       objects.push({ type: 'text', text: full, x: imgCenter.x, y: imgCenter.y, size: 36, color: '#00a8ff' });
@@ -955,15 +984,15 @@
   // 輝度・濃淡ダイアログ
   document.getElementById('btn-img-adjust').onclick = () => document.getElementById('modal-adjust').style.display = 'flex';
   document.getElementById('adjust-bright').oninput = e => {
-    if (currentImgIndex >= 0) { imagesList[currentImgIndex].brightness = parseInt(e.target.value); redraw(); }
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) { imagesList[currentImgIndex].brightness = parseInt(e.target.value); redraw(); }
   };
   document.getElementById('adjust-contrast').oninput = e => {
-    if (currentImgIndex >= 0) { imagesList[currentImgIndex].contrast = parseInt(e.target.value); redraw(); }
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) { imagesList[currentImgIndex].contrast = parseInt(e.target.value); redraw(); }
   };
   document.getElementById('modal-adjust-reset').onclick = () => {
     document.getElementById('adjust-bright').value = 0;
     document.getElementById('adjust-contrast').value = 0;
-    if (currentImgIndex >= 0) { imagesList[currentImgIndex].brightness = 0; imagesList[currentImgIndex].contrast = 0; redraw(); }
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) { imagesList[currentImgIndex].brightness = 0; imagesList[currentImgIndex].contrast = 0; redraw(); }
   };
   document.getElementById('modal-adjust-close').onclick = () => document.getElementById('modal-adjust').style.display = 'none';
 
@@ -1025,7 +1054,7 @@
 
   // 報告書作成機能 (簡易レポートダイアログ生成)
   document.getElementById('btn-report').onclick = () => {
-    if (currentImgIndex < 0) return;
+    if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
     let reportTxt = `======================================\n`;
     reportTxt += `  探査コア部 エックス線探査報告書  \n`;
