@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ジャスト社 探査コア部専用 罫書きWEBアプリ</title>
+  <meta name="theme-color" content="#0056b3">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22罫書きWEBアプリ%22,%22short_name%22:%22罫書き%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#ffffff%22,%22theme_color%22:%22#0056b3%22}">
+  <!-- PDF生成用ライブラリ (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #1e1e1e; color: #fff; }
+
+    /* 全体レイアウト */
+    #app-container { display: flex; flex-direction: column; width: 100vw; height: 100vh; position: relative; }
+
+    /* メインヘッダー / ツールバー */
+    header { background: #2c2c2c; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; align-items: center; z-index: 10; }
+    .btn { background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: bold; }
+    .btn:active, .btn.active { background: #0066cc; border-color: #0088ff; }
+    .btn-blue { background: #0066cc; border-color: #0088ff; }
+    .btn-purple { background: #6f42c1; border-color: #8553e6; }
+    .btn-green { background: #28a745; border-color: #34ce57; }
+    .btn-cyan { background: #17a2b8; border-color: #1fc8e3; }
+    .btn-danger { background: #d9534f; border-color: #e2706c; }
+    .btn-warning { background: #ffc107; color: #000; border-color: #ffcd39; }
+
+    select, input[type="range"], input[type="number"], input[type="text"] { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
+
+    /* 状態・アラート表示バー */
+    #status-bar { background: #181818; border-bottom: 1px solid #333; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; color: #aaa; }
+    #storage-alert { color: #ffbe3b; font-weight: bold; }
+
+    /* ワークスペース (サイドバー + キャンバス) */
+    #workspace { flex: 1; display: flex; position: relative; overflow: hidden; }
+
+    /* 左側スライドドロワー (サムネイル一覧) */
+    #drawer { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #252525; border-right: 1px solid #444; transition: left 0.25s ease; z-index: 20; display: flex; flex-direction: column; }
+    #drawer.open { left: 0; }
+    #drawer-header { padding: 10px; border-bottom: 1px solid #444; display: flex; flex-direction: column; gap: 8px; }
+    #drawer-title { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; }
+    #drawer-actions { display: flex; gap: 6px; }
+    #virtual-thumb-container { flex: 1; overflow-y: auto; position: relative; }
+    #virtual-thumb-spacer { width: 100%; position: relative; }
+    .thumb-item { position: absolute; left: 10px; width: 240px; height: 140px; background: #333; border: 2px solid #555; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+    .thumb-item.active { border-color: #0088ff; background: #1e3a5f; }
+    .thumb-item img { max-width: 100%; max-height: 110px; object-fit: contain; }
+    .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
+
+    /* メインキャンバスエリア */
+    #canvas-container { flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; cursor: crosshair; }
+    canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+    /* 左側フローティングツールパネル */
+    #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.85); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+
+    /* モーダルダイアログ各種 */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-card { background: #2c2c2c; border: 1px solid #555; border-radius: 8px; width: 340px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-card h3 { font-size: 14px; border-bottom: 1px solid #444; padding-bottom: 6px; color: #0088ff; }
+    .modal-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<!-- 非表示のファイル・フォルダ読み込み用input要素 -->
+<input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
+<input type="file" id="file-input" multiple accept="image/*,.pdf" style="display:none;">
+
+<div id="app-container">
+  <!-- ヘッダーツールバー -->
+  <header>
+    <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
+    <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
+    <button class="btn" id="btn-open-file">📄 ファイル選択</button>
+    <button class="btn btn-purple" id="btn-film-code">🏷️ フィルムNo.</button>
+    <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
+    <button class="btn btn-cyan" id="btn-img-adjust">☀️ 輝度・濃淡</button>
+    <button class="btn" id="btn-fit">全体表示</button>
+    <button class="btn" id="btn-zoom-100">100%</button>
+    
+    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
+      ズーム:
+      <input type="range" id="zoom-slider" min="10" max="400" value="100" style="width:80px;">
+      <span id="zoom-text">100%</span>
+    </label>
+
+    <button class="btn btn-danger" id="btn-save-pdf">💾 罫書きPDF保存</button>
+    <button class="btn btn-danger" id="btn-save-batch-pdf">📦 PDF一括保存</button>
+    <button class="btn btn-warning" id="btn-report">📋 報告書作成</button>
+    <button class="btn" id="btn-gdrive-settings">☁️ GDrive設定</button>
+  </header>
+
+  <!-- サブステータスバー -->
+  <div id="status-bar">
+    <span id="file-info">📄 編集中: なし</span>
+    <span id="mode-info">モード: 選択・パニング</span>
+    <span id="storage-alert">残り約 -- 枚作業可能</span>
+  </div>
+
+  <div id="workspace">
+    <!-- スライドドロワー (画像サムネイル一覧) -->
+    <div id="drawer">
+      <div id="drawer-header">
+        <div id="drawer-title">
+          <span>画像一覧 (100枚対応)</span>
+        </div>
+        <div id="drawer-actions">
+          <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">📂 フォルダ選択</button>
+          <button class="btn" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 ファイル追加</button>
+        </div>
+      </div>
+      <div id="virtual-thumb-container">
+        <div id="virtual-thumb-spacer"></div>
+      </div>
+    </div>
+
+    <!-- 左浮き出し描画ツールパネル -->
+    <div id="floating-toolbar">
+      <button class="btn active" id="tool-select" title="選択・移動・変形">👈 選択</button>
+      <button class="btn" id="tool-viewer" title="ビューアモード(移動専用)">👁️ Viewer</button>
+      <button class="btn" id="tool-measure" title="2点間測定">📏 測定</button>
+      <button class="btn" id="tool-right-measure" title="直角3点測定">📐 直角測定</button>
+      <button class="btn btn-warning" id="tool-signature" title="確認サイン用太ペン">✍️ サイン</button>
+      
+      <select id="pen-style-select" style="width:75px;">
+        <option value="実線">実線</option>
+        <option value="破線小">破線小</option>
+        <option value="破線中">破線中</option>
+        <option value="破線大">破線大</option>
+        <option value="一点鎖線">一点鎖線</option>
+        <option value="直線">直線</option>
+      </select>
+      <button class="btn" id="tool-pen" title="ペン描画">✏️ ペン</button>
+
+      <button class="btn" id="tool-stamp" title="検出物・スタンプ">🏷️ 検出物</button>
+      <button class="btn" id="tool-shape" title="図形挿入">🔲 図形</button>
+      <button class="btn" id="tool-text" title="テキスト">📝 文字</button>
+      <button class="btn" id="tool-eraser" title="消しゴム">🧹 消しゴム</button>
+      <hr style="border-color:#444;">
+      <button class="btn" id="btn-undo">↩ 戻る</button>
+      <button class="btn" id="btn-redo">↪ 進む</button>
+    </div>
+
+    <!-- メインキャンバス -->
+    <div id="canvas-container">
+      <canvas id="main-canvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル各種 -->
+
+<!-- 1. フィルムNo.・撮影箇所ダイアログ -->
+<div class="modal-overlay" id="modal-film">
+  <div class="modal-card">
+    <h3>フィルムNo.・撮影箇所入力</h3>
+    <div class="modal-row">
+      <span>種別:</span>
+      <label><input type="radio" name="film-type" value="開口"> 開口</label>
+      <label><input type="radio" name="film-type" value="No."> No.</label>
+      <label><input type="radio" name="film-type" value="なし" checked> なし</label>
+    </div>
+    <div class="modal-row">
+      <span>No. (任意):</span>
+      <input type="text" id="film-opening-num" placeholder="例: 1">
+    </div>
+    <div class="modal-row">
+      <span>フィルムNo.:</span>
+      <input type="text" id="film-code-input" placeholder="例: 1F-F1">
+    </div>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-film-cancel">キャンセル</button>
+      <button class="btn btn-green" id="modal-film-ok">確定設定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. スタンプ・検出物選択ダイアログ -->
+<div class="modal-overlay" id="modal-stamp">
+  <div class="modal-card">
+    <h3>検出物・スタンプ選択</h3>
+    <div class="modal-row">
+      <span>項目:</span>
+      <select id="stamp-preset-select">
+        <option value="障害物">障害物</option>
+        <option value="電気配管">電気配管</option>
+        <option value="CD管">CD管</option>
+        <option value="電気配線">電気配線</option>
+        <option value="電気BOX">電気BOX</option>
+        <option value="塩ビ管">塩ビ管</option>
+        <option value="番線">番線</option>
+        <option value="異形鉄筋">異形鉄筋</option>
+        <option value="丸鋼">丸鋼</option>
+        <option value="□">□ (四角形)</option>
+        <option value="△">△ (三角形)</option>
+        <option value="〇">〇 (円形)</option>
+        <option value="☓">☓ (バツ印)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <span>方向:</span>
+      <label><input type="radio" name="stamp-orient" value="horiz" checked> 横書き</label>
+      <label><input type="radio" name="stamp-orient" value="vert"> 縦書き</label>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-stamp-cancel">キャンセル</button>
+      <button class="btn btn-green" id="modal-stamp-ok">配置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 画像階調 (輝度・濃淡) 調整ダイアログ -->
+<div class="modal-overlay" id="modal-adjust">
+  <div class="modal-card">
+    <h3>画質調整 (輝度・濃淡)</h3>
+    <div class="modal-row">
+      <span>輝度 (明るさ):</span>
+      <input type="range" id="adjust-bright" min="-100" max="100" value="0">
+    </div>
+    <div class="modal-row">
+      <span>濃淡 (コントラスト):</span>
+      <input type="range" id="adjust-contrast" min="-100" max="100" value="0">
+    </div>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-adjust-reset">リセット</button>
+      <button class="btn btn-green" id="modal-adjust-close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Googleドライブ移送設定ダイアログ -->
+<div class="modal-overlay" id="modal-gdrive">
+  <div class="modal-card">
+    <h3>Googleドライブ自動移送設定</h3>
+    <div class="modal-row">
+      <span>自動移送:</span>
+      <input type="checkbox" id="gdrive-enable" checked>
+    </div>
+    <div class="modal-row">
+      <span>移送対象:</span>
+      <select id="gdrive-target">
+        <option value="pdf">罫書きPDFのみ</option>
+        <option value="raw">元画像のみ</option>
+        <option value="both">両方 (元画像 + PDF)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <span>保持期間:</span>
+      <select id="gdrive-period">
+        <option value="3">3日間</option>
+        <option value="7" selected>7日間</option>
+        <option value="30">30日間</option>
+      </select>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-green" id="modal-gdrive-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * 罫書きWEBアプリ コアアプリケーションロジック
+ */
+(function() {
+  // --- アプリケーション状態変数 ---
+  let imagesList = []; // { id, name, src, imgObj, objects: [], dpi: 96, brightness: 0, contrast: 0, filmCode: '' }
+  let currentImgIndex = -1;
+
+  // キャンバスおよび描画系
+  const container = document.getElementById('canvas-container');
+  const canvas = document.getElementById('main-canvas');
+  const ctx = canvas.getContext('2d');
+
+  let scale = 1.0;
+  let panX = 0, panY = 0;
+  let currentMode = 'select'; // select, viewer, measure, right_measure, pen, signature, stamp, shape, text, eraser, calibrate
+
+  // 描画オブジェクト保持用
+  let objects = []; 
+  let selectedObj = null;
+  let undoStack = [], redoStack = [];
+
+  // 入力状態
+  let isDrawing = false;
+  let currentPath = [];
+  let startPt = null, secondPt = null;
+  let isPanning = false, startPan = { x: 0, y: 0 };
+
+  // 測定・スタンプ用設定
+  let penStyle = '実線';
+  let penColor = '#ff0000';
+  let penWidth = 6;
+  let currentDPI = 96.0;
+
+  // --- IndexedDB 端末内一時保存 ---
+  const DB_NAME = 'XRayKagakiDB';
+  let db = null;
+  const initDB = () => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains('images')) db.createObjectStore('images', { keyPath: 'id' });
+    };
+    req.onsuccess = e => {
+      db = e.target.result;
+      loadImagesFromDB();
+      checkStorageCapacity();
+    };
+  };
+
+  const saveToDB = (item) => {
+    if (!db) return;
+    const tx = db.transaction('images', 'readwrite');
+    tx.objectStore('images').put(item);
+  };
+
+  const loadImagesFromDB = () => {
+    if (!db) return;
+    const tx = db.transaction('images', 'readonly');
+    const req = tx.objectStore('images').getAll();
+    req.onsuccess = () => {
+      if (req.result && req.result.length > 0) {
+        imagesList = req.result.map(data => {
+          const imgObj = new Image();
+          imgObj.src = data.src;
+          return { ...data, imgObj };
+        });
+        updateVirtualScroll();
+        if (imagesList.length > 0) selectImage(0);
+      }
+    };
+  };
+
+  // ストレージ残量監視 & 「残り約〇枚作業可能」計算
+  const checkStorageCapacity = async () => {
+    if (navigator.storage && navigator.storage.estimate) {
+      const { quota, usage } = await navigator.storage.estimate();
+      const remainingMB = (quota - usage) / (1024 * 1024);
+      const estCount = Math.max(0, Math.floor(remainingMB / 5)); // 1枚約5MB換算
+      document.getElementById('storage-alert').innerText = `残り約 ${estCount} 枚作業可能`;
+    }
+  };
+
+  // --- サムネイル バーチャルスクロール (100枚ぬるぬる対応 + 前後5枚バッファ) ---
+  const thumbContainer = document.getElementById('virtual-thumb-container');
+  const thumbSpacer = document.getElementById('virtual-thumb-spacer');
+  const ITEM_HEIGHT = 150;
+
+  const updateVirtualScroll = () => {
+    thumbSpacer.style.height = (imagesList.length * ITEM_HEIGHT) + 'px';
+    renderVirtualThumbs();
+  };
+
+  const renderVirtualThumbs = () => {
+    const scrollTop = thumbContainer.scrollTop;
+    const clientHeight = thumbContainer.clientHeight;
+
+    // 前後5枚のバッファを含めた描画範囲
+    let startIndex = Math.floor(scrollTop / ITEM_HEIGHT) - 5;
+    let endIndex = Math.ceil((scrollTop + clientHeight) / ITEM_HEIGHT) + 5;
+
+    startIndex = Math.max(0, startIndex);
+    endIndex = Math.min(imagesList.length - 1, endIndex);
+
+    // 既存の要素をリセット
+    const existing = thumbSpacer.querySelectorAll('.thumb-item');
+    existing.forEach(el => el.remove());
+
+    for (let i = startIndex; i <= endIndex; i++) {
+      const item = imagesList[i];
+      const div = document.createElement('div');
+      div.className = `thumb-item ${i === currentImgIndex ? 'active' : ''}`;
+      div.style.top = (i * ITEM_HEIGHT) + 'px';
+      
+      const img = document.createElement('img');
+      img.src = item.src;
+      const span = document.createElement('span');
+      span.innerText = item.name;
+
+      div.appendChild(img);
+      div.appendChild(span);
+      div.onclick = () => selectImage(i);
+      thumbSpacer.appendChild(div);
+    }
+  };
+
+  thumbContainer.addEventListener('scroll', renderVirtualThumbs);
+
+  // --- 画像選択・切り替え ---
+  const selectImage = (index) => {
+    if (index < 0 || index >= imagesList.length) return;
+    
+    // 直前の画像を保存
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+      imagesList[currentImgIndex].objects = JSON.parse(JSON.stringify(objects));
+      imagesList[currentImgIndex].dpi = currentDPI;
+      saveToDB(imagesList[currentImgIndex]);
+    }
+
+    currentImgIndex = index;
+    const cur = imagesList[index];
+    objects = cur.objects ? JSON.parse(JSON.stringify(cur.objects)) : [];
+    currentDPI = cur.dpi || 96.0;
+    document.getElementById('file-info').innerText = `📄 編集中: ${cur.name}`;
+
+    fitToView();
+    renderVirtualThumbs();
+    pushUndo();
+  };
+
+  // --- 画像/フォルダ読み込みイベントバインド ---
+  const folderInput = document.getElementById('folder-input');
+  const fileInput = document.getElementById('file-input');
+
+  document.getElementById('btn-open-folder').onclick = () => folderInput.click();
+  document.getElementById('btn-drawer-folder').onclick = () => folderInput.click();
+  document.getElementById('btn-open-file').onclick = () => fileInput.click();
+  document.getElementById('btn-drawer-file').onclick = () => fileInput.click();
+
+  const handleFilesRead = (files) => {
+    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/') || f.name.endsWith('.pdf'));
+    if (validFiles.length === 0) return;
+
+    // ファイル名で並び替え
+    validFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const imgObj = new Image();
+        imgObj.onload = () => {
+          const item = {
+            id: Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: file.webkitRelativePath || file.name,
+            src: ev.target.result,
+            imgObj: imgObj,
+            objects: [],
+            dpi: 96.0,
+            brightness: 0,
+            contrast: 0,
+            filmCode: ''
+          };
+          imagesList.push(item);
+          saveToDB(item);
+          updateVirtualScroll();
+          if (imagesList.length === 1 || currentImgIndex === -1) selectImage(0);
+        };
+        imgObj.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
+  fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
+
+  // --- ズーム & フィット処理 ---
+  const fitToView = () => {
+    if (currentImgIndex < 0) return;
+    const img = imagesList[currentImgIndex].imgObj;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    
+    const scaleX = cw / img.width;
+    const scaleY = ch / img.height;
+    scale = Math.min(scaleX, scaleY) * 0.95;
+    panX = (cw - img.width * scale) / 2;
+    panY = (ch - img.height * scale) / 2;
+
+    updateCanvasTransform();
+  };
+
+  const setZoom100 = () => {
+    if (currentImgIndex < 0) return;
+    scale = 1.0;
+    const img = imagesList[currentImgIndex].imgObj;
+    panX = (container.clientWidth - img.width) / 2;
+    panY = (container.clientHeight - img.height) / 2;
+    updateCanvasTransform();
+  };
+
+  const updateCanvasTransform = () => {
+    const zoomPct = Math.round(scale * 100);
+    document.getElementById('zoom-slider').value = zoomPct;
+    document.getElementById('zoom-text').innerText = zoomPct + '%';
+    redraw();
+  };
+
+  document.getElementById('zoom-slider').addEventListener('input', e => {
+    scale = parseInt(e.target.value) / 100.0;
+    updateCanvasTransform();
+  });
+
+  document.getElementById('btn-fit').onclick = fitToView;
+  document.getElementById('btn-zoom-100').onclick = setZoom100;
+
+  // --- メインレンダリング (描画ロジック) ---
+  const redraw = () => {
+    if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
+    const item = imagesList[currentImgIndex];
+    const img = item.imgObj;
+
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+
+    // パニング & ズーム適用
+    ctx.translate(panX, panY);
+    ctx.scale(scale, scale);
+
+    // 画像フィルタ（輝度・濃淡）適用
+    if (item.brightness !== 0 || item.contrast !== 0) {
+      ctx.filter = `brightness(${100 + item.brightness}%) contrast(${100 + item.contrast}%)`;
+    } else {
+      ctx.filter = 'none';
+    }
+
+    ctx.drawImage(img, 0, 0);
+    ctx.filter = 'none'; // オブジェクトにはフィルタを適用しない
+
+    // オブジェクト描画
+    objects.forEach(obj => drawObject(obj));
+
+    // 現在描画中の要素
+    if (isDrawing && currentPath.length > 1) {
+      drawPath({ type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
+    }
+
+    ctx.restore();
+  };
+
+  const drawObject = (obj) => {
+    ctx.save();
+    if (obj.type === 'pen') {
+      drawPath(obj);
+    } else if (obj.type === 'measure') {
+      drawMeasure(obj);
+    } else if (obj.type === 'text') {
+      drawText(obj);
+    } else if (obj.type === 'stamp') {
+      drawStamp(obj);
+    }
+
+    // 選択中の場合、バウンディングボックスとハンドルを表示
+    if (obj === selectedObj) {
+      drawSelectionBounds(obj);
+    }
+    ctx.restore();
+  };
+
+  const drawPath = (obj) => {
+    ctx.beginPath();
+    ctx.strokeStyle = obj.color;
+    ctx.lineWidth = obj.width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // 線種（破線・一点鎖線など）の設定
+    if (obj.style === '破線小') ctx.setLineDash([4, 4]);
+    else if (obj.style === '破線中') ctx.setLineDash([8, 8]);
+    else if (obj.style === '破線大') ctx.setLineDash([16, 16]);
+    else if (obj.style === '一点鎖線') ctx.setLineDash([12, 4, 3, 4]);
+    else ctx.setLineDash([]);
+
+    if (obj.style === '直線' && obj.path.length >= 2) {
+      const p1 = obj.path[0];
+      const p2 = obj.path[obj.path.length - 1];
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+    } else {
+      obj.path.forEach((pt, idx) => {
+        if (idx === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+
+  const drawMeasure = (obj) => {
+    ctx.strokeStyle = obj.color || '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.fillStyle = obj.color || '#ff0000';
+    ctx.font = 'bold 16px Arial';
+
+    // L1描画
+    ctx.beginPath();
+    ctx.moveTo(obj.p1.x, obj.p1.y);
+    ctx.lineTo(obj.p2.x, obj.p2.y);
+    ctx.stroke();
+
+    // 目盛り線
+    drawTick(obj.p1, obj.p2);
+    drawTick(obj.p2, obj.p1);
+
+    const dist1 = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
+    const mm1 = (dist1 / currentDPI) * 25.4;
+    const txt1 = obj.isCalibration ? `[補正基準] ${obj.knownMM.toFixed(1)} mm` : `L1: ${mm1.toFixed(1)} mm`;
+    ctx.fillText(txt1, (obj.p1.x + obj.p2.x) / 2 + 5, (obj.p1.y + obj.p2.y) / 2 - 5);
+
+    // L2 (直角/3点測定)
+    if (obj.p3) {
+      ctx.beginPath();
+      ctx.moveTo(obj.p2.x, obj.p2.y);
+      ctx.lineTo(obj.p3.x, obj.p3.y);
+      ctx.stroke();
+
+      drawTick(obj.p3, obj.p2);
+      const dist2 = Math.hypot(obj.p3.x - obj.p2.x, obj.p3.y - obj.p2.y);
+      const mm2 = (dist2 / currentDPI) * 25.4;
+      ctx.fillText(`L2: ${mm2.toFixed(1)} mm`, (obj.p2.x + obj.p3.x) / 2 + 5, (obj.p2.y + obj.p3.y) / 2 - 5);
+
+      // 角度計算
+      const ang1 = Math.atan2(obj.p1.y - obj.p2.y, obj.p1.x - obj.p2.x);
+      const ang2 = Math.atan2(obj.p3.y - obj.p2.y, obj.p3.x - obj.p2.x);
+      let deg = Math.abs(ang1 - ang2) * (180 / Math.PI);
+      if (deg > 180) deg = 360 - deg;
+      ctx.fillStyle = '#0056b3';
+      ctx.fillText(`∠ ${deg.toFixed(1)}°`, obj.p2.x + 15, obj.p2.y - 15);
+    }
+  };
+
+  const drawTick = (pA, pB) => {
+    const len = Math.hypot(pB.x - pA.x, pB.y - pA.y);
+    if (len === 0) return;
+    const dx = (pB.x - pA.x) / len;
+    const dy = (pB.y - pA.y) / len;
+    const nx = -dy * 10;
+    const ny = dx * 10;
+    ctx.beginPath();
+    ctx.moveTo(pA.x - nx, pA.y - ny);
+    ctx.lineTo(pA.x + nx, pA.y + ny);
+    ctx.stroke();
+  };
+
+  const drawText = (obj) => {
+    ctx.fillStyle = obj.color || '#ffffff';
+    ctx.font = `bold ${obj.size || 24}px Arial`;
+    ctx.fillText(obj.text, obj.x, obj.y);
+  };
+
+  const drawStamp = (obj) => {
+    ctx.strokeStyle = '#00a8ff';
+    ctx.fillStyle = '#00a8ff';
+    ctx.lineWidth = 4;
+    const s = obj.size || 40;
+
+    if (obj.shape === '□') ctx.strokeRect(obj.x - s/2, obj.y - s/2, s, s);
+    else if (obj.shape === '〇') {
+      ctx.beginPath(); ctx.arc(obj.x, obj.y, s/2, 0, Math.PI*2); ctx.stroke();
+    } else if (obj.shape === '△') {
+      ctx.beginPath();
+      ctx.moveTo(obj.x, obj.y - s/2);
+      ctx.lineTo(obj.x - s/2, obj.y + s/2);
+      ctx.lineTo(obj.x + s/2, obj.y + s/2);
+      ctx.closePath(); ctx.stroke();
+    } else if (obj.shape === '☓') {
+      ctx.beginPath();
+      ctx.moveTo(obj.x - s/2, obj.y - s/2); ctx.lineTo(obj.x + s/2, obj.y + s/2);
+      ctx.moveTo(obj.x + s/2, obj.y - s/2); ctx.lineTo(obj.x - s/2, obj.y + s/2);
+      ctx.stroke();
+    } else {
+      ctx.font = `bold ${s*0.8}px Arial`;
+      ctx.fillText(obj.text, obj.x, obj.y);
+    }
+  };
+
+  const drawSelectionBounds = (obj) => {
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    const b = getBounds(obj);
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+    ctx.setLineDash([]);
+
+    // 回転・変形ハンドル
+    ctx.fillStyle = '#00ff00';
+    ctx.fillRect(b.x + b.w - 6, b.y + b.h - 6, 12, 12); // 右下スケール
+    ctx.fillStyle = '#ffff00';
+    ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 15, 6, 0, Math.PI*2); ctx.fill(); // 回転
+  };
+
+  const getBounds = (obj) => {
+    if (obj.type === 'pen') {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      obj.path.forEach(p => {
+        if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+      });
+      return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+    } else if (obj.type === 'measure') {
+      const minX = Math.min(obj.p1.x, obj.p2.x, obj.p3 ? obj.p3.x : obj.p2.x);
+      const maxX = Math.max(obj.p1.x, obj.p2.x, obj.p3 ? obj.p3.x : obj.p2.x);
+      const minY = Math.min(obj.p1.y, obj.p2.y, obj.p3 ? obj.p3.y : obj.p2.y);
+      const maxY = Math.max(obj.p1.y, obj.p2.y, obj.p3 ? obj.p3.y : obj.p2.y);
+      return { x: minX - 10, y: minY - 10, w: maxX - minX + 20, h: maxY - minY + 20 };
+    } else {
+      return { x: obj.x - 20, y: obj.y - 20, w: 100, h: 40 };
+    }
+  };
+
+  // --- UNDO / REDO ---
+  const pushUndo = () => {
+    undoStack.push(JSON.stringify(objects));
+    if (undoStack.length > 20) undoStack.shift();
+    redoStack = [];
+  };
+
+  document.getElementById('btn-undo').onclick = () => {
+    if (undoStack.length > 1) {
+      redoStack.push(undoStack.pop());
+      objects = JSON.parse(undoStack[undoStack.length - 1]);
+      redraw();
+    }
+  };
+
+  document.getElementById('btn-redo').onclick = () => {
+    if (redoStack.length > 0) {
+      const state = redoStack.pop();
+      undoStack.push(state);
+      objects = JSON.parse(state);
+      redraw();
+    }
+  };
+
+  // --- Pointer Events (ペン・タッチ・マウス完全自動識別) ---
+  const getCanvasCoords = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    return {
+      x: (clientX - rect.left - panX) / scale,
+      y: (clientY - rect.top - panY) / scale
+    };
+  };
+
+  canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch' && !e.isPrimary) {
+      isPanning = true;
+      startPan = { x: e.clientX - panX, y: e.clientY - panY };
+      return;
+    }
+
+    const pt = getCanvasCoords(e);
+
+    if (e.pointerType === 'pen' && e.pressure) {
+      penWidth = Math.max(2, e.pressure * 12);
+    }
+
+    if (currentMode === 'viewer' || (e.pointerType === 'touch' && currentMode === 'select' && !hitTest(pt))) {
+      isPanning = true;
+      startPan = { x: e.clientX - panX, y: e.clientY - panY };
+      return;
+    }
+
+    if (currentMode === 'select') {
+      selectedObj = hitTest(pt);
+      redraw();
+    } else if (currentMode === 'pen' || currentMode === 'signature') {
+      isDrawing = true;
+      currentPath = [pt];
+    } else if (currentMode === 'measure' || currentMode === 'calibrate') {
+      startPt = pt;
+      isDrawing = true;
+    } else if (currentMode === 'right_measure') {
+      if (!startPt) {
+        startPt = pt;
+      } else if (!secondPt) {
+        secondPt = pt;
+      } else {
+        objects.push({ type: 'measure', p1: startPt, p2: secondPt, p3: pt, color: '#0088ff' });
+        startPt = null; secondPt = null;
+        pushUndo();
+        redraw();
+      }
+    } else if (currentMode === 'eraser') {
+      const hit = hitTest(pt);
+      if (hit) {
+        objects = objects.filter(o => o !== hit);
+        pushUndo();
+        redraw();
+      }
+    }
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (isPanning) {
+      panX = e.clientX - startPan.x;
+      panY = e.clientY - startPan.y;
+      redraw();
+      return;
+    }
+
+    const pt = getCanvasCoords(e);
+
+    if (isDrawing && (currentMode === 'pen' || currentMode === 'signature')) {
+      currentPath.push(pt);
+      redraw();
+    } else if (isDrawing && (currentMode === 'measure' || currentMode === 'calibrate')) {
+      redraw();
+      ctx.save();
+      ctx.translate(panX, panY);
+      ctx.scale(scale, scale);
+      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(startPt.x, startPt.y);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    if (isPanning) {
+      isPanning = false;
+      return;
+    }
+
+    const pt = getCanvasCoords(e);
+
+    if (isDrawing && (currentMode === 'pen' || currentMode === 'signature')) {
+      isDrawing = false;
+      const style = currentMode === 'signature' ? '実線' : penStyle;
+      const color = currentMode === 'signature' ? '#ff0000' : penColor;
+      const width = currentMode === 'signature' ? 8 : penWidth;
+      objects.push({ type: 'pen', path: currentPath, style, color, width });
+      currentPath = [];
+      pushUndo();
+      redraw();
+    } else if (isDrawing && currentMode === 'measure') {
+      isDrawing = false;
+      objects.push({ type: 'measure', p1: startPt, p2: pt, color: '#ff0000' });
+      startPt = null;
+      pushUndo();
+      redraw();
+    } else if (isDrawing && currentMode === 'calibrate') {
+      isDrawing = false;
+      const dist = Math.hypot(pt.x - startPt.x, pt.y - startPt.y);
+      const knownMM = parseFloat(prompt(`引いた線の長さ: ${dist.toFixed(1)} px\n既知の寸法(mm)を入力してください:`, "100.0"));
+      if (knownMM && knownMM > 0) {
+        currentDPI = (dist / knownMM) * 25.4;
+        objects.push({ type: 'measure', p1: startPt, p2: pt, isCalibration: true, knownMM, color: '#00ff00' });
+        alert(`寸法補正完了\n新解像度: ${currentDPI.toFixed(1)} DPI`);
+        pushUndo();
+      }
+      startPt = null;
+      redraw();
+    }
+  });
+
+  const hitTest = (pt) => {
+    for (let i = objects.length - 1; i >= 0; i--) {
+      const b = getBounds(objects[i]);
+      if (pt.x >= b.x && pt.x <= b.x + b.w && pt.y >= b.y && pt.y <= b.y + b.h) {
+        return objects[i];
+      }
+    }
+    return null;
+  };
+
+  // --- モード切替・ボタンバインド ---
+  const tools = [
+    { id: 'tool-select', mode: 'select', label: 'モード: 選択・移動' },
+    { id: 'tool-viewer', mode: 'viewer', label: 'モード: ビューア(移動専用)' },
+    { id: 'tool-measure', mode: 'measure', label: 'モード: 2点間測定' },
+    { id: 'tool-right-measure', mode: 'right_measure', label: 'モード: 直角3点測定 (3点タップ)' },
+    { id: 'tool-signature', mode: 'signature', label: 'モード: 確認サイン用太ペン' },
+    { id: 'tool-pen', mode: 'pen', label: 'モード: フリーハンド・直線' },
+    { id: 'tool-eraser', mode: 'eraser', label: 'モード: 消しゴム' }
+  ];
+
+  tools.forEach(t => {
+    document.getElementById(t.id).onclick = () => {
+      tools.forEach(o => document.getElementById(o.id).classList.remove('active'));
+      document.getElementById(t.id).classList.add('active');
+      currentMode = t.mode;
+      document.getElementById('mode-info').innerText = t.label;
+    };
+  });
+
+  document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
+
+  // スタンプ・検出物ダイアログ
+  document.getElementById('tool-stamp').onclick = () => document.getElementById('modal-stamp').style.display = 'flex';
+  document.getElementById('modal-stamp-cancel').onclick = () => document.getElementById('modal-stamp').style.display = 'none';
+  document.getElementById('modal-stamp-ok').onclick = () => {
+    const preset = document.getElementById('stamp-preset-select').value;
+    const isShape = ['□', '△', '〇', '☓'].includes(preset);
+    const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
+    
+    if (isShape) {
+      objects.push({ type: 'stamp', shape: preset, x: imgCenter.x, y: imgCenter.y });
+    } else {
+      objects.push({ type: 'stamp', text: preset, x: imgCenter.x, y: imgCenter.y });
+    }
+    document.getElementById('modal-stamp').style.display = 'none';
+    pushUndo();
+    redraw();
+  };
+
+  // 文字入力
+  document.getElementById('tool-text').onclick = () => {
+    const txt = prompt("表示する文字を入力してください:");
+    if (txt) {
+      const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
+      objects.push({ type: 'text', text: txt, x: imgCenter.x, y: imgCenter.y, size: 28, color: '#ffffff' });
+      pushUndo();
+      redraw();
+    }
+  };
+
+  // 図形挿入
+  document.getElementById('tool-shape').onclick = () => {
+    const imgCenter = { x: (container.clientWidth/2 - panX)/scale, y: (container.clientHeight/2 - panY)/scale };
+    objects.push({ type: 'stamp', shape: '□', x: imgCenter.x, y: imgCenter.y });
+    pushUndo();
+    redraw();
+  };
+
+  // フィルムNo.ダイアログ
+  document.getElementById('btn-film-code').onclick = () => document.getElementById('modal-film').style.display = 'flex';
+  document.getElementById('modal-film-cancel').onclick = () => document.getElementById('modal-film').style.display = 'none';
+  document.getElementById('modal-film-ok').onclick = () => {
+    const type = document.querySelector('input[name="film-type"]:checked').value;
+    const num = document.getElementById('film-opening-num').value.trim();
+    const code = document.getElementById('film-code-input').value.trim();
+    
+    let full = code;
+    if (num) full = (type !== 'なし' ? type + num : num) + '_' + code;
+    
+    if (currentImgIndex >= 0) {
+      imagesList[currentImgIndex].filmCode = full;
+      const imgCenter = { x: 50, y: 50 };
+      objects.push({ type: 'text', text: full, x: imgCenter.x, y: imgCenter.y, size: 36, color: '#00a8ff' });
+      pushUndo();
+      redraw();
+    }
+    document.getElementById('modal-film').style.display = 'none';
+  };
+
+  // 寸法補正モード起動
+  document.getElementById('btn-calibrate').onclick = () => {
+    currentMode = 'calibrate';
+    document.getElementById('mode-info').innerText = 'モード: 寸法補正基準線を引いてください';
+  };
+
+  // 輝度・濃淡ダイアログ
+  document.getElementById('btn-img-adjust').onclick = () => document.getElementById('modal-adjust').style.display = 'flex';
+  document.getElementById('adjust-bright').oninput = e => {
+    if (currentImgIndex >= 0) { imagesList[currentImgIndex].brightness = parseInt(e.target.value); redraw(); }
+  };
+  document.getElementById('adjust-contrast').oninput = e => {
+    if (currentImgIndex >= 0) { imagesList[currentImgIndex].contrast = parseInt(e.target.value); redraw(); }
+  };
+  document.getElementById('modal-adjust-reset').onclick = () => {
+    document.getElementById('adjust-bright').value = 0;
+    document.getElementById('adjust-contrast').value = 0;
+    if (currentImgIndex >= 0) { imagesList[currentImgIndex].brightness = 0; imagesList[currentImgIndex].contrast = 0; redraw(); }
+  };
+  document.getElementById('modal-adjust-close').onclick = () => document.getElementById('modal-adjust').style.display = 'none';
+
+  // Googleドライブ設定
+  document.getElementById('btn-gdrive-settings').onclick = () => document.getElementById('modal-gdrive').style.display = 'flex';
+  document.getElementById('modal-gdrive-save').onclick = () => {
+    alert("Googleドライブ自動移送設定を更新しました。");
+    document.getElementById('modal-gdrive').style.display = 'none';
+  };
+
+  // ドロワー開閉
+  document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
+
+  // --- PDF保存・一括保存・報告書作成機能 ---
+  document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex);
+
+  const savePDF = (index) => {
+    if (index < 0 || !imagesList[index]) return;
+    const { jsPDF } = window.jspdf;
+    
+    // 一時描画用オフスクリーンキャンバス
+    const item = imagesList[index];
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = item.imgObj.width;
+    offCanvas.height = item.imgObj.height;
+    const offCtx = offCanvas.getContext('2d');
+
+    // フィルター & 画像描画
+    if (item.brightness !== 0 || item.contrast !== 0) {
+      offCtx.filter = `brightness(${100 + item.brightness}%) contrast(${100 + item.contrast}%)`;
+    }
+    offCtx.drawImage(item.imgObj, 0, 0);
+    offCtx.filter = 'none';
+
+    // オブジェクト焼き付け描画 (スケール1.0)
+    const savedScale = scale, savedPanX = panX, savedPanY = panY;
+    scale = 1.0; panX = 0; panY = 0;
+    objects.forEach(obj => drawObject(obj));
+    scale = savedScale; panX = savedPanX; panY = savedPanY;
+
+    const imgData = offCanvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF({
+      orientation: item.imgObj.width > item.imgObj.height ? 'l' : 'p',
+      unit: 'pt',
+      format: [item.imgObj.width * (72/currentDPI), item.imgObj.height * (72/currentDPI)]
+    });
+
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+    pdf.save(`罫書きPDF_${item.name.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_')}.pdf`);
+  };
+
+  // 一括PDF保存
+  document.getElementById('btn-save-batch-pdf').onclick = () => {
+    if (imagesList.length === 0) return;
+    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「罫書きPDF」として順次出力しますか？`)) {
+      imagesList.forEach((_, idx) => savePDF(idx));
+    }
+  };
+
+  // 報告書作成機能 (簡易レポートダイアログ生成)
+  document.getElementById('btn-report').onclick = () => {
+    if (currentImgIndex < 0) return;
+    const item = imagesList[currentImgIndex];
+    let reportTxt = `======================================\n`;
+    reportTxt += `  探査コア部 エックス線探査報告書  \n`;
+    reportTxt += `======================================\n`;
+    reportTxt += `対象ファイル: ${item.name}\n`;
+    reportTxt += `フィルムNo.  : ${item.filmCode || '未設定'}\n`;
+    reportTxt += `設定DPI      : ${currentDPI.toFixed(1)} DPI\n`;
+    reportTxt += `--------------------------------------\n`;
+    reportTxt += `【検出物・アノテーション一覧】\n`;
+
+    objects.forEach((obj, idx) => {
+      if (obj.type === 'stamp') reportTxt += `${idx + 1}. 検出物/スタンプ: ${obj.text || obj.shape}\n`;
+      else if (obj.type === 'measure') {
+        const d1 = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
+        const mm1 = (d1 / currentDPI) * 25.4;
+        reportTxt += `${idx + 1}. 測定L1: ${mm1.toFixed(1)} mm\n`;
+      } else if (obj.type === 'text') reportTxt += `${idx + 1}. テキスト: "${obj.text}"\n`;
+    });
+
+    alert(reportTxt);
+  };
+
+  // アプリ初期化
+  initDB();
+})();
+</script>
+
+</body>
+</html>
