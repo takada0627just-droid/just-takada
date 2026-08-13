@@ -148,7 +148,6 @@
         <option value="一点鎖線">一点鎖線</option>
       </select>
       <button class="btn" id="tool-pen" title="ペン描画">✏️ ペン</button>
-      <!-- ★追加: 直線モードボタン -->
       <button class="btn" id="tool-straight" title="直線描画">📏 直線</button>
 
       <button class="btn" id="tool-stamp" title="検出物（タップ配置）">🏷️ 検出物</button>
@@ -362,6 +361,9 @@
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
+  // --- 超大型3倍 96x96px 照準カスタムカーソルSVG ---
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><line x1="48" y1="6" x2="48" y2="30" stroke="%23ffffff" stroke-width="5"/><line x1="48" y1="6" x2="48" y2="30" stroke="%23000000" stroke-width="2.5"/><line x1="48" y1="66" x2="48" y2="90" stroke="%23ffffff" stroke-width="5"/><line x1="48" y1="66" x2="48" y2="90" stroke="%23000000" stroke-width="2.5"/><line x1="6" y1="48" x2="30" y2="48" stroke="%23ffffff" stroke-width="5"/><line x1="6" y1="48" x2="30" y2="48" stroke="%23000000" stroke-width="2.5"/><line x1="66" y1="48" x2="90" y2="48" stroke="%23ffffff" stroke-width="5"/><line x1="66" y1="48" x2="90" y2="48" stroke="%23000000" stroke-width="2.5"/><circle cx="48" cy="48" r="4" fill="%23ff0000"/><circle cx="48" cy="48" r="7" stroke="%23ffffff" stroke-width="2" fill="none"/></svg>\') 48 48, crosshair';
+
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
   let currentImgIndex = -1;
@@ -399,7 +401,7 @@
 
   // 変形・回転ハンドル状態
   let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3', 'move_line'
-  let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, p1: null, p2: null, p3: null };
+  let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, size: 140, dist: 1, p1: null, p2: null, p3: null };
 
   // 納品フィルム保存先ディレクトリハンドル
   let nouhinDirHandle = null;
@@ -416,6 +418,8 @@
   let pendingStampData = null;
   let pendingConfirmData = null;
 
+  let isTouchActive = false;
+
   // フォーム初期セット
   document.getElementById('film-pos-select').value = filmPreset.pos;
   document.getElementById('film-color-input').value = filmPreset.color;
@@ -424,7 +428,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v12';
+  const DB_NAME = 'XRayKagakiDB_v13';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -649,13 +653,13 @@
   };
 
   document.getElementById('zoom-slider').addEventListener('input', e => {
-    if (currentMode === 'viewer') return; // Viewerモード中はズーム操作不可
+    if (currentMode === 'viewer') return;
     scale = parseInt(e.target.value) / 100.0;
     updateCanvasTransform();
   });
 
   document.getElementById('btn-fit').onclick = () => {
-    if (currentMode === 'viewer') return; // Viewerモード中はフィット不可
+    if (currentMode === 'viewer') return;
     fitToView();
   };
   document.getElementById('btn-zoom-100').onclick = setActualSize100;
@@ -704,7 +708,7 @@
     ctx.drawImage(img, 0, 0);
     ctx.filter = 'none';
 
-    // オブジェクト描画
+    // 確定済みオブジェクト描画
     objects.forEach(obj => renderObjectToContext(ctx, obj));
 
     // フリーハンドペン描画中プレビュー
@@ -712,34 +716,42 @@
       drawPath(ctx, { type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
     }
 
-    // ★直線モード描画中プレビュー
+    // 直線モード描画中プレビュー
     if (isDrawing && currentMode === 'straight' && startPt && tempEndPt) {
       drawPath(ctx, { type: 'pen', path: [startPt, tempEndPt], style: penStyle, color: penColor, width: penWidth });
     }
 
-    // 測定・寸法補正のドラッグ中線プレビュー
-    if (isDrawing && (currentMode === 'measure' || currentMode === 'calibrate') && startPt && tempEndPt) {
-      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(startPt.x, startPt.y);
-      ctx.lineTo(tempEndPt.x, tempEndPt.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // 直角測定ドラッグ中プレビュー
-    if (currentMode === 'right_measure' && startPt && tempEndPt) {
-      ctx.strokeStyle = '#0088ff';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(startPt.x, startPt.y);
-      ctx.lineTo(secondPt ? secondPt.x : tempEndPt.x, secondPt ? secondPt.y : tempEndPt.y);
-      if (secondPt) ctx.lineTo(tempEndPt.x, tempEndPt.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    // ★測定・寸法補正のドラッグ中プレビュー (1点目ドラッグ中 measureStep===0 の時は線を表示しない)
+    if (isDrawing && tempEndPt) {
+      if (currentMode === 'calibrate' || currentMode === 'measure') {
+        if (measureStep === 1 && startPt) {
+          ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(startPt.x, startPt.y);
+          ctx.lineTo(tempEndPt.x, tempEndPt.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      } else if (currentMode === 'right_measure') {
+        ctx.strokeStyle = '#0088ff';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 4]);
+        if (measureStep === 1 && startPt) {
+          ctx.beginPath();
+          ctx.moveTo(startPt.x, startPt.y);
+          ctx.lineTo(tempEndPt.x, tempEndPt.y);
+          ctx.stroke();
+        } else if (measureStep === 2 && startPt && secondPt) {
+          ctx.beginPath();
+          ctx.moveTo(startPt.x, startPt.y);
+          ctx.lineTo(secondPt.x, secondPt.y);
+          ctx.lineTo(tempEndPt.x, tempEndPt.y);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
     }
 
     ctx.restore();
@@ -890,7 +902,7 @@
     targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'alphabetic';
   };
 
-  // ★選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
+  // 選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
   const drawSelectionBounds = (obj) => {
     if (obj.type === 'measure') {
       ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
@@ -1041,7 +1053,7 @@
             x: pt.x, y: pt.y, w: b.w, h: b.h, 
             cx: cx, cy: cy, 
             size: selectedObj.size || 140,
-            dist: Math.hypot(pt.x - cx, pt.y - cy)
+            dist: Math.hypot(pt.x - cx, pt.y - cy) || 1
           };
           return;
         } else if (Math.hypot(pt.x - rotHandle.x, pt.y - rotHandle.y) < 25) {
@@ -1059,14 +1071,12 @@
     }
 
     if (currentMode === 'select') {
-      // ★背景画像（フィルム写真）自体は選択されないようアノテーションオブジェクトのみヒットテスト
       selectedObj = hitTest(pt);
       redraw();
     } else if (currentMode === 'pen') {
       isDrawing = true;
       currentPath = [pt];
     } else if (currentMode === 'straight') {
-      // ★直線モード
       isDrawing = true;
       startPt = pt;
       tempEndPt = pt;
@@ -1133,7 +1143,7 @@
       } else {
         if (activeTransformHandle === 'br') {
           const currentDist = Math.hypot(pt.x - transformStart.cx, pt.y - transformStart.cy);
-          const scaleFactor = Math.max(0.2, currentDist / (transformStart.dist || 1));
+          const scaleFactor = Math.max(0.2, currentDist / transformStart.dist);
           
           if (selectedObj.type === 'text' || selectedObj.type === 'stamp' || selectedObj.type === 'confirm_stamp') {
             selectedObj.size = Math.max(20, Math.round(transformStart.size * scaleFactor));
@@ -1292,7 +1302,7 @@
     if (isPalmTouch(e)) { e.preventDefault(); return; }
 
     if (touchMode === 'pinch' && e.touches.length >= 2) {
-      if (currentMode === 'viewer') return; // Viewerモード中はズーム不可
+      if (currentMode === 'viewer') return;
 
       e.preventDefault();
       const t1 = e.touches[0];
@@ -1375,13 +1385,27 @@
     { id: 'tool-eraser', mode: 'eraser', label: 'モード: 消しゴム' }
   ];
 
+  // ★モード切替時の巨大照準カーソルの動的設定
   const setMode = (newMode, label) => {
     currentMode = newMode;
     measureStep = 0; startPt = null; secondPt = null; tempEndPt = null;
 
-    // ★Viewerモードへの切り替え時は即座に100%実測表示へ固定
     if (newMode === 'viewer') {
       setActualSize100();
+    }
+
+    if (['measure', 'right_measure', 'calibrate'].includes(newMode)) {
+      canvas.style.cursor = LARGE_CROSS_CURSOR;
+      container.style.cursor = LARGE_CROSS_CURSOR;
+    } else if (newMode === 'viewer') {
+      canvas.style.cursor = 'grab';
+      container.style.cursor = 'grab';
+    } else if (newMode === 'eraser') {
+      canvas.style.cursor = 'cell';
+      container.style.cursor = 'cell';
+    } else {
+      canvas.style.cursor = 'default';
+      container.style.cursor = 'default';
     }
 
     tools.forEach(o => {
