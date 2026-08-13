@@ -49,7 +49,7 @@
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
 
-    /* メインキャンバスエリア (超大型96x96px 精密赤点照準 SVG カスタムカーソル) */
+    /* メインキャンバスエリア (3倍超大型 96x96px 精密赤点照準 SVG カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
       cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
@@ -194,8 +194,9 @@
         <label><input type="radio" name="film-type" value="なし" checked> なし</label>
       </div>
     </div>
+    <!-- ★変更指示: 表記を「撮影箇所 (任意):」へ変更 -->
     <div class="modal-row">
-      <span>No. (任意):</span>
+      <span>撮影箇所 (任意):</span>
       <input type="text" id="film-opening-num" placeholder="例: 1" style="width:300px;" autocapitalize="characters">
     </div>
     <div class="modal-row">
@@ -374,8 +375,8 @@
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
-  // ★超大型3倍 96x96px 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  // 精密照準SVGカスタムカーソル
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -434,15 +435,8 @@
   let pendingStampData = null;
   let pendingConfirmData = null;
 
-  // フォーム初期セット
-  document.getElementById('film-pos-select').value = filmPreset.pos;
-  document.getElementById('film-color-input').value = filmPreset.color;
-  document.getElementById('film-size-input').value = filmPreset.size;
-  document.getElementById('cloud-path-input').value = cloudPreset.path;
-  document.getElementById('cloud-target').value = cloudPreset.target;
-
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v17';
+  const DB_NAME = 'XRayKagakiDB_v18';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -467,7 +461,9 @@
       objects: item.objects || [],
       pmm: item.pmm || calibratedPMM,
       isInverted: item.isInverted || false,
-      filmCode: item.filmCode || ''
+      filmCode: item.filmCode || '',
+      filmLocation: item.filmLocation || '',
+      folderName: item.folderName || '写真データ'
     };
     tx.objectStore('images').put(dataToSave);
   };
@@ -582,6 +578,13 @@
     validFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     validFiles.forEach(file => {
+      // 参照フォルダ名の抽出
+      let relPath = file.webkitRelativePath || file.name;
+      let folderName = "写真データ";
+      if (file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
+        folderName = file.webkitRelativePath.split('/')[0];
+      }
+
       const reader = new FileReader();
       reader.onload = ev => {
         const srcData = ev.target.result;
@@ -589,13 +592,15 @@
         imgObj.onload = () => {
           const item = {
             id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            name: file.webkitRelativePath || file.name,
+            name: file.name,
+            folderName: folderName,
             src: srcData,
             imgObj: imgObj,
             objects: [],
             pmm: calibratedPMM,
             isInverted: false,
-            filmCode: ''
+            filmCode: '',
+            filmLocation: ''
           };
           imagesList.push(item);
           saveToDB(item);
@@ -642,7 +647,7 @@
     updateCanvasTransform();
   };
 
-  // ★実測100%表示機能
+  // 実測100%表示機能
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
@@ -735,7 +740,7 @@
       drawPath(ctx, { type: 'pen', path: [startPt, tempEndPt], style: penStyle, color: penColor, width: penWidth });
     }
 
-    // ★測定・寸法補正のドラッグ中線リアルタイムプレビュー表示 (1点目ドラッグ中から表示)
+    // 測定・寸法補正のドラッグ中線リアルタイムプレビュー表示
     if (isDrawing && tempEndPt) {
       if (currentMode === 'calibrate' || currentMode === 'measure') {
         if (startPt) {
@@ -768,7 +773,7 @@
       }
     }
 
-    // ★測定系モード：照準カーソルをペン/指先の真上（画面上20pxオフセット）に表示
+    // 測定系モード：照準カーソルを指先/ペン先より画面上20pxオフセット描画
     if (['measure', 'right_measure', 'calibrate'].includes(currentMode) && tempEndPt) {
       drawLargeTargetCursor(ctx, tempEndPt);
     }
@@ -776,12 +781,11 @@
     ctx.restore();
   };
 
-  // ★キャンバス上オフセットオーバーレイ照準描画 (指先・ペン先から画面上で上方向20px浮かせ表示)
+  // キャンバス上オフセットオーバーレイ照準描画
   const drawLargeTargetCursor = (targetCtx, pt) => {
     if (!pt) return;
     targetCtx.save();
     
-    // ptは既に上方向20pxオフセットされた確定ターゲット座標そのもの！
     const targetX = pt.x;
     const targetY = pt.y;
 
@@ -796,7 +800,6 @@
       { x1: targetX + gap, y1: targetY, x2: targetX + gap + sz, y2: targetY }
     ];
 
-    // 黒フチ
     targetCtx.strokeStyle = '#000000';
     targetCtx.lineWidth = strokeW + (1 / scale);
     targetCtx.lineCap = 'round';
@@ -804,14 +807,12 @@
       targetCtx.beginPath(); targetCtx.moveTo(l.x1, l.y1); targetCtx.lineTo(l.x2, l.y2); targetCtx.stroke();
     });
 
-    // 白線
     targetCtx.strokeStyle = '#ffffff';
     targetCtx.lineWidth = strokeW;
     lines.forEach(l => {
       targetCtx.beginPath(); targetCtx.moveTo(l.x1, l.y1); targetCtx.lineTo(l.x2, l.y2); targetCtx.stroke();
     });
 
-    // 中心精密赤点 (サイズ半分: 半径2px) & 白外枠
     targetCtx.fillStyle = '#ff0000';
     targetCtx.beginPath();
     targetCtx.arc(targetX, targetY, 2 / scale, 0, Math.PI * 2);
@@ -823,7 +824,6 @@
     targetCtx.arc(targetX, targetY, 3.5 / scale, 0, Math.PI * 2);
     targetCtx.stroke();
 
-    // 指先の実タッチ地点（画面上20px下）を示すガイド破線
     const fingerY = targetY + (20 / scale);
     targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
     targetCtx.lineWidth = 1.5 / scale;
@@ -880,7 +880,6 @@
     targetCtx.setLineDash([]);
   };
 
-  // 測定線描画
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
@@ -982,7 +981,6 @@
     targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'alphabetic';
   };
 
-  // 選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
   const drawSelectionBounds = (obj) => {
     if (obj.type === 'measure') {
       ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
@@ -1052,13 +1050,12 @@
     }
   };
 
-  // --- ★変更指示：測定系モードで20px上方にシフトされた「実際のドロップ座標」を返す座標計算 ---
+  // ★測定系モードで20px上方にシフトされた「実際のドロップ座標」を返す座標計算
   const getCanvasCoordsFromClient = (clientX, clientY) => {
     const rect = canvas.getBoundingClientRect();
     let cx = (clientX - rect.left - panX) / scale;
     let cy = (clientY - rect.top - panY) / scale;
 
-    // 測定系ツール使用時、画面上で上方向20px分オフセットした位置を真ターゲット・固定位置とする
     if (['measure', 'right_measure', 'calibrate'].includes(currentMode)) {
       cy -= (20 / scale);
     }
@@ -1554,8 +1551,8 @@
   document.getElementById('modal-film-cancel').onclick = () => document.getElementById('modal-film').style.display = 'none';
   document.getElementById('modal-film-ok').onclick = () => {
     const type = document.querySelector('input[name="film-type"]:checked').value;
-    const num = document.getElementById('film-opening-num').value.trim();
-    const code = document.getElementById('film-code-input').value.trim();
+    const num = document.getElementById('film-opening-num').value.trim().toUpperCase();
+    const code = document.getElementById('film-code-input').value.trim().toUpperCase();
     const pos = document.getElementById('film-pos-select').value;
     const color = document.getElementById('film-color-input').value;
     const size = parseInt(document.getElementById('film-size-input').value) || 140;
@@ -1563,12 +1560,15 @@
     filmPreset = { pos, color, size };
     localStorage.setItem('filmPreset', JSON.stringify(filmPreset));
 
-    let full = code;
-    if (num) full = (type !== 'なし' ? type + num : num) + '_' + code;
+    // ★撮影箇所入力内容とフィルム№の構成
+    let locStr = num ? (type !== 'なし' ? type + num : num) : '';
+    let codeStr = code;
+    let full = locStr ? (codeStr ? locStr + '_' + codeStr : locStr) : codeStr;
 
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       const img = imagesList[currentImgIndex].imgObj;
-      imagesList[currentImgIndex].filmCode = full;
+      imagesList[currentImgIndex].filmCode = codeStr;
+      imagesList[currentImgIndex].filmLocation = locStr;
 
       let posX = 100, posY = img.height - 100;
       if (pos === 'top') { posX = img.width/2 - 200; posY = 180; }
@@ -1597,7 +1597,7 @@
   document.getElementById('btn-cloud-settings').onclick = () => document.getElementById('modal-cloud').style.display = 'flex';
   document.getElementById('modal-cloud-save').onclick = () => {
     cloudPreset = {
-      path: document.getElementById('cloud-path-input').value.trim(),
+      path: document.getElementById('cloud-path-input').value.trim().toUpperCase(),
       target: document.getElementById('cloud-target').value
     };
     localStorage.setItem('cloudPreset', JSON.stringify(cloudPreset));
@@ -1608,7 +1608,7 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // ★「納品フィルム」フォルダ自動作成・直接PDF保存処理
+  // ★「納品フィルム」PDF直接保存処理（新命名ルール：”撮影箇所入力内容”_”ファイル№入力内容”_”参照フォルダ名”.pdf）
   document.getElementById('btn-save-pdf').onclick = async () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) {
       alert("保存対象の画像が選択されていません。");
@@ -1658,9 +1658,19 @@
 
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
 
-      const filmPrefix = item.filmCode ? `${item.filmCode}_` : '';
-      const cleanName = item.name.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_');
-      const pdfFileName = `納品フィルム_罫書き_${filmPrefix}${cleanName}.pdf`;
+      // ★新命名ルール構築: ”撮影箇所入力内容”_”ファイル№入力内容”_”参照フォルダ名”.pdf (元画像名を完全除去)
+      const locStr = (item.filmLocation || '').trim();
+      const codeStr = (item.filmCode || '').trim();
+      const folderName = (item.folderName || '写真データ').trim();
+
+      let nameParts = [];
+      if (locStr) nameParts.push(locStr);
+      if (codeStr) nameParts.push(codeStr);
+      if (folderName) nameParts.push(folderName);
+
+      let pdfFileName = nameParts.join('_');
+      if (!pdfFileName) pdfFileName = `罫書き_${folderName}`;
+      pdfFileName = pdfFileName.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_') + '.pdf';
 
       if ('showDirectoryPicker' in window) {
         if (!nouhinDirHandle) {
@@ -1741,15 +1751,24 @@
     pdf.text("エックス線探査 調査報告書", 40, 40);
     pdf.setFontSize(10);
     pdf.text(`対象ファイル: ${item.name}`, 40, 60);
-    pdf.text(`フィルム№: ${item.filmCode || '未設定'}`, 40, 75);
-    pdf.text(`設定解像度: ${(activePMM * 25.4).toFixed(1)} DPI`, 40, 90);
+    pdf.text(`撮影箇所: ${item.filmLocation || '未設定'}`, 40, 75);
+    pdf.text(`フィルム№: ${item.filmCode || '未設定'}`, 40, 90);
+    pdf.text(`設定解像度: ${(activePMM * 25.4).toFixed(1)} DPI`, 40, 105);
 
     const imgWidth = 515;
     const imgHeight = (offCanvas.height / offCanvas.width) * imgWidth;
-    pdf.addImage(imgData, 'JPEG', 40, 110, imgWidth, Math.min(650, imgHeight));
+    pdf.addImage(imgData, 'JPEG', 40, 120, imgWidth, Math.min(640, imgHeight));
 
-    const filmPrefix = item.filmCode ? `${item.filmCode}_` : '';
-    pdf.save(`探査報告書_${qualityMode}_${filmPrefix}${item.name.split('.')[0]}.pdf`);
+    const locStr = (item.filmLocation || '').trim();
+    const codeStr = (item.filmCode || '').trim();
+    const folderName = (item.folderName || '写真データ').trim();
+
+    let nameParts = [];
+    if (locStr) nameParts.push(locStr);
+    if (codeStr) nameParts.push(codeStr);
+    if (folderName) nameParts.push(folderName);
+
+    pdf.save(`探査報告書_${qualityMode}_${nameParts.join('_')}.pdf`);
     document.getElementById('modal-report').style.display = 'none';
   };
 
