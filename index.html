@@ -49,7 +49,7 @@
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
 
-    /* メインキャンバスエリア (3倍超大型 96x96px 精密赤点照準カスタムカーソル) */
+    /* メインキャンバスエリア (超大型96x96px 精密赤点照準カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
       cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><line x1="48" y1="6" x2="48" y2="30" stroke="%23ffffff" stroke-width="5"/><line x1="48" y1="6" x2="48" y2="30" stroke="%23000000" stroke-width="2.5"/><line x1="48" y1="66" x2="48" y2="90" stroke="%23ffffff" stroke-width="5"/><line x1="48" y1="66" x2="48" y2="90" stroke="%23000000" stroke-width="2.5"/><line x1="6" y1="48" x2="30" y2="48" stroke="%23ffffff" stroke-width="5"/><line x1="6" y1="48" x2="30" y2="48" stroke="%23000000" stroke-width="2.5"/><line x1="66" y1="48" x2="90" y2="48" stroke="%23ffffff" stroke-width="5"/><line x1="66" y1="48" x2="90" y2="48" stroke="%23000000" stroke-width="2.5"/><circle cx="48" cy="48" r="4" fill="%23ff0000"/><circle cx="48" cy="48" r="7" stroke="%23ffffff" stroke-width="2" fill="none"/></svg>') 48 48, crosshair;
@@ -59,7 +59,7 @@
     /* 左側フローティングツールパネル */
     #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.88); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
 
-    /* モーダルダイアログ各種（大型2.5倍入力サイズ） */
+    /* モーダルダイアログ各種 (大型2.5倍入力サイズ) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
     .modal-card { background: #2c2c2c; border: 2px solid #666; border-radius: 12px; width: 750px; max-width: 92vw; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .modal-card h3 { font-size: 26px; border-bottom: 2px solid #555; padding-bottom: 12px; color: #0088ff; font-weight: bold; }
@@ -361,7 +361,7 @@
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
-  // --- 超大型3倍 96x96px 照準カスタムカーソルSVG ---
+  // ★超大型3倍 96x96px 精密照準カスタムカーソルSVG
   const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><line x1="48" y1="6" x2="48" y2="30" stroke="%23ffffff" stroke-width="5"/><line x1="48" y1="6" x2="48" y2="30" stroke="%23000000" stroke-width="2.5"/><line x1="48" y1="66" x2="48" y2="90" stroke="%23ffffff" stroke-width="5"/><line x1="48" y1="66" x2="48" y2="90" stroke="%23000000" stroke-width="2.5"/><line x1="6" y1="48" x2="30" y2="48" stroke="%23ffffff" stroke-width="5"/><line x1="6" y1="48" x2="30" y2="48" stroke="%23000000" stroke-width="2.5"/><line x1="66" y1="48" x2="90" y2="48" stroke="%23ffffff" stroke-width="5"/><line x1="66" y1="48" x2="90" y2="48" stroke="%23000000" stroke-width="2.5"/><circle cx="48" cy="48" r="4" fill="%23ff0000"/><circle cx="48" cy="48" r="7" stroke="%23ffffff" stroke-width="2" fill="none"/></svg>\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
@@ -393,7 +393,6 @@
   let isPanning = false, startPan = { x: 0, y: 0 };
 
   // ピンチズーム制御用
-  let touchMode = null; // 'single', 'pinch'
   let pinchStartDist = 0;
   let pinchStartScale = 1.0;
   let pinchCenter = { x: 0, y: 0 };
@@ -418,8 +417,6 @@
   let pendingStampData = null;
   let pendingConfirmData = null;
 
-  let isTouchActive = false;
-
   // フォーム初期セット
   document.getElementById('film-pos-select').value = filmPreset.pos;
   document.getElementById('film-color-input').value = filmPreset.color;
@@ -428,7 +425,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v13';
+  const DB_NAME = 'XRayKagakiDB_v14';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -721,7 +718,7 @@
       drawPath(ctx, { type: 'pen', path: [startPt, tempEndPt], style: penStyle, color: penColor, width: penWidth });
     }
 
-    // ★測定・寸法補正のドラッグ中プレビュー (1点目ドラッグ中 measureStep===0 の時は線を表示しない)
+    // ★測定・寸法補正・直角測定のドラッグ中プレビュー (1点目ドラッグ中 measureStep===0 の時はガイド線を表示しない)
     if (isDrawing && tempEndPt) {
       if (currentMode === 'calibrate' || currentMode === 'measure') {
         if (measureStep === 1 && startPt) {
@@ -1018,7 +1015,7 @@
     return null;
   };
 
-  // --- タッチ・Pointer 統一ハンドラ ---
+  // ★統合型インプット制御（PCマウス・iPadタッチ・スタイラスペンの全操作を100%処理）
   const handleInputStart = (clientX, clientY) => {
     const pt = getCanvasCoordsFromClient(clientX, clientY);
 
@@ -1267,17 +1264,15 @@
     }
   };
 
-  // --- タッチイベント (iPad・スマートフォン) ---
+  // --- タッチイベント (iPad・スマートフォン完全連動) ---
   canvas.addEventListener('touchstart', e => {
-    isTouchActive = true;
     if (isPalmTouch(e)) { e.preventDefault(); return; }
 
     if (e.touches.length >= 2) {
-      if (currentMode === 'viewer') return; // Viewerモード中はズーム不可
+      if (currentMode === 'viewer') return;
       
       touchMode = 'pinch';
-      isDrawing = false;
-      currentPath = [];
+      isDrawing = false; currentPath = [];
       
       const t1 = e.touches[0];
       const t2 = e.touches[1];
@@ -1341,24 +1336,21 @@
       handleInputEnd();
       touchMode = null;
     }
-    setTimeout(() => { isTouchActive = false; }, 300);
-  });
+  }, { passive: false });
 
   // --- マウスイベント (PC向け) ---
   let isMouseDown = false;
   canvas.addEventListener('mousedown', e => {
-    if (!isTouchActive) {
-      isMouseDown = true;
-      handleInputStart(e.clientX, e.clientY);
-    }
+    isMouseDown = true;
+    handleInputStart(e.clientX, e.clientY);
   });
   canvas.addEventListener('mousemove', e => {
-    if (!isTouchActive && (isMouseDown || isPanning)) {
+    if (isMouseDown || isPanning) {
       handleInputMove(e.clientX, e.clientY);
     }
   });
   canvas.addEventListener('mouseup', e => {
-    if (!isTouchActive && (isMouseDown || isPanning)) {
+    if (isMouseDown || isPanning) {
       isMouseDown = false;
       handleInputEnd();
     }
@@ -1385,7 +1377,6 @@
     { id: 'tool-eraser', mode: 'eraser', label: 'モード: 消しゴム' }
   ];
 
-  // ★モード切替時の巨大照準カーソルの動的設定
   const setMode = (newMode, label) => {
     currentMode = newMode;
     measureStep = 0; startPt = null; secondPt = null; tempEndPt = null;
