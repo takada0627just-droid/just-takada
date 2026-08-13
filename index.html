@@ -104,7 +104,7 @@
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
-    <button class="btn btn-dark btn-invert-trigger">🌗 白黒反転</button>
+    <button class="btn btn-dark btn-invert-trigger" id="btn-invert-header">🌗 白黒反転</button>
     <button class="btn btn-blue" id="btn-zoom-100">📐 100%表示(実測)</button>
     <button class="btn" id="btn-fit">全体表示</button>
     
@@ -171,7 +171,7 @@
         <button class="btn" id="tool-shape" title="図形（タップ配置）">🔲 図形</button>
         <button class="btn" id="tool-text" title="文字（タップ配置）">📝 文字</button>
         
-        <button class="btn btn-dark btn-invert-trigger">🌗 白黒反転</button>
+        <button class="btn btn-dark btn-invert-trigger" id="btn-invert-toolbar">🌗 白黒反転</button>
         <button class="btn btn-warning" id="tool-confirm-stamp" title="確認印（タップ配置）">💮 確認印</button>
         <button class="btn" id="tool-eraser" title="消しゴム">🧹 消しゴム</button>
         <hr style="border-color:#444;">
@@ -431,7 +431,7 @@
  */
 (function() {
   // 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -484,6 +484,7 @@
 
   // 納品フィルム保存先ディレクトリハンドル
   let nouhinDirHandle = null;
+  let nouhinDirName = '';
 
   // 設定プリセット (LocalStorage)
   let filmPreset = JSON.parse(localStorage.getItem('filmPreset')) || { pos: 'bottom', color: '#ffffff', size: 140 };
@@ -533,7 +534,7 @@
     });
   });
 
-  // ★可動式寸法補正入力カードのドラッグ移動制御
+  // 可動式寸法補正入力カードのドラッグ移動制御
   const calibCard = document.getElementById('calib-float-card');
   const calibHeader = document.getElementById('calib-drag-header');
   let isCardDragging = false;
@@ -747,8 +748,17 @@
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       imagesList[currentImgIndex].isInverted = !imagesList[currentImgIndex].isInverted;
       saveToDB(imagesList[currentImgIndex]);
+      updateInvertButtonState();
       redraw();
     }
+  };
+
+  const updateInvertButtonState = () => {
+    const isInv = (currentImgIndex >= 0 && imagesList[currentImgIndex] && imagesList[currentImgIndex].isInverted);
+    document.querySelectorAll('.btn-invert-trigger').forEach(btn => {
+      if (isInv) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
   };
 
   document.querySelectorAll('.btn-invert-trigger').forEach(btn => {
@@ -1006,6 +1016,7 @@
     targetCtx.setLineDash([]);
   };
 
+  // 測定線描画
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
@@ -1109,7 +1120,7 @@
     }
   };
 
-  // ★確認印描画 (縦書き/横書き対応・文字サイズ1.25倍)
+  // 確認印描画 (縦書き/横書き対応・文字サイズ1.25倍)
   const drawConfirmStamp = (targetCtx, obj) => {
     const col = obj.color || '#d9534f';
     targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
@@ -1277,7 +1288,6 @@
     return null;
   };
 
-  // ★画面縁（エッジ）での自動画面移動（オートパン）チェック処理
   const checkEdgeAutoPan = (clientX, clientY) => {
     if (!isDrawing || !['measure', 'right_measure', 'straight', 'calibrate'].includes(currentMode)) {
       stopAutoPan();
@@ -1597,33 +1607,7 @@
     }
   };
 
-  document.getElementById('modal-calib-cancel').onclick = () => {
-    document.getElementById('modal-calibrate-input').style.display = 'none';
-    pendingCalibData = null;
-    setMode('select');
-  };
-
-  document.getElementById('modal-calib-ok').onclick = () => {
-    if (pendingCalibData) {
-      const knownMM = parseFloat(document.getElementById('calib-mm-input').value);
-      if (!isNaN(knownMM) && knownMM > 0) {
-        calibratedPMM = pendingCalibData.distPx / knownMM;
-        localStorage.setItem('calibratedPMM', calibratedPMM);
-        if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
-          imagesList[currentImgIndex].pmm = calibratedPMM;
-          saveToDB(imagesList[currentImgIndex]);
-        }
-        objects.push({ type: 'measure', p1: pendingCalibData.p1, p2: pendingCalibData.p2, isCalibration: true, knownMM: knownMM, color: '#00ff00' });
-        alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
-        pushUndo(); redraw();
-      }
-    }
-    document.getElementById('modal-calibrate-input').style.display = 'none';
-    pendingCalibData = null;
-    setMode('select');
-  };
-
-  // --- Pointer Events による完全一元化イベントリスナー ---
+  // Pointer Events 統一インプット制御リスナー
   canvas.addEventListener('pointerdown', e => {
     if (isPalmTouch(e)) { e.preventDefault(); return; }
 
@@ -1775,7 +1759,7 @@
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
 
-  // ★確認印ダイアログ (縦書き/横書き方向選択追加)
+  // 確認印ダイアログ
   document.getElementById('tool-confirm-stamp').onclick = () => document.getElementById('modal-confirm-stamp').style.display = 'flex';
   document.getElementById('modal-confirm-cancel').onclick = () => document.getElementById('modal-confirm-stamp').style.display = 'none';
   document.getElementById('modal-confirm-ok').onclick = () => {
@@ -1886,19 +1870,21 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // ★「納品フィルム」フォルダ自動作成・直接PDF保存処理
-  document.getElementById('btn-save-pdf').onclick = async () => {
-    if (currentImgIndex < 0 || !imagesList[currentImgIndex]) {
-      alert("保存対象の画像が選択されていません。");
-      return;
+  // ★「”参照フォルダ名”_納品フィルム」フォルダ自動作成・直接PDF保存処理
+  document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex, false);
+
+  const savePDF = async (index, isBatch = false) => {
+    if (index < 0 || !imagesList[index]) {
+      if (!isBatch) alert("保存対象の画像が選択されていません。");
+      return false;
     }
 
-    const item = imagesList[currentImgIndex];
+    const item = imagesList[index];
     const img = item.imgObj;
 
     if (!img || !img.complete || img.naturalWidth === 0) {
-      alert("画像の読み込みが完了していないため保存できません。");
-      return;
+      if (!isBatch) alert("画像の読み込みが完了していないため保存できません。");
+      return false;
     }
 
     try {
@@ -1921,8 +1907,8 @@
 
       const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
       if (!jsPDFClass) {
-        alert("PDFライブラリ(jsPDF)の読み込みに失敗しています。");
-        return;
+        if (!isBatch) alert("PDFライブラリ(jsPDF)の読み込みに失敗しています。");
+        return false;
       }
 
       const pdfW = offCanvas.width * (72 / activeDPI);
@@ -1949,12 +1935,16 @@
       if (!pdfFileName) pdfFileName = `罫書き_${folderName}`;
       pdfFileName = pdfFileName.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_') + '.pdf';
 
+      // ★機能修正指示: フォルダ名を「”参照フォルダ名”_納品フィルム」に変更
+      const targetFolderName = `${folderName}_納品フィルム`;
+
       if ('showDirectoryPicker' in window) {
-        if (!nouhinDirHandle) {
+        if (!nouhinDirHandle || nouhinDirName !== targetFolderName) {
           try {
-            alert("「納品フィルム」フォルダを作成・保存する参照先フォルダを選択してください。");
+            if (!isBatch) alert(`「${targetFolderName}」フォルダを作成・保存する参照先フォルダを選択してください。`);
             const parentDirHandle = await window.showDirectoryPicker();
-            nouhinDirHandle = await parentDirHandle.getDirectoryHandle('納品フィルム', { create: true });
+            nouhinDirHandle = await parentDirHandle.getDirectoryHandle(targetFolderName, { create: true });
+            nouhinDirName = targetFolderName;
           } catch (e) {
             console.log("フォルダ選択キャンセル:", e);
           }
@@ -1966,26 +1956,29 @@
           const pdfArrayBuffer = pdf.output('arraybuffer');
           await writable.write(pdfArrayBuffer);
           await writable.close();
-          alert(`「納品フィルム」フォルダに『${pdfFileName}』を直接保存しました！`);
-          return;
+          if (!isBatch) alert(`「${targetFolderName}」フォルダに『${pdfFileName}』を直接保存しました！`);
+          return true;
         }
       }
 
       pdf.save(pdfFileName);
+      return true;
 
     } catch (err) {
-      alert("PDF保存中にエラーが発生しました: " + err.message);
+      if (!isBatch) alert("PDF保存中にエラーが発生しました: " + err.message);
       console.error(err);
+      return false;
     }
   };
 
-  // 一括PDF保存
-  document.getElementById('btn-save-batch-pdf').onclick = () => {
+  // ★一括PDF保存
+  document.getElementById('btn-save-batch-pdf').onclick = async () => {
     if (imagesList.length === 0) return;
-    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「納品フィルム」用罫書きPDFとして保存しますか？`)) {
-      imagesList.forEach((_, idx) => {
-        document.getElementById('btn-save-pdf').click();
-      });
+    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「”参照フォルダ名”_納品フィルム」フォルダへ罫書きPDFとして保存しますか？`)) {
+      for (let idx = 0; idx < imagesList.length; idx++) {
+        await savePDF(idx, true);
+      }
+      alert("全ファイルのPDF一括保存処理が完了しました。");
     }
   };
 
