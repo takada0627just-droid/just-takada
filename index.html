@@ -373,7 +373,7 @@
   let pinchPanStart = { x: 0, y: 0 };
 
   // 変形・回転ハンドル状態
-  let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3'
+  let activeTransformHandle = null; 
   let transformStart = { x: 0, y: 0, w: 0, h: 0, rot: 0 };
 
   // 設定プリセット (LocalStorage)
@@ -388,8 +388,6 @@
   let pendingStampData = null;
   let pendingConfirmData = null;
 
-  let isTouchActive = false;
-
   // フォーム初期セット
   document.getElementById('film-pos-select').value = filmPreset.pos;
   document.getElementById('film-color-input').value = filmPreset.color;
@@ -398,7 +396,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v10';
+  const DB_NAME = 'XRayKagakiDB_v9';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -591,12 +589,13 @@
     updateCanvasTransform();
   };
 
-  // ★実測100%表示機能
+  // ★実測100%表示機能: 画面上の1mmと定規が1:1で完全合致するスケールを精密計算
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
     const activeImgPMM = item.pmm || calibratedPMM;
 
+    // スケール = 画面で1mmを表現するpx / 画像で1mmを表現するpx
     scale = screenPMM / activeImgPMM;
 
     const img = item.imgObj;
@@ -744,15 +743,13 @@
     targetCtx.setLineDash([]);
   };
 
-  // ★測定線描画: 文字サイズ拡大 & 測定線からテキストを離すオフセット付き
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
     targetCtx.lineWidth = 3;
     targetCtx.fillStyle = obj.color || '#ff0000';
-    targetCtx.font = 'bold 24px Arial'; // 文字サイズ拡大
+    targetCtx.font = 'bold 18px Arial';
 
-    // L1描画
     targetCtx.beginPath();
     targetCtx.moveTo(obj.p1.x, obj.p1.y);
     targetCtx.lineTo(obj.p2.x, obj.p2.y);
@@ -763,18 +760,8 @@
     const dist1 = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
     const mm1 = dist1 / activePMM;
     const txt1 = obj.isCalibration ? `[補正基準] ${obj.knownMM.toFixed(1)} mm` : `L1: ${mm1.toFixed(1)} mm`;
+    targetCtx.fillText(txt1, (obj.p1.x + obj.p2.x) / 2 + 5, (obj.p1.y + obj.p2.y) / 2 - 5);
 
-    // 測定線から寸法テキストを離すオフセット計算
-    let dx1 = obj.p2.x - obj.p1.x, dy1 = obj.p2.y - obj.p1.y;
-    let len1 = Math.hypot(dx1, dy1);
-    let nx1 = len1 > 0 ? -dy1 / len1 : 0;
-    let ny1 = len1 > 0 ? dx1 / len1 : 0;
-
-    const midX1 = (obj.p1.x + obj.p2.x) / 2 + nx1 * 22;
-    const midY1 = (obj.p1.y + obj.p2.y) / 2 + ny1 * 22;
-    targetCtx.fillText(txt1, midX1, midY1);
-
-    // L2 (直角/3点測定)
     if (obj.p3) {
       targetCtx.beginPath();
       targetCtx.moveTo(obj.p2.x, obj.p2.y);
@@ -784,22 +771,14 @@
       drawTick(targetCtx, obj.p3, obj.p2);
       const dist2 = Math.hypot(obj.p3.x - obj.p2.x, obj.p3.y - obj.p2.y);
       const mm2 = dist2 / activePMM;
-
-      let dx2 = obj.p3.x - obj.p2.x, dy2 = obj.p3.y - obj.p2.y;
-      let len2 = Math.hypot(dx2, dy2);
-      let nx2 = len2 > 0 ? -dy2 / len2 : 0;
-      let ny2 = len2 > 0 ? dx2 / len2 : 0;
-
-      const midX2 = (obj.p2.x + obj.p3.x) / 2 + nx2 * 22;
-      const midY2 = (obj.p2.y + obj.p3.y) / 2 + ny2 * 22;
-      targetCtx.fillText(`L2: ${mm2.toFixed(1)} mm`, midX2, midY2);
+      targetCtx.fillText(`L2: ${mm2.toFixed(1)} mm`, (obj.p2.x + obj.p3.x) / 2 + 5, (obj.p2.y + obj.p3.y) / 2 - 5);
 
       const ang1 = Math.atan2(obj.p1.y - obj.p2.y, obj.p1.x - obj.p2.x);
       const ang2 = Math.atan2(obj.p3.y - obj.p2.y, obj.p3.x - obj.p2.x);
       let deg = Math.abs(ang1 - ang2) * (180 / Math.PI);
       if (deg > 180) deg = 360 - deg;
       targetCtx.fillStyle = '#0056b3';
-      targetCtx.fillText(`∠ ${deg.toFixed(1)}°`, obj.p2.x + 20, obj.p2.y - 20);
+      targetCtx.fillText(`∠ ${deg.toFixed(1)}°`, obj.p2.x + 15, obj.p2.y - 15);
     }
   };
 
@@ -849,29 +828,14 @@
     targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'alphabetic';
   };
 
-  // ★選択ツールの枠 ＆ 測定線用「シースルー（塗りつぶしなし）」ピンチポイント描画
   const drawSelectionBounds = (obj) => {
-    if (obj.type === 'measure') {
-      ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2;
-      const r = 12;
-      // p1
-      ctx.beginPath(); ctx.arc(obj.p1.x, obj.p1.y, r, 0, Math.PI * 2); ctx.stroke();
-      // p2
-      ctx.beginPath(); ctx.arc(obj.p2.x, obj.p2.y, r, 0, Math.PI * 2); ctx.stroke();
-      // p3 (直角測定)
-      if (obj.p3) {
-        ctx.strokeStyle = '#00ffff';
-        ctx.beginPath(); ctx.arc(obj.p3.x, obj.p3.y, r, 0, Math.PI * 2); ctx.stroke();
-      }
-    } else {
-      const b = getRawBounds(obj);
-      ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
-      ctx.strokeRect(b.x, b.y, b.w, b.h);
-      ctx.setLineDash([]);
+    const b = getRawBounds(obj);
+    ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+    ctx.setLineDash([]);
 
-      ctx.fillStyle = '#00ff00'; ctx.fillRect(b.x + b.w - 10, b.y + b.h - 10, 20, 20); 
-      ctx.fillStyle = '#ffff00'; ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 25, 10, 0, Math.PI*2); ctx.fill(); 
-    }
+    ctx.fillStyle = '#00ff00'; ctx.fillRect(b.x + b.w - 10, b.y + b.h - 10, 20, 20); 
+    ctx.fillStyle = '#ffff00'; ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 25, 10, 0, Math.PI*2); ctx.fill(); 
   };
 
   const getRawBounds = (obj) => {
@@ -934,33 +898,19 @@
   const handleInputStart = (clientX, clientY) => {
     const pt = getCanvasCoords(clientX, clientY);
 
-    // 選択ツールの各種ハンドル判定 (測定線端点 & 通常オブジェクト変形)
     if (currentMode === 'select' && selectedObj) {
-      if (selectedObj.type === 'measure') {
-        const hitR = 20;
-        if (Math.hypot(pt.x - selectedObj.p1.x, pt.y - selectedObj.p1.y) < hitR) {
-          activeTransformHandle = 'p1'; return;
-        }
-        if (Math.hypot(pt.x - selectedObj.p2.x, pt.y - selectedObj.p2.y) < hitR) {
-          activeTransformHandle = 'p2'; return;
-        }
-        if (selectedObj.p3 && Math.hypot(pt.x - selectedObj.p3.x, pt.y - selectedObj.p3.y) < hitR) {
-          activeTransformHandle = 'p3'; return;
-        }
-      } else {
-        const b = getRawBounds(selectedObj);
-        const brHandle = { x: b.x + b.w, y: b.y + b.h };
-        const rotHandle = { x: b.x + b.w/2, y: b.y - 25 };
+      const b = getRawBounds(selectedObj);
+      const brHandle = { x: b.x + b.w, y: b.y + b.h };
+      const rotHandle = { x: b.x + b.w/2, y: b.y - 25 };
 
-        if (Math.hypot(pt.x - brHandle.x, pt.y - brHandle.y) < 25) {
-          activeTransformHandle = 'br';
-          transformStart = { x: pt.x, y: pt.y, w: b.w, h: b.h, size: selectedObj.size || 140 };
-          return;
-        } else if (Math.hypot(pt.x - rotHandle.x, pt.y - rotHandle.y) < 25) {
-          activeTransformHandle = 'rot';
-          transformStart = { x: pt.x, y: pt.y, rot: selectedObj.rotation || 0 };
-          return;
-        }
+      if (Math.hypot(pt.x - brHandle.x, pt.y - brHandle.y) < 25) {
+        activeTransformHandle = 'br';
+        transformStart = { x: pt.x, y: pt.y, w: b.w, h: b.h, size: selectedObj.size || 140 };
+        return;
+      } else if (Math.hypot(pt.x - rotHandle.x, pt.y - rotHandle.y) < 25) {
+        activeTransformHandle = 'rot';
+        transformStart = { x: pt.x, y: pt.y, rot: selectedObj.rotation || 0 };
+        return;
       }
     }
 
@@ -1029,22 +979,16 @@
     const pt = getCanvasCoords(clientX, clientY);
 
     if (activeTransformHandle && selectedObj) {
-      if (selectedObj.type === 'measure') {
-        if (activeTransformHandle === 'p1') selectedObj.p1 = { x: pt.x, y: pt.y };
-        else if (activeTransformHandle === 'p2') selectedObj.p2 = { x: pt.x, y: pt.y };
-        else if (activeTransformHandle === 'p3') selectedObj.p3 = { x: pt.x, y: pt.y };
-      } else {
-        if (activeTransformHandle === 'br') {
-          const scaleFactor = Math.max(0.2, (pt.x - selectedObj.x) / (transformStart.w || 100));
-          if (selectedObj.type === 'text' || selectedObj.type === 'stamp' || selectedObj.type === 'confirm_stamp') {
-            selectedObj.size = Math.max(20, Math.round(transformStart.size * scaleFactor));
-          }
-        } else if (activeTransformHandle === 'rot') {
-          const b = getRawBounds(selectedObj);
-          const cx = b.x + b.w/2, cy = b.y + b.h/2;
-          let deg = Math.atan2(pt.y - cy, pt.x - cx) * (180 / Math.PI);
-          selectedObj.rotation = Math.round(deg);
+      if (activeTransformHandle === 'br') {
+        const scaleFactor = Math.max(0.2, (pt.x - selectedObj.x) / (transformStart.w || 100));
+        if (selectedObj.type === 'text' || selectedObj.type === 'stamp' || selectedObj.type === 'confirm_stamp') {
+          selectedObj.size = Math.max(20, Math.round(transformStart.size * scaleFactor));
         }
+      } else if (activeTransformHandle === 'rot') {
+        const b = getRawBounds(selectedObj);
+        const cx = b.x + b.w/2, cy = b.y + b.h/2;
+        let deg = Math.atan2(pt.y - cy, pt.x - cx) * (180 / Math.PI);
+        selectedObj.rotation = Math.round(deg);
       }
       redraw(); return;
     }
@@ -1056,26 +1000,7 @@
       tempEndPt = pt;
       redraw();
     } else if (currentMode === 'right_measure' && startPt) {
-      if (secondPt) {
-        // 直角測定3点目ドラッグ時：1本目の線に対する直角/10°刻みスナップ計算
-        const baseAng = Math.atan2(secondPt.y - startPt.y, secondPt.x - startPt.x);
-        let currAng = Math.atan2(pt.y - secondPt.y, pt.x - secondPt.x);
-        let diffDeg = (currAng - baseAng) * (180 / Math.PI);
-
-        let normDiff = ((diffDeg % 360) + 360) % 360;
-        if (Math.abs(normDiff - 90) < 6) diffDeg = 90;
-        else if (Math.abs(normDiff - 270) < 6) diffDeg = 270;
-        else diffDeg = Math.round(diffDeg / 10) * 10;
-
-        const snapAng = baseAng + (diffDeg * Math.PI / 180);
-        const dist = Math.hypot(pt.x - secondPt.x, pt.y - secondPt.y);
-        tempEndPt = {
-          x: secondPt.x + Math.cos(snapAng) * dist,
-          y: secondPt.y + Math.sin(snapAng) * dist
-        };
-      } else {
-        tempEndPt = pt;
-      }
+      tempEndPt = pt;
       redraw();
     }
   };
@@ -1104,7 +1029,7 @@
         const distPx = Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y);
         const p1 = { ...startPt }, p2 = { ...tempEndPt };
         setTimeout(() => {
-          const inputMM = prompt(`引いた線の長さ (ピクセル: ${distPx.toFixed(1)} px)\n画面上の物差しで測った既知の実測寸法(mm)を入力してください:`, "100.0");
+          const inputMM = prompt(`引いた線の長さ: ${distPx.toFixed(1)} px\n画面上の物差しで測った既知の実測寸法(mm)を入力してください:`, "100.0");
           if (inputMM) {
             const knownMM = parseFloat(inputMM);
             if (!isNaN(knownMM) && knownMM > 0) {
@@ -1123,19 +1048,12 @@
         }, 50);
       }
       startPt = null; tempEndPt = null;
-    } else if (currentMode === 'right_measure') {
-      if (startPt && !secondPt) {
-        if (tempEndPt && Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y) > 3) {
-          secondPt = { ...tempEndPt }; // L1ドラッグ確定、3点目ドラッグ/ドロップ待ちへ
-          tempEndPt = null;
-          isDrawing = false;
-          redraw();
-        }
-      } else if (startPt && secondPt && tempEndPt) {
-        // 3点目ドロップ確定！
-        objects.push({ type: 'measure', p1: startPt, p2: secondPt, p3: tempEndPt, color: '#0088ff' });
-        startPt = null; secondPt = null; tempEndPt = null; isDrawing = false;
-        pushUndo(); redraw();
+    } else if (currentMode === 'right_measure' && startPt && !secondPt) {
+      if (tempEndPt && Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y) > 3) {
+        secondPt = { ...tempEndPt }; // L1ドラッグ確定！3点目タップ待ち
+        tempEndPt = null;
+        isDrawing = false;
+        redraw();
       }
     }
   };
@@ -1241,7 +1159,7 @@
     { id: 'tool-select', mode: 'select', label: 'モード: 選択・変形・移動・回転' },
     { id: 'tool-viewer', mode: 'viewer', label: 'モード: ビューア(移動専用)' },
     { id: 'tool-measure', mode: 'measure', label: 'モード: 2点間測定' },
-    { id: 'tool-right-measure', mode: 'right_measure', label: 'モード: 直角3点測定 (ドラッグでL1, 3点目ドラッグで確定)' },
+    { id: 'tool-right-measure', mode: 'right_measure', label: 'モード: 直角3点測定 (ドラッグでL1, タップでL2)' },
     { id: 'tool-pen', mode: 'pen', label: 'モード: ペン描画 (指・ペン対応)' },
     { id: 'tool-eraser', mode: 'eraser', label: 'モード: 消しゴム' }
   ];
