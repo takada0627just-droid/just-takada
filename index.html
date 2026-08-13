@@ -382,7 +382,7 @@
   let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3', 'move_line'
   let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, p1: null, p2: null, p3: null };
 
-  // 納品フィルム保存先ディレクトリハンドル（File System Access API）
+  // 納品フィルム保存先ディレクトリハンドル
   let nouhinDirHandle = null;
 
   // 設定プリセット (LocalStorage)
@@ -520,7 +520,6 @@
     const displayName = cur.filmCode ? `[${cur.filmCode}] ${cur.name}` : cur.name;
     document.getElementById('file-info').innerText = `📄 編集中: ${displayName}`;
 
-    // 画像切り替え直後にキャンバス初期フィット
     if (cur.imgObj.complete && cur.imgObj.naturalWidth > 0) {
       fitToView();
     } else {
@@ -684,7 +683,7 @@
     ctx.drawImage(img, 0, 0);
     ctx.filter = 'none';
 
-    // オブジェクト描画
+    // 確定済みオブジェクト描画
     objects.forEach(obj => renderObjectToContext(ctx, obj));
 
     // フリーハンドペン描画中プレビュー
@@ -693,28 +692,38 @@
     }
 
     // 測定・寸法補正のドラッグ中線プレビュー
-    if (isDrawing && (currentMode === 'measure' || currentMode === 'calibrate') && startPt && tempEndPt) {
-      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(startPt.x, startPt.y);
-      ctx.lineTo(tempEndPt.x, tempEndPt.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // 直角測定ドラッグ中プレビュー
-    if (currentMode === 'right_measure' && startPt && tempEndPt) {
-      ctx.strokeStyle = '#0088ff';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(startPt.x, startPt.y);
-      ctx.lineTo(secondPt ? secondPt.x : tempEndPt.x, secondPt ? secondPt.y : tempEndPt.y);
-      if (secondPt) ctx.lineTo(tempEndPt.x, tempEndPt.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    if (isDrawing && tempEndPt) {
+      if (currentMode === 'calibrate') {
+        ctx.strokeStyle = '#00ff00'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        if (measureStep === 0) {
+          ctx.arc(tempEndPt.x, tempEndPt.y, 6, 0, Math.PI*2); ctx.stroke();
+        } else {
+          ctx.moveTo(startPt.x, startPt.y); ctx.lineTo(tempEndPt.x, tempEndPt.y); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      } else if (currentMode === 'measure') {
+        ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        if (measureStep === 0) {
+          ctx.arc(tempEndPt.x, tempEndPt.y, 6, 0, Math.PI*2); ctx.stroke();
+        } else {
+          ctx.moveTo(startPt.x, startPt.y); ctx.lineTo(tempEndPt.x, tempEndPt.y); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      } else if (currentMode === 'right_measure') {
+        ctx.strokeStyle = '#0088ff'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        if (measureStep === 0) {
+          ctx.arc(tempEndPt.x, tempEndPt.y, 6, 0, Math.PI*2); ctx.stroke();
+        } else if (measureStep === 1) {
+          ctx.moveTo(startPt.x, startPt.y); ctx.lineTo(tempEndPt.x, tempEndPt.y); ctx.stroke();
+        } else if (measureStep === 2) {
+          ctx.moveTo(startPt.x, startPt.y); ctx.lineTo(secondPt.x, secondPt.y);
+          ctx.lineTo(tempEndPt.x, tempEndPt.y); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
     }
 
     ctx.restore();
@@ -947,7 +956,7 @@
   const isPalmTouch = (e) => {
     if (e.touches && e.touches.length > 0) {
       const t = e.touches[0];
-      if (t.radiusX > 18 || t.radiusY > 18) return true; // 手刀部（広面積接触）判定・カット
+      if (t.radiusX > 18 || t.radiusY > 18) return true; // 手刀部判定カット
     }
     return false;
   };
@@ -985,7 +994,6 @@
   const handleInputStart = (clientX, clientY) => {
     const pt = getCanvasCoordsFromClient(clientX, clientY);
 
-    // ★選択ツールの各種ハンドル判定 (中心基点化対応)
     if (currentMode === 'select' && selectedObj) {
       if (selectedObj.type === 'measure') {
         const hitR = 25;
@@ -1040,11 +1048,7 @@
     } else if (currentMode === 'pen') {
       isDrawing = true;
       currentPath = [pt];
-    } else if (currentMode === 'measure' || currentMode === 'calibrate') {
-      isDrawing = true;
-      startPt = pt;
-      tempEndPt = pt;
-    } else if (currentMode === 'right_measure') {
+    } else if (currentMode === 'measure' || currentMode === 'calibrate' || currentMode === 'right_measure') {
       if (measureStep === 0) {
         isDrawing = true;
         startPt = pt;
@@ -1106,7 +1110,6 @@
         }
       } else {
         if (activeTransformHandle === 'br') {
-          // ★中心基点での変形・拡大縮小（文字・図形の中心位置を固定したままリサイズ）
           const currentDist = Math.hypot(pt.x - transformStart.cx, pt.y - transformStart.cy);
           const scaleFactor = Math.max(0.2, currentDist / (transformStart.dist || 1));
           
@@ -1131,7 +1134,6 @@
       redraw();
     } else if (isDrawing && currentMode === 'right_measure') {
       if (measureStep === 2 && secondPt && startPt) {
-        // 直角測定3点目ドラッグ時：1本目の線に対する直角/10°刻みスナップ計算
         const baseAng = Math.atan2(secondPt.y - startPt.y, secondPt.x - startPt.x);
         let currAng = Math.atan2(pt.y - secondPt.y, pt.x - secondPt.x);
         let diffDeg = (currAng - baseAng) * (180 / Math.PI);
@@ -1455,7 +1457,7 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // ★「納品フィルム」フォルダ自動作成・直接PDF保存処理 (File System Access API対応 ＆ フォールバック機能付き)
+  // ★「納品フィルム」フォルダ自動作成・直接PDF保存処理
   document.getElementById('btn-save-pdf').onclick = async () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) {
       alert("保存対象の画像が選択されていません。");
@@ -1509,7 +1511,6 @@
       const cleanName = item.name.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_');
       const pdfFileName = `納品フィルム_罫書き_${filmPrefix}${cleanName}.pdf`;
 
-      // Web File System Access API に対応しているブラウザ（Chrome / Edge / Androidなど）
       if ('showDirectoryPicker' in window) {
         if (!nouhinDirHandle) {
           try {
@@ -1532,7 +1533,6 @@
         }
       }
 
-      // フォールバック（iPad SafariやAPI非対応環境の場合）
       pdf.save(pdfFileName);
 
     } catch (err) {
