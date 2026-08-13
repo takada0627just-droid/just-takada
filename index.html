@@ -49,7 +49,7 @@
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
 
-    /* メインキャンバスエリア (★線の太さ半分・中心赤点サイズ半分の精密照準カスタムカーソル) */
+    /* メインキャンバスエリア */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
       cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
@@ -69,6 +69,7 @@
     .modal-card input[type="number"], 
     .modal-card select { 
       font-size: 24px; padding: 12px 16px; border-radius: 6px; border: 2px solid #666; background: #1a1a1a; color: #fff; min-height: 54px; 
+      text-transform: uppercase; /* ★入力時英大文字固定表示 */
     }
     .modal-card input[type="color"] { width: 80px; height: 54px; border: none; border-radius: 6px; cursor: pointer; }
     .modal-card label { font-size: 22px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -183,11 +184,11 @@
     </div>
     <div class="modal-row">
       <span>No. (任意):</span>
-      <input type="text" id="film-opening-num" placeholder="例: 1" style="width:300px;">
+      <input type="text" id="film-opening-num" placeholder="例: 1" style="width:300px;" autocapitalize="characters">
     </div>
     <div class="modal-row">
       <span>フィルム№:</span>
-      <input type="text" id="film-code-input" placeholder="例: 1F-F1" style="width:300px;">
+      <input type="text" id="film-code-input" placeholder="例: 1F-F1" style="width:300px;" autocapitalize="characters">
     </div>
     <div class="modal-row">
       <span>配置位置:</span>
@@ -273,7 +274,7 @@
     <h3>💮 確認印設定</h3>
     <div class="modal-row">
       <span>印影文字:</span>
-      <input type="text" id="confirm-stamp-text" value="確認" placeholder="例: 確認, 検印, 済" style="width:320px;">
+      <input type="text" id="confirm-stamp-text" value="確認" placeholder="例: 確認, 検印, 済" style="width:320px;" autocapitalize="characters">
     </div>
     <div class="modal-row">
       <span>形状:</span>
@@ -295,7 +296,8 @@
   <div class="modal-card">
     <h3>📏 画面定規合わせ (モニター物理校正)</h3>
     <p style="font-size:18px; color:#ccc; line-height:1.4;">下青色の基準バーに手物の定規（物差し）を当て、定規の100mm目盛りとバーの長さを一致させてください。</p>
-    <div id="gauge-bar" style="width: 100mm; height: 30px; background: #0088ff; border: 3px solid #fff; margin: 12px 0; border-radius: 4px;"></div>
+    <!-- ★変更指示1: 境界の迷いを無くすため白枠(border)を削除し完全な青色バーに変更 -->
+    <div id="gauge-bar" style="width: 100mm; height: 30px; background: #0088ff; border: none; margin: 12px 0; border-radius: 0;"></div>
     <div class="modal-row">
       <span>基準バーの画面実測値:</span>
       <div>
@@ -320,7 +322,7 @@
     </div>
     <div class="modal-row">
       <span>参照先URL/パス:</span>
-      <input type="text" id="cloud-path-input" placeholder="例: gdrive://JustCore/納品フィルム" style="width:380px;">
+      <input type="text" id="cloud-path-input" placeholder="例: gdrive://JustCore/納品フィルム" style="width:380px;" autocapitalize="characters">
     </div>
     <div class="modal-row">
       <span>移送対象:</span>
@@ -361,8 +363,8 @@
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
-  // ★線の太さ半分・中心赤点サイズ半分の精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  // ★超大型3倍 96x96px 精密照準SVGカスタムカーソル
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -425,8 +427,20 @@
   document.getElementById('cloud-path-input').value = cloudPreset.path;
   document.getElementById('cloud-target').value = cloudPreset.target;
 
+  // ★変更指示2: 全テキスト入力欄の自動英大文字変換リスナー設定
+  document.querySelectorAll('input[type="text"]').forEach(input => {
+    input.addEventListener('input', e => {
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      e.target.value = e.target.value.toUpperCase();
+      if (start !== null && end !== null) {
+        try { e.target.setSelectionRange(start, end); } catch (err) {}
+      }
+    });
+  });
+
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v16';
+  const DB_NAME = 'XRayKagakiDB_v17';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -626,7 +640,7 @@
     updateCanvasTransform();
   };
 
-  // 実測100%表示機能
+  // ★実測100%表示機能
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
@@ -719,7 +733,7 @@
       drawPath(ctx, { type: 'pen', path: [startPt, tempEndPt], style: penStyle, color: penColor, width: penWidth });
     }
 
-    // ★測定・寸法補正・直角測定のドラッグ中線プレビュー (1点目ドラッグ中 measureStep===0 の時はガイド線を表示しながらドラッグ)
+    // ★変更指示2: 測定・寸法補正・直角測定のドラッグ中線リアルタイムプレビュー表示 (1点目ドラッグ中から表示)
     if (isDrawing && tempEndPt) {
       if (currentMode === 'calibrate' || currentMode === 'measure') {
         if (startPt) {
@@ -736,12 +750,12 @@
         ctx.strokeStyle = '#0088ff';
         ctx.lineWidth = 3;
         ctx.setLineDash([4, 4]);
-        if (measureStep === 0 && startPt) {
+        if (measureStep <= 1 && startPt) {
           ctx.beginPath();
           ctx.moveTo(startPt.x, startPt.y);
           ctx.lineTo(tempEndPt.x, tempEndPt.y);
           ctx.stroke();
-        } else if (measureStep === 1 && startPt && secondPt) {
+        } else if (measureStep === 2 && startPt && secondPt) {
           ctx.beginPath();
           ctx.moveTo(startPt.x, startPt.y);
           ctx.lineTo(secondPt.x, secondPt.y);
@@ -752,7 +766,7 @@
       }
     }
 
-    // ★測定系モード：タッチ/ドラッグ位置に超大型3倍照準マークを画面オーバーレイ描画
+    // 測定系モード：タッチ/ドラッグ位置に超大型3倍照準マークを画面オーバーレイ描画
     if (['measure', 'right_measure', 'calibrate'].includes(currentMode) && tempEndPt) {
       drawLargeTargetCursor(ctx, tempEndPt);
     }
@@ -760,14 +774,14 @@
     ctx.restore();
   };
 
-  // ★キャンバス上オーバーレイ照準描画 (線の太さ半分・中心赤点サイズ半分)
+  // ★キャンバス上オーバーレイ照準描画 (変更指示1: 線の太さ半分・中心赤点サイズ半分)
   const drawLargeTargetCursor = (targetCtx, pt) => {
     if (!pt) return;
     targetCtx.save();
     
     const sz = 32 / scale;
     const gap = 10 / scale;
-    const strokeW = 1.75 / scale; // 線の太さ半分
+    const strokeW = 1.75 / scale;
 
     const lines = [
       { x1: pt.x, y1: pt.y - gap - sz, x2: pt.x, y2: pt.y - gap },
@@ -849,7 +863,7 @@
     targetCtx.setLineDash([]);
   };
 
-  // ★測定線描画: 文字サイズ2.5倍 (60px) & 測定線からテキストを40pxオフセット表示
+  // 測定線描画 (文字サイズ60px・オフセット40px)
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
@@ -1067,7 +1081,7 @@
     return null;
   };
 
-  // ★Pointer Events 統一インプット制御ロジック
+  // Pointer Events 統一インプット制御ロジック
   const handleInputStart = (clientX, clientY) => {
     const pt = getCanvasCoordsFromClient(clientX, clientY);
 
@@ -1130,6 +1144,7 @@
       startPt = pt;
       tempEndPt = pt;
     } else if (currentMode === 'measure' || currentMode === 'calibrate' || currentMode === 'right_measure') {
+      // ★変更指示2: 1点目ドラッグ時からもリアルタイムでプレビュー線を伸ばす
       isDrawing = true;
       if (measureStep === 0) {
         startPt = pt;
