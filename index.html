@@ -49,15 +49,16 @@
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
 
-    /* メインキャンバスエリア (超大型96x96px 精密赤点照準 SVG カスタムカーソル) */
+    /* メインキャンバスエリア (3倍超大型 96x96px 精密赤点照準 SVG カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
       cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
     }
     canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
-    /* 左側フローティングツールパネル */
-    #floating-toolbar { position: absolute; top: 12px; left: 12px; background: rgba(40,40,40,0.88); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+    /* 左側フローティングツールパネルコンテナ */
+    #floating-toolbar-container { position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
+    #floating-toolbar { background: rgba(40,40,40,0.88); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
 
     /* Viewerモード専用 画面固定/解除フロートボタン */
     #viewer-lock-btn {
@@ -95,16 +96,15 @@
 <input type="file" id="file-input" multiple accept="image/*" style="display:none;">
 
 <div id="app-container">
-  <!-- ヘッダーツールバー -->
+  <!-- ヘッダーツールバー (★画面定規合わせボタンをフィルム№の右隣に移動) -->
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
     <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
     <button class="btn btn-green" id="btn-open-file">📄 写真選択</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
-    <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
-    <button class="btn btn-dark" id="btn-invert-color">🌗 白黒反転</button>
-    <button class="btn btn-blue" id="btn-zoom-100">📐 100%表示(実測)</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
+    <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
+    <button class="btn btn-blue" id="btn-zoom-100">📐 100%表示(実測)</button>
     <button class="btn" id="btn-fit">全体表示</button>
     
     <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
@@ -143,36 +143,40 @@
       </div>
     </div>
 
-    <!-- 左浮き出し描画ツールパネル -->
-    <div id="floating-toolbar">
-      <button class="btn active" id="tool-select" title="選択・移動・変形・回転">👈 選択</button>
-      <button class="btn" id="tool-viewer" title="ビューアモード(移動専用/100%固定)">👁️ Viewer</button>
-      <button class="btn" id="tool-measure" title="2点間測定">📏 測定</button>
-      <button class="btn" id="tool-right-measure" title="直角3点測定">📐 直角測定</button>
+    <!-- 左浮き出し描画ツールパネル (★Viewerボタンを外側に独立配置、白黒反転を確認印の上に配置) -->
+    <div id="floating-toolbar-container">
+      <button class="btn" id="tool-viewer" title="ビューアモード(移動専用/100%固定)" style="padding:8px; width:100%; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.4);">👁️ Viewer</button>
       
-      <select id="pen-style-select" style="width:75px;">
-        <option value="実線">実線</option>
-        <option value="破線小">破線小</option>
-        <option value="破線中">破線中</option>
-        <option value="破線大">破線大</option>
-        <option value="一点鎖線">一点鎖線</option>
-      </select>
-      <!-- ★追加機能: ペン・直線・文字等の共通カラーピッカー -->
-      <div style="display:flex; align-items:center; gap:4px;" title="ペン・直線・文字の描画色">
-        <span style="font-size:10px;">🎨色:</span>
-        <input type="color" id="pen-color-picker" value="#ff0000" style="width:45px; height:26px; border:1px solid #555; border-radius:3px; cursor:pointer;">
-      </div>
-      <button class="btn" id="tool-pen" title="ペン描画">✏️ ペン</button>
-      <button class="btn" id="tool-straight" title="直線描画">📏 直線</button>
+      <div id="floating-toolbar">
+        <button class="btn active" id="tool-select" title="選択・移動・変形・回転">👈 選択</button>
+        <button class="btn" id="tool-measure" title="2点間測定">📏 測定</button>
+        <button class="btn" id="tool-right-measure" title="直角3点測定">📐 直角測定</button>
+        
+        <select id="pen-style-select" style="width:75px;">
+          <option value="実線">実線</option>
+          <option value="破線小">破線小</option>
+          <option value="破線中">破線中</option>
+          <option value="破線大">破線大</option>
+          <option value="一点鎖線">一点鎖線</option>
+        </select>
+        <div style="display:flex; align-items:center; gap:4px;" title="ペン・直線・文字の描画色">
+          <span style="font-size:10px;">🎨色:</span>
+          <input type="color" id="pen-color-picker" value="#ff0000" style="width:45px; height:26px; border:1px solid #555; border-radius:3px; cursor:pointer;">
+        </div>
+        <button class="btn" id="tool-pen" title="ペン描画">✏️ ペン</button>
+        <button class="btn" id="tool-straight" title="直線描画">📏 直線</button>
 
-      <button class="btn" id="tool-stamp" title="検出物（タップ配置）">🏷️ 検出物</button>
-      <button class="btn" id="tool-shape" title="図形（タップ配置）">🔲 図形</button>
-      <button class="btn" id="tool-text" title="文字（タップ配置）">📝 文字</button>
-      <button class="btn btn-warning" id="tool-confirm-stamp" title="確認印（タップ配置）">💮 確認印</button>
-      <button class="btn" id="tool-eraser" title="消しゴム">🧹 消しゴム</button>
-      <hr style="border-color:#444;">
-      <button class="btn" id="btn-undo">↩ 戻る</button>
-      <button class="btn" id="btn-redo">↪ 進む</button>
+        <button class="btn" id="tool-stamp" title="検出物（タップ配置）">🏷️ 検出物</button>
+        <button class="btn" id="tool-shape" title="図形（タップ配置）">🔲 図形</button>
+        <button class="btn" id="tool-text" title="文字（タップ配置）">📝 文字</button>
+        
+        <button class="btn btn-dark" id="btn-invert-color">🌗 白黒反転</button>
+        <button class="btn btn-warning" id="tool-confirm-stamp" title="確認印（タップ配置）">💮 確認印</button>
+        <button class="btn" id="tool-eraser" title="消しゴム">🧹 消しゴム</button>
+        <hr style="border-color:#444;">
+        <button class="btn" id="btn-undo">↩ 戻る</button>
+        <button class="btn" id="btn-redo">↪ 進む</button>
+      </div>
     </div>
 
     <!-- Viewerモード専用 画面固定/解除フロートボタン -->
@@ -231,7 +235,7 @@
   </div>
 </div>
 
-<!-- 2. 検出物選択ダイアログ（★変更指示: タイトル変更、縦横切り替え、文字色選択追加） -->
+<!-- 2. 検出物選択ダイアログ -->
 <div class="modal-overlay" id="modal-stamp">
   <div class="modal-card">
     <h3>検出物 選択</h3>
@@ -268,7 +272,7 @@
   </div>
 </div>
 
-<!-- 3. 図形選択ダイアログ（★追加機能: 図形枠色選択機能追加） -->
+<!-- 3. 図形選択ダイアログ -->
 <div class="modal-overlay" id="modal-shape">
   <div class="modal-card">
     <h3>🔲 図形選択</h3>
@@ -293,7 +297,7 @@
   </div>
 </div>
 
-<!-- 4. 確認印ダイアログ -->
+<!-- 4. 確認印ダイアログ (★追加機能: カラー選択・サイズ選択大中小・文字プリセット対応) -->
 <div class="modal-overlay" id="modal-confirm-stamp">
   <div class="modal-card">
     <h3>💮 確認印設定</h3>
@@ -307,6 +311,18 @@
         <option value="circle">丸型</option>
         <option value="rect">角型</option>
       </select>
+    </div>
+    <div class="modal-row">
+      <span>印影サイズ:</span>
+      <div style="display:flex; gap:16px;">
+        <label><input type="radio" name="confirm-stamp-size-level" value="small"> 小</label>
+        <label><input type="radio" name="confirm-stamp-size-level" value="mid" checked> 中 (標準)</label>
+        <label><input type="radio" name="confirm-stamp-size-level" value="large"> 大</label>
+      </div>
+    </div>
+    <div class="modal-row">
+      <span>印影色:</span>
+      <input type="color" id="confirm-stamp-color-input" value="#d9534f">
     </div>
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
@@ -387,8 +403,8 @@
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
-  // ★超大型3倍 96x96px 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  // 精密照準SVGカスタムカーソル
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -429,8 +445,8 @@
   let pinchPanStart = { x: 0, y: 0 };
 
   // 変形・回転ハンドル状態
-  let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3', 'move_line'
-  let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, size: 140, dist: 1, p1: null, p2: null, p3: null };
+  let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3', 'move_line', 'move_obj'
+  let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, size: 140, dist: 1, p1: null, p2: null, p3: null, initialPath: null, objX: 0, objY: 0 };
 
   // 納品フィルム保存先ディレクトリハンドル
   let nouhinDirHandle = null;
@@ -440,6 +456,9 @@
   let calibratedPMM = parseFloat(localStorage.getItem('calibratedPMM')) || (96.0 / 25.4); // デフォルト px/mm
   let screenPMM = parseFloat(localStorage.getItem('screenPMM')) || (96.0 / 25.4); // モニター物理校正 px/mm
   let cloudPreset = JSON.parse(localStorage.getItem('cloudPreset')) || { path: 'gdrive://JustCore/納品フィルム', target: 'pdf' };
+
+  // ★確認印プリセット保持
+  let confirmStampPreset = JSON.parse(localStorage.getItem('confirmStampPreset')) || { text: '確認', shape: 'circle', sizeLevel: 'mid', color: '#d9534f' };
 
   let penStyle = '実線';
   let penColor = '#ff0000';
@@ -453,6 +472,13 @@
   document.getElementById('film-size-input').value = filmPreset.size;
   document.getElementById('cloud-path-input').value = cloudPreset.path;
   document.getElementById('cloud-target').value = cloudPreset.target;
+
+  // 確認印ダイアログの初期値プリセット反映
+  document.getElementById('confirm-stamp-text').value = confirmStampPreset.text || '確認';
+  document.getElementById('confirm-stamp-shape').value = confirmStampPreset.shape || 'circle';
+  document.getElementById('confirm-stamp-color-input').value = confirmStampPreset.color || '#d9534f';
+  const sizeRadio = document.querySelector(`input[name="confirm-stamp-size-level"][value="${confirmStampPreset.sizeLevel || 'mid'}"]`);
+  if (sizeRadio) sizeRadio.checked = true;
 
   // ペン・直線・文字の共通カラーピッカー連動
   const penColorPicker = document.getElementById('pen-color-picker');
@@ -474,7 +500,7 @@
   });
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v19';
+  const DB_NAME = 'XRayKagakiDB_v20';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -684,7 +710,7 @@
     updateCanvasTransform();
   };
 
-  // ★実測100%表示機能
+  // 実測100%表示機能
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
@@ -917,6 +943,7 @@
     targetCtx.setLineDash([]);
   };
 
+  // 測定線描画
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
@@ -986,7 +1013,6 @@
     targetCtx.fillText(obj.text, obj.x, obj.y);
   };
 
-  // ★検出物スタンプ描画: 縦書き (orient === 'vert') / 横書きおよび色の反映
   const drawStamp = (targetCtx, obj) => {
     const col = obj.color || '#00a8ff';
     targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
@@ -1004,7 +1030,6 @@
       targetCtx.font = `bold ${fontSize}px Arial`;
       
       if (obj.orient === 'vert') {
-        // ★縦書き描画（上から下へ一文字ずつ並べて描画）
         const chars = (obj.text || '').split('');
         chars.forEach((c, idx) => {
           targetCtx.fillText(c, obj.x, obj.y + (idx * fontSize * 1.1));
@@ -1015,8 +1040,10 @@
     }
   };
 
+  // ★確認印描画 (文字サイズ1.25倍化: r * 0.75, カラー適用)
   const drawConfirmStamp = (targetCtx, obj) => {
-    targetCtx.strokeStyle = '#d9534f'; targetCtx.fillStyle = '#d9534f'; targetCtx.lineWidth = 4;
+    const col = obj.color || '#d9534f';
+    targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
     const r = obj.size || 50;
 
     if (obj.shape === 'rect') {
@@ -1025,12 +1052,14 @@
       targetCtx.beginPath(); targetCtx.arc(obj.x, obj.y, r, 0, Math.PI*2); targetCtx.stroke();
     }
 
-    targetCtx.font = `bold ${r*0.6}px Arial`; targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle';
+    // ★指示変更: 印影文字サイズを従来の1.25倍に拡大 (r * 0.6 * 1.25 = r * 0.75)
+    targetCtx.font = `bold ${r * 0.75}px Arial`; 
+    targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle';
     targetCtx.fillText(obj.text || "確認", obj.x, obj.y);
     targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'alphabetic';
   };
 
-  // 選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
+  // ★選択ツールの枠 ＆ 直線/測定線用シースルー（黄色の円）スナップポイント描画
   const drawSelectionBounds = (obj) => {
     if (obj.type === 'measure') {
       ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
@@ -1041,6 +1070,19 @@
         ctx.strokeStyle = '#00ffff';
         ctx.beginPath(); ctx.arc(obj.p3.x, obj.p3.y, r, 0, Math.PI * 2); ctx.stroke();
       }
+    } else if (obj.type === 'pen' && obj.path.length >= 2) {
+      // ★直線（penオブジェクトで2点以上）選択時：始点と終点に黄色の円（塗りつぶしなし）を描画
+      ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
+      const r = 14;
+      const pStart = obj.path[0];
+      const pEnd = obj.path[obj.path.length - 1];
+      ctx.beginPath(); ctx.arc(pStart.x, pStart.y, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(pEnd.x, pEnd.y, r, 0, Math.PI * 2); ctx.stroke();
+
+      const b = getRawBounds(obj);
+      ctx.setLineDash([6, 6]);
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.setLineDash([]);
     } else {
       const b = getRawBounds(obj);
       ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
@@ -1059,7 +1101,7 @@
         if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
         if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
       });
-      return { x: minX, y: minY, w: Math.max(30, maxX - minX), h: Math.max(30, maxY - minY) };
+      return { x: minX - 10, y: minY - 10, w: Math.max(30, maxX - minX + 20), h: Math.max(30, maxY - minY + 20) };
     } else if (obj.type === 'text') {
       const fontSize = obj.size || 140;
       const w = Math.max(100, (obj.text ? obj.text.length : 1) * fontSize * 0.7);
@@ -1104,7 +1146,6 @@
     }
   };
 
-  // ★測定系モードで20px上方にシフトされた「実際のドロップ座標」を返す座標計算
   const getCanvasCoordsFromClient = (clientX, clientY) => {
     const rect = canvas.getBoundingClientRect();
     let cx = (clientX - rect.left - panX) / scale;
@@ -1120,7 +1161,7 @@
   const isPalmTouch = (e) => {
     if (e.touches && e.touches.length > 0) {
       const t = e.touches[0];
-      if (t.radiusX > 10 || t.radiusY > 10) return true; // 手刀部（感度向上10px）カット
+      if (t.radiusX > 10 || t.radiusY > 10) return true;
     }
     return false;
   };
@@ -1176,6 +1217,17 @@
           transformStart = { x: pt.x, y: pt.y, p1: { ...selectedObj.p1 }, p2: { ...selectedObj.p2 }, p3: selectedObj.p3 ? { ...selectedObj.p3 } : null };
           return;
         }
+      } else if (selectedObj.type === 'pen' && selectedObj.path.length >= 2) {
+        // ★直線オブジェクトの始点・終点端点調整（端点の黄色円ドラッグ）
+        const hitR = 25;
+        const pStart = selectedObj.path[0];
+        const pEnd = selectedObj.path[selectedObj.path.length - 1];
+        if (Math.hypot(pt.x - pStart.x, pt.y - pStart.y) < hitR) {
+          activeTransformHandle = 'pen_p1'; return;
+        }
+        if (Math.hypot(pt.x - pEnd.x, pt.y - pEnd.y) < hitR) {
+          activeTransformHandle = 'pen_p2'; return;
+        }
       } else {
         const b = getRawBounds(selectedObj);
         const brHandle = { x: b.x + b.w, y: b.y + b.h };
@@ -1197,6 +1249,19 @@
           transformStart = { x: pt.x, y: pt.y, rot: selectedObj.rotation || 0 };
           return;
         }
+      }
+
+      // ★選択オブジェクト全体のドラッグ移動
+      const hit = hitTest(pt);
+      if (hit === selectedObj) {
+        activeTransformHandle = 'move_obj';
+        transformStart = {
+          x: pt.x, y: pt.y,
+          objX: selectedObj.x || 0,
+          objY: selectedObj.y || 0,
+          initialPath: selectedObj.path ? JSON.parse(JSON.stringify(selectedObj.path)) : null
+        };
+        return;
       }
     }
 
@@ -1248,7 +1313,6 @@
     } else if (currentMode === 'pending_text') {
       const txt = prompt("表示する文字を入力してください:");
       if (txt) {
-        // ★文字ツール：カラーピッカーの選択色(penColor)を直接適用
         objects.push({ type: 'text', text: txt, x: pt.x, y: pt.y, size: filmPreset.size, color: penColor });
         pushUndo(); redraw();
       }
@@ -1285,6 +1349,20 @@
           if (selectedObj.p3 && transformStart.p3) {
             selectedObj.p3 = { x: transformStart.p3.x + dx, y: transformStart.p3.y + dy };
           }
+        }
+      } else if (selectedObj.type === 'pen' && (activeTransformHandle === 'pen_p1' || activeTransformHandle === 'pen_p2')) {
+        // ★直線の両端ドラッグ長さ・角度変更
+        if (activeTransformHandle === 'pen_p1') selectedObj.path[0] = { x: pt.x, y: pt.y };
+        else if (activeTransformHandle === 'pen_p2') selectedObj.path[selectedObj.path.length - 1] = { x: pt.x, y: pt.y };
+      } else if (activeTransformHandle === 'move_obj') {
+        // ★選択オブジェクト全体の移動処理
+        const dx = pt.x - transformStart.x;
+        const dy = pt.y - transformStart.y;
+        if (selectedObj.type === 'pen' && transformStart.initialPath) {
+          selectedObj.path = transformStart.initialPath.map(p => ({ x: p.x + dx, y: p.y + dy }));
+        } else {
+          selectedObj.x = transformStart.objX + dx;
+          selectedObj.y = transformStart.objY + dy;
         }
       } else {
         if (activeTransformHandle === 'br') {
@@ -1344,7 +1422,6 @@
     if (isDrawing && currentMode === 'pen') {
       isDrawing = false;
       if (currentPath.length > 1) {
-        // ★フリーハンドペン描画時：選択カラー(penColor)適用
         objects.push({ type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
         pushUndo(); redraw();
       }
@@ -1352,7 +1429,6 @@
     } else if (isDrawing && currentMode === 'straight') {
       isDrawing = false;
       if (startPt && tempEndPt && Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y) > 3) {
-        // ★直線モード描画時：選択カラー(penColor)適用
         objects.push({ type: 'pen', path: [startPt, tempEndPt], style: penStyle, color: penColor, width: penWidth });
         pushUndo(); redraw();
       }
@@ -1567,18 +1643,28 @@
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
 
-  // 確認印ダイアログ
+  // ★確認印ダイアログ (サイズ大中小・カラー選択・プリセット記憶対応)
   document.getElementById('tool-confirm-stamp').onclick = () => document.getElementById('modal-confirm-stamp').style.display = 'flex';
   document.getElementById('modal-confirm-cancel').onclick = () => document.getElementById('modal-confirm-stamp').style.display = 'none';
   document.getElementById('modal-confirm-ok').onclick = () => {
     const text = document.getElementById('confirm-stamp-text').value.trim() || '確認';
     const shape = document.getElementById('confirm-stamp-shape').value;
-    pendingConfirmData = { text, shape, size: 50 };
+    const sizeLevel = document.querySelector('input[name="confirm-stamp-size-level"]:checked').value;
+    const color = document.getElementById('confirm-stamp-color-input').value;
+
+    confirmStampPreset = { text, shape, sizeLevel, color };
+    localStorage.setItem('confirmStampPreset', JSON.stringify(confirmStampPreset));
+
+    let baseR = 50;
+    if (sizeLevel === 'small') baseR = 35;
+    else if (sizeLevel === 'large') baseR = 70;
+
+    pendingConfirmData = { text, shape, size: baseR, color: color };
     setMode('pending_confirm', 'モード: 確認印の配置位置をタップしてください');
     document.getElementById('modal-confirm-stamp').style.display = 'none';
   };
 
-  // ★検出物ダイアログ (タップ配置 ＋ 縦横方向・文字色選択機能)
+  // 検出物ダイアログ (タップ配置)
   document.getElementById('tool-stamp').onclick = () => document.getElementById('modal-stamp').style.display = 'flex';
   document.getElementById('modal-stamp-cancel').onclick = () => document.getElementById('modal-stamp').style.display = 'none';
   document.getElementById('modal-stamp-ok').onclick = () => {
@@ -1590,7 +1676,7 @@
     document.getElementById('modal-stamp').style.display = 'none';
   };
 
-  // ★図形ダイアログ (タップ配置 ＋ 枠色選択機能)
+  // 図形ダイアログ (タップ配置)
   document.getElementById('tool-shape').onclick = () => document.getElementById('modal-shape').style.display = 'flex';
   document.getElementById('modal-shape-cancel').onclick = () => document.getElementById('modal-shape').style.display = 'none';
   document.getElementById('modal-shape-ok').onclick = () => {
