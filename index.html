@@ -366,10 +366,11 @@
   let isPanning = false, startPan = { x: 0, y: 0 };
 
   // ピンチズーム制御用
-  let initialPinchDist = null;
-  let initialPinchScale = 1.0;
-  let initialCenter = { x: 0, y: 0 };
-  let initialPan = { x: 0, y: 0 };
+  let touchMode = null; // 'single', 'pinch'
+  let pinchStartDist = 0;
+  let pinchStartScale = 1.0;
+  let pinchCenter = { x: 0, y: 0 };
+  let pinchPanStart = { x: 0, y: 0 };
 
   // 変形・回転ハンドル状態
   let activeTransformHandle = null; 
@@ -387,8 +388,6 @@
   let pendingStampData = null;
   let pendingConfirmData = null;
 
-  let isTouchActive = false;
-
   // フォーム初期セット
   document.getElementById('film-pos-select').value = filmPreset.pos;
   document.getElementById('film-color-input').value = filmPreset.color;
@@ -397,7 +396,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v8';
+  const DB_NAME = 'XRayKagakiDB_v9';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -590,12 +589,13 @@
     updateCanvasTransform();
   };
 
-  // ★実測100%表示機能: 画像の1ミリ当たりのピクセル数と、モニター表示のピクセル/mmを完全一致させるスケール決定
+  // ★実測100%表示機能: 画面上の1mmと定規が1:1で完全合致するスケールを精密計算
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
     const activeImgPMM = item.pmm || calibratedPMM;
 
+    // スケール = 画面で1mmを表現するpx / 画像で1mmを表現するpx
     scale = screenPMM / activeImgPMM;
 
     const img = item.imgObj;
@@ -886,8 +886,8 @@
     }
   };
 
-  // --- 座標変換 & パームリジェクション ---
-  const getCanvasCoordsFromClient = (clientX, clientY) => {
+  // --- 座標計算 & 統合インプット制御 ---
+  const getCanvasCoords = (clientX, clientY) => {
     const rect = canvas.getBoundingClientRect();
     return {
       x: (clientX - rect.left - panX) / scale,
@@ -895,17 +895,8 @@
     };
   };
 
-  const isPalmTouch = (e) => {
-    if (e.touches && e.touches.length > 0) {
-      const t = e.touches[0];
-      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部（広面積接触）判定・カット
-    }
-    return false;
-  };
-
-  // --- タッチ・Pointer 統一ハンドラ ---
-  const onPointerStart = (clientX, clientY) => {
-    const pt = getCanvasCoordsFromClient(clientX, clientY);
+  const handleInputStart = (clientX, clientY) => {
+    const pt = getCanvasCoords(clientX, clientY);
 
     if (currentMode === 'select' && selectedObj) {
       const b = getRawBounds(selectedObj);
@@ -936,13 +927,18 @@
       isDrawing = true;
       currentPath = [pt];
     } else if (currentMode === 'measure' || currentMode === 'calibrate') {
+      isDrawing = true;
       startPt = pt;
       tempEndPt = pt;
-      isDrawing = true;
     } else if (currentMode === 'right_measure') {
-      if (!startPt) { startPt = pt; tempEndPt = pt; isDrawing = true; }
-      else if (!secondPt) { secondPt = pt; tempEndPt = pt; isDrawing = true; }
-      else {
+      if (!startPt) {
+        isDrawing = true;
+        startPt = pt;
+        tempEndPt = pt;
+      } else if (!secondPt) {
+        isDrawing = true;
+        tempEndPt = pt;
+      } else {
         // 3点目確定
         objects.push({ type: 'measure', p1: startPt, p2: secondPt, p3: pt, color: '#0088ff' });
         startPt = null; secondPt = null; tempEndPt = null; isDrawing = false;
@@ -973,14 +969,14 @@
     }
   };
 
-  const onPointerMove = (clientX, clientY) => {
+  const handleInputMove = (clientX, clientY) => {
     if (isPanning) {
       panX = clientX - startPan.x;
       panY = clientY - startPan.y;
       redraw(); return;
     }
 
-    const pt = getCanvasCoordsFromClient(clientX, clientY);
+    const pt = getCanvasCoords(clientX, clientY);
 
     if (activeTransformHandle && selectedObj) {
       if (activeTransformHandle === 'br') {
@@ -1009,16 +1005,9 @@
     }
   };
 
-  const onPointerEnd = (clientX, clientY) => {
+  const handleInputEnd = () => {
     if (activeTransformHandle) { activeTransformHandle = null; pushUndo(); return; }
     if (isPanning) { isPanning = false; return; }
-
-    let pt = null;
-    if (clientX !== undefined && clientY !== undefined) {
-      pt = getCanvasCoordsFromClient(clientX, clientY);
-    } else if (tempEndPt) {
-      pt = tempEndPt;
-    }
 
     if (isDrawing && currentMode === 'pen') {
       isDrawing = false;
@@ -1029,130 +1018,129 @@
       currentPath = [];
     } else if (isDrawing && currentMode === 'measure') {
       isDrawing = false;
-      if (startPt && pt && Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
-        objects.push({ type: 'measure', p1: startPt, p2: pt, color: '#ff0000' });
+      if (startPt && tempEndPt && Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y) > 3) {
+        objects.push({ type: 'measure', p1: startPt, p2: tempEndPt, color: '#ff0000' });
         pushUndo(); redraw();
       }
       startPt = null; tempEndPt = null;
     } else if (isDrawing && currentMode === 'calibrate') {
       isDrawing = false;
-      if (startPt && pt) {
-        const distPx = Math.hypot(pt.x - startPt.x, pt.y - startPt.y);
-        if (distPx > 5) {
-          setTimeout(() => {
-            const inputMM = prompt(`引いた線の長さ (ピクセル: ${distPx.toFixed(1)} px)\n画面上の物差しで測った既知の実測寸法(mm)を入力してください:`, "100.0");
-            if (inputMM) {
-              const knownMM = parseFloat(inputMM);
-              if (!isNaN(knownMM) && knownMM > 0) {
-                calibratedPMM = distPx / knownMM;
-                localStorage.setItem('calibratedPMM', calibratedPMM);
-                if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
-                  imagesList[currentImgIndex].pmm = calibratedPMM;
-                  saveToDB(imagesList[currentImgIndex]);
-                }
-                objects.push({ type: 'measure', p1: startPt, p2: pt, isCalibration: true, knownMM: knownMM, color: '#00ff00' });
-                alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
-                pushUndo(); redraw();
+      if (startPt && tempEndPt && Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y) > 3) {
+        const distPx = Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y);
+        const p1 = { ...startPt }, p2 = { ...tempEndPt };
+        setTimeout(() => {
+          const inputMM = prompt(`引いた線の長さ: ${distPx.toFixed(1)} px\n画面上の物差しで測った既知の実測寸法(mm)を入力してください:`, "100.0");
+          if (inputMM) {
+            const knownMM = parseFloat(inputMM);
+            if (!isNaN(knownMM) && knownMM > 0) {
+              calibratedPMM = distPx / knownMM;
+              localStorage.setItem('calibratedPMM', calibratedPMM);
+              if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+                imagesList[currentImgIndex].pmm = calibratedPMM;
+                saveToDB(imagesList[currentImgIndex]);
               }
+              objects.push({ type: 'measure', p1: p1, p2: p2, isCalibration: true, knownMM: knownMM, color: '#00ff00' });
+              alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
+              pushUndo(); redraw();
             }
-            setMode('select');
-          }, 50);
-        }
+          }
+          setMode('select');
+        }, 50);
       }
       startPt = null; tempEndPt = null;
     } else if (currentMode === 'right_measure' && startPt && !secondPt) {
-      if (pt && Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
-        secondPt = pt; // L1ドラッグ確定、次は3点目タップ待ち
+      if (tempEndPt && Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y) > 3) {
+        secondPt = { ...tempEndPt }; // L1ドラッグ確定！3点目タップ待ち
         tempEndPt = null;
+        isDrawing = false;
+        redraw();
       }
     }
   };
 
-  // --- タッチイベントリスナー (iPad・スマホ向け) ---
+  // --- タッチイベント (iPad・スマートフォン) ---
   canvas.addEventListener('touchstart', e => {
-    isTouchActive = true;
-    if (isPalmTouch(e)) { e.preventDefault(); return; }
+    e.preventDefault();
 
-    if (e.touches.length >= 2) {
-      if (isDrawing) { isDrawing = false; currentPath = []; startPt = null; secondPt = null; tempEndPt = null; }
+    if (e.touches.length === 2) {
+      touchMode = 'pinch';
+      isDrawing = false;
+      currentPath = [];
       
       const t1 = e.touches[0];
       const t2 = e.touches[1];
-      initialPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      initialPinchScale = scale;
-      initialCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-      initialPan = { x: panX, y: panY };
-
-      e.preventDefault();
+      pinchStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      pinchStartScale = scale;
+      pinchCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      pinchPanStart = { x: panX, y: panY };
       return;
     }
 
     if (e.touches.length === 1) {
+      touchMode = 'single';
       const t = e.touches[0];
-      onPointerStart(t.clientX, t.clientY);
-      e.preventDefault();
+      if (t.radiusX > 18 || t.radiusY > 18) return; // パームリジェクション
+      handleInputStart(t.clientX, t.clientY);
     }
   }, { passive: false });
 
   canvas.addEventListener('touchmove', e => {
-    if (isPalmTouch(e)) { e.preventDefault(); return; }
+    e.preventDefault();
 
-    if (e.touches.length >= 2 && initialPinchDist) {
-      e.preventDefault();
+    if (touchMode === 'pinch' && e.touches.length === 2) {
       const t1 = e.touches[0];
       const t2 = e.touches[1];
-      const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      if (currentDist === 0) return;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      if (dist === 0) return;
 
-      const currentCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-      const newScale = Math.min(4.0, Math.max(0.1, initialPinchScale * (currentDist / initialPinchDist)));
+      const curCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      const newScale = Math.min(4.0, Math.max(0.1, pinchStartScale * (dist / pinchStartDist)));
 
-      const imgPtX = (initialCenter.x - initialPan.x) / initialPinchScale;
-      const imgPtY = (initialCenter.y - initialPan.y) / initialPinchScale;
+      const centerImgX = (pinchCenter.x - pinchPanStart.x) / pinchStartScale;
+      const centerImgY = (pinchCenter.y - pinchPanStart.y) / pinchStartScale;
 
       scale = newScale;
-      panX = currentCenter.x - imgPtX * scale;
-      panY = currentCenter.y - imgPtY * scale;
+      panX = curCenter.x - centerImgX * scale;
+      panY = curCenter.y - centerImgY * scale;
 
       updateCanvasTransform();
       return;
     }
 
-    if (e.touches.length === 1 && !initialPinchDist) {
+    if (touchMode === 'single' && e.touches.length === 1) {
       const t = e.touches[0];
-      onPointerMove(t.clientX, t.clientY);
-      e.preventDefault();
+      if (t.radiusX > 18 || t.radiusY > 18) return;
+      handleInputMove(t.clientX, t.clientY);
     }
   }, { passive: false });
 
   canvas.addEventListener('touchend', e => {
-    if (e.touches.length < 2) { initialPinchDist = null; }
-    if (e.changedTouches && e.changedTouches.length > 0) {
-      const t = e.changedTouches[0];
-      onPointerEnd(t.clientX, t.clientY);
-    } else {
-      onPointerEnd();
+    e.preventDefault();
+    if (touchMode === 'pinch') {
+      if (e.touches.length < 2) touchMode = null;
+      return;
     }
-    setTimeout(() => { isTouchActive = false; }, 300);
-  });
+    if (touchMode === 'single') {
+      handleInputEnd();
+      touchMode = null;
+    }
+  }, { passive: false });
 
-  // --- マウスイベントリスナー (PC向け) ---
+  // --- マウスイベント (PC) ---
   let isMouseDown = false;
   canvas.addEventListener('mousedown', e => {
-    if (!isTouchActive) {
-      isMouseDown = true;
-      onPointerStart(e.clientX, e.clientY);
-    }
+    isMouseDown = true;
+    handleInputStart(e.clientX, e.clientY);
   });
   canvas.addEventListener('mousemove', e => {
-    if (!isTouchActive && (isMouseDown || isPanning)) {
-      onPointerMove(e.clientX, e.clientY);
+    if (isMouseDown || isPanning) {
+      handleInputMove(e.clientX, e.clientY);
     }
   });
   canvas.addEventListener('mouseup', e => {
-    if (!isTouchActive && (isMouseDown || isPanning)) {
+    if (isMouseDown || isPanning) {
       isMouseDown = false;
-      onPointerEnd(e.clientX, e.clientY);
+      handleInputEnd();
     }
   });
 
