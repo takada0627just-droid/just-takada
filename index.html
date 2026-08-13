@@ -6,8 +6,6 @@
   <title>ジャスト社 探査コア部専用 罫書きWEBアプリ</title>
   <meta name="theme-color" content="#0056b3">
   <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22罫書きWEBアプリ%22,%22short_name%22:%22罫書き%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#ffffff%22,%22theme_color%22:%22#0056b3%22}">
-  <!-- PDF生成用ライブラリ (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -427,11 +425,194 @@
 
 <script>
 /**
+ * ★完全オフライン対応 純粋JavaScript用 CRC32 / PDF 1.4 バイナリ生成器 / ZIPアーカイブ生成エンジン
+ */
+
+// 1. 純粋JS CRC32計算関数
+function crc32(uint8Array) {
+  let table = window._crc32Table;
+  if (!table) {
+    table = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) {
+        c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+      }
+      table[i] = c;
+    }
+    window._crc32Table = table;
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < uint8Array.length; i++) {
+    crc = (crc >>> 8) ^ table[(crc ^ uint8Array[i]) & 0xFF];
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function concatUint8Arrays(arrays) {
+  let totalLen = 0;
+  for (const arr of arrays) totalLen += arr.length;
+  const result = new Uint8Array(totalLen);
+  let offset = 0;
+  for (const arr of arrays) {
+    result.set(arr, offset);
+    offset += arr.length;
+  }
+  return result;
+}
+
+// 2. Canvasから取り出したJPEG DataURLを純粋JSで完全オフラインPDF化する関数
+function createPdfFromJpegDataUrl(jpegDataUrl, widthPt, heightPt, pxWidth, pxHeight) {
+  const base64Str = jpegDataUrl.split(',')[1];
+  const binaryStr = atob(base64Str);
+  const jpegLen = binaryStr.length;
+  const jpegBytes = new Uint8Array(jpegLen);
+  for (let i = 0; i < jpegLen; i++) {
+    jpegBytes[i] = binaryStr.charCodeAt(i);
+  }
+
+  const encoder = new TextEncoder();
+
+  const header = encoder.encode("%PDF-1.4\n%\xE2\xE3\xD1\xD3\n");
+  const obj1 = encoder.encode("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  const obj2 = encoder.encode("2 0 obj\n<< /Type /Pages /Kids [ 3 0 R ] /Count 1 >>\nendobj\n");
+  const obj3 = encoder.encode(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [ 0 0 ${widthPt.toFixed(2)} ${heightPt.toFixed(2)} ] /Resources << /XObject << /Im1 5 0 R >> >> /Contents 4 0 R >>\nendobj\n`);
+
+  const contentStr = `q ${widthPt.toFixed(2)} 0 0 ${heightPt.toFixed(2)} 0 0 cm /Im1 Do Q\n`;
+  const contentBytes = encoder.encode(contentStr);
+
+  const obj4Head = encoder.encode(`4 0 obj\n<< /Length ${contentBytes.length} >>\nstream\n`);
+  const obj4Tail = encoder.encode("endstream\nendobj\n");
+  const obj4Bytes = concatUint8Arrays([obj4Head, contentBytes, obj4Tail]);
+
+  const obj5Head = encoder.encode(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pxWidth} /Height ${pxHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+  const obj5Tail = encoder.encode("\nendstream\nendobj\n");
+  const obj5Bytes = concatUint8Arrays([obj5Head, jpegBytes, obj5Tail]);
+
+  const objects = [
+    { id: 1, bytes: obj1 },
+    { id: 2, bytes: obj2 },
+    { id: 3, bytes: obj3 },
+    { id: 4, bytes: obj4Bytes },
+    { id: 5, bytes: obj5Bytes }
+  ];
+
+  let currentOffset = header.length;
+  const offsets = [];
+  const bodyParts = [];
+
+  for (const obj of objects) {
+    offsets.push(currentOffset);
+    bodyParts.push(obj.bytes);
+    currentOffset += obj.bytes.length;
+  }
+
+  const xrefOffset = currentOffset;
+  let xrefStr = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const off of offsets) {
+    xrefStr += String(off).padStart(10, '0') + " 00000 n \n";
+  }
+  const xrefBytes = encoder.encode(xrefStr);
+
+  const trailerStr = `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  const trailerBytes = encoder.encode(trailerStr);
+
+  return concatUint8Arrays([header, ...bodyParts, xrefBytes, trailerBytes]);
+}
+
+// 3. 複数PDFを単一ZIPアーカイブ（“参照フォルダ名”_納品フィルム.zip）にまとめる純粋JS関数
+function createZipArchive(filesMap) {
+  const encoder = new TextEncoder();
+  const localHeaders = [];
+  const centralDirs = [];
+  let offset = 0;
+
+  for (const [filename, data] of Object.entries(filesMap)) {
+    const nameBytes = encoder.encode(filename);
+    const len = data.length;
+    const crc = crc32(data);
+
+    const lh = new Uint8Array(30 + nameBytes.length + len);
+    const view = new DataView(lh.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(6, 0, true);
+    view.setUint16(8, 0, true);
+    view.setUint16(10, 0, true);
+    view.setUint16(12, 0, true);
+    view.setUint32(14, crc, true);
+    view.setUint32(18, len, true);
+    view.setUint32(22, len, true);
+    view.setUint16(26, nameBytes.length, true);
+    view.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+    lh.set(data, 30 + nameBytes.length);
+
+    const cd = new Uint8Array(46 + nameBytes.length);
+    const cdView = new DataView(cd.buffer);
+    cdView.setUint32(0, 0x02064b50, true);
+    cdView.setUint16(4, 20, true);
+    cdView.setUint16(6, 20, true);
+    cdView.setUint16(8, 0, true);
+    cdView.setUint16(10, 0, true);
+    cdView.setUint16(12, 0, true);
+    cdView.setUint16(14, 0, true);
+    cdView.setUint32(16, crc, true);
+    cdView.setUint32(20, len, true);
+    cdView.setUint32(24, len, true);
+    cdView.setUint16(28, nameBytes.length, true);
+    cdView.setUint16(30, 0, true);
+    cdView.setUint16(32, 0, true);
+    cdView.setUint16(34, 0, true);
+    cdView.setUint16(36, 0, true);
+    cdView.setUint32(38, 0, true);
+    cdView.setUint32(42, offset, true);
+    cd.set(nameBytes, 46);
+
+    offset += lh.length;
+    localHeaders.push(lh);
+    centralDirs.push(cd);
+  }
+
+  const cdOffset = offset;
+  let cdSize = 0;
+  centralDirs.forEach(cd => cdSize += cd.length);
+  const count = Object.keys(filesMap).length;
+
+  const eocd = new Uint8Array(22);
+  const eView = new DataView(eocd.buffer);
+  eView.setUint32(0, 0x06054b50, true);
+  eView.setUint16(4, 0, true);
+  eView.setUint16(6, 0, true);
+  eView.setUint16(8, count, true);
+  eView.setUint16(10, count, true);
+  eView.setUint32(12, cdSize, true);
+  eView.setUint32(16, cdOffset, true);
+  eView.setUint16(20, 0, true);
+
+  return concatUint8Arrays([...localHeaders, ...centralDirs, eocd]);
+}
+
+// 4. ファイル保存ダウンロードヘルパー
+function triggerBlobDownload(blobData, filename) {
+  const blob = new Blob([blobData], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+
+/**
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
-  // 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  // 超大型3倍 96x96px 精密照準SVGカスタムカーソル
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -481,10 +662,6 @@
 
   // 補正保留用座標保持
   let pendingCalibData = null;
-
-  // 納品フィルム保存先ディレクトリハンドル
-  let nouhinDirHandle = null;
-  let nouhinDirName = '';
 
   // 設定プリセット (LocalStorage)
   let filmPreset = JSON.parse(localStorage.getItem('filmPreset')) || { pos: 'bottom', color: '#ffffff', size: 140 };
@@ -1016,7 +1193,6 @@
     targetCtx.setLineDash([]);
   };
 
-  // 測定線描画
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
@@ -1120,7 +1296,6 @@
     }
   };
 
-  // 確認印描画 (縦書き/横書き対応・文字サイズ1.25倍)
   const drawConfirmStamp = (targetCtx, obj) => {
     const col = obj.color || '#d9534f';
     targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
@@ -1153,7 +1328,6 @@
     targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'alphabetic';
   };
 
-  // 選択ツールの枠 ＆ 測定線用シースルー（黄色の円）スナップポイント描画
   const drawSelectionBounds = (obj) => {
     if (obj.type === 'measure') {
       ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
@@ -1870,8 +2044,34 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // ★「”参照フォルダ名”_納品フィルム」フォルダ自動作成・直接PDF保存処理
+  // ★「”参照フォルダ名”_納品フィルム.zip」直接PDF生成・ZIPまとめ保存処理
   document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex, false);
+
+  const generateSinglePdfUint8Array = (item) => {
+    const img = item.imgObj;
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = img.naturalWidth || img.width;
+    offCanvas.height = img.naturalHeight || img.height;
+    const offCtx = offCanvas.getContext('2d');
+
+    if (item.isInverted) offCtx.filter = 'invert(100%)';
+    offCtx.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
+    offCtx.filter = 'none';
+
+    const itemObjs = item.objects || (item === imagesList[currentImgIndex] ? objects : []);
+    if (itemObjs && itemObjs.length > 0) {
+      itemObjs.forEach(obj => renderObjectToContext(offCtx, obj));
+    }
+
+    const imgDataUrl = offCanvas.toDataURL('image/jpeg', 0.95);
+    const activePMM = item.pmm || calibratedPMM;
+    const activeDPI = activePMM * 25.4;
+
+    const pdfW = offCanvas.width * (72 / activeDPI);
+    const pdfH = offCanvas.height * (72 / activeDPI);
+
+    return createPdfFromJpegDataUrl(imgDataUrl, pdfW, pdfH, offCanvas.width, offCanvas.height);
+  };
 
   const savePDF = async (index, isBatch = false) => {
     if (index < 0 || !imagesList[index]) {
@@ -1888,39 +2088,7 @@
     }
 
     try {
-      const offCanvas = document.createElement('canvas');
-      offCanvas.width = img.naturalWidth || img.width;
-      offCanvas.height = img.naturalHeight || img.height;
-      const offCtx = offCanvas.getContext('2d');
-
-      if (item.isInverted) offCtx.filter = 'invert(100%)';
-      offCtx.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
-      offCtx.filter = 'none';
-
-      if (objects && objects.length > 0) {
-        objects.forEach(obj => renderObjectToContext(offCtx, obj));
-      }
-
-      const imgData = offCanvas.toDataURL('image/jpeg', 0.95);
-      const activePMM = item.pmm || calibratedPMM;
-      const activeDPI = activePMM * 25.4;
-
-      const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-      if (!jsPDFClass) {
-        if (!isBatch) alert("PDFライブラリ(jsPDF)の読み込みに失敗しています。");
-        return false;
-      }
-
-      const pdfW = offCanvas.width * (72 / activeDPI);
-      const pdfH = offCanvas.height * (72 / activeDPI);
-
-      const pdf = new jsPDFClass({
-        orientation: offCanvas.width > offCanvas.height ? 'l' : 'p',
-        unit: 'pt',
-        format: [pdfW, pdfH]
-      });
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+      const pdfBytes = generateSinglePdfUint8Array(item);
 
       const locStr = (item.filmLocation || '').trim();
       const codeStr = (item.filmCode || '').trim();
@@ -1935,7 +2103,6 @@
       if (!pdfFileName) pdfFileName = `罫書き_${folderName}`;
       pdfFileName = pdfFileName.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_') + '.pdf';
 
-      // ★機能修正指示: フォルダ名を「”参照フォルダ名”_納品フィルム」に変更
       const targetFolderName = `${folderName}_納品フィルム`;
 
       if ('showDirectoryPicker' in window) {
@@ -1953,15 +2120,22 @@
         if (nouhinDirHandle) {
           const fileHandle = await nouhinDirHandle.getFileHandle(pdfFileName, { create: true });
           const writable = await fileHandle.createWritable();
-          const pdfArrayBuffer = pdf.output('arraybuffer');
-          await writable.write(pdfArrayBuffer);
+          await writable.write(pdfBytes);
           await writable.close();
           if (!isBatch) alert(`「${targetFolderName}」フォルダに『${pdfFileName}』を直接保存しました！`);
           return true;
         }
       }
 
-      pdf.save(pdfFileName);
+      // フォールバック解決策1: 「”参照フォルダ名”_納品フィルム.zip」のZIPアーカイブを作成して保存
+      const zipMap = {};
+      zipMap[pdfFileName] = pdfBytes;
+
+      const zipBytes = createZipArchive(zipMap);
+      const zipFileName = `${targetFolderName}.zip`;
+
+      triggerBlobDownload(zipBytes, zipFileName);
+      if (!isBatch) alert(`「${zipFileName}」を保存しました！\n（解凍すると「${targetFolderName}」フォルダになります）`);
       return true;
 
     } catch (err) {
@@ -1971,14 +2145,53 @@
     }
   };
 
-  // ★一括PDF保存
+  // ★一括PDF保存 (解決策1 ZIPアーカイブ一括出力)
   document.getElementById('btn-save-batch-pdf').onclick = async () => {
-    if (imagesList.length === 0) return;
-    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「”参照フォルダ名”_納品フィルム」フォルダへ罫書きPDFとして保存しますか？`)) {
-      for (let idx = 0; idx < imagesList.length; idx++) {
-        await savePDF(idx, true);
+    if (imagesList.length === 0) {
+      alert("読み込み済みの画像がありません。");
+      return;
+    }
+
+    const firstFolderName = (imagesList[0].folderName || '写真データ').trim();
+    const targetFolderName = `${firstFolderName}_納品フィルム`;
+
+    if (confirm(`読み込み済みの全 ${imagesList.length} 枚を「${targetFolderName}.zip」として一括保存しますか？`)) {
+      try {
+        const zipMap = {};
+
+        imagesList.forEach((item, idx) => {
+          const pdfBytes = generateSinglePdfUint8Array(item);
+
+          const locStr = (item.filmLocation || '').trim();
+          const codeStr = (item.filmCode || '').trim();
+          const folderName = (item.folderName || '写真データ').trim();
+
+          let nameParts = [];
+          if (locStr) nameParts.push(locStr);
+          if (codeStr) nameParts.push(codeStr);
+          if (folderName) nameParts.push(folderName);
+
+          let pdfFileName = nameParts.join('_');
+          if (!pdfFileName) pdfFileName = `罫書き_${folderName}_${idx + 1}`;
+          pdfFileName = pdfFileName.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_') + '.pdf';
+
+          if (zipMap[pdfFileName]) {
+            pdfFileName = pdfFileName.replace('.pdf', `_${idx + 1}.pdf`);
+          }
+
+          zipMap[pdfFileName] = pdfBytes;
+        });
+
+        const zipBytes = createZipArchive(zipMap);
+        const zipFileName = `${targetFolderName}.zip`;
+
+        triggerBlobDownload(zipBytes, zipFileName);
+        alert(`全 ${imagesList.length} 枚の「${zipFileName}」を一括保存しました！`);
+
+      } catch (err) {
+        alert("一括保存中にエラーが発生しました: " + err.message);
+        console.error(err);
       }
-      alert("全ファイルのPDF一括保存処理が完了しました。");
     }
   };
 
@@ -1994,12 +2207,6 @@
     if (qualityMode === 'low') qualityRatio = 0.4;
     else if (qualityMode === 'high') qualityRatio = 0.98;
 
-    const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-    if (!jsPDFClass) {
-      alert("PDFライブラリ(jsPDF)の読み込みに失敗しています。");
-      return;
-    }
-
     const item = imagesList[currentImgIndex];
 
     const offCanvas = document.createElement('canvas');
@@ -2013,21 +2220,8 @@
 
     objects.forEach(obj => renderObjectToContext(offCtx, obj));
 
-    const imgData = offCanvas.toDataURL('image/jpeg', qualityRatio);
+    const imgDataUrl = offCanvas.toDataURL('image/jpeg', qualityRatio);
     const activePMM = item.pmm || calibratedPMM;
-
-    const pdf = new jsPDFClass('p', 'pt', 'a4');
-    pdf.setFontSize(16);
-    pdf.text("エックス線探査 調査報告書", 40, 40);
-    pdf.setFontSize(10);
-    pdf.text(`対象ファイル: ${item.name}`, 40, 60);
-    pdf.text(`撮影箇所: ${item.filmLocation || '未設定'}`, 40, 75);
-    pdf.text(`フィルム№: ${item.filmCode || '未設定'}`, 40, 90);
-    pdf.text(`設定解像度: ${(activePMM * 25.4).toFixed(1)} DPI`, 40, 105);
-
-    const imgWidth = 515;
-    const imgHeight = (offCanvas.height / offCanvas.width) * imgWidth;
-    pdf.addImage(imgData, 'JPEG', 40, 120, imgWidth, Math.min(640, imgHeight));
 
     const locStr = (item.filmLocation || '').trim();
     const codeStr = (item.filmCode || '').trim();
@@ -2038,7 +2232,11 @@
     if (codeStr) nameParts.push(codeStr);
     if (folderName) nameParts.push(folderName);
 
-    pdf.save(`探査報告書_${qualityMode}_${nameParts.join('_')}.pdf`);
+    const pdfW = 595.28;
+    const pdfH = 841.89;
+    const pdfBytes = createPdfFromJpegDataUrl(imgDataUrl, pdfW, pdfH, offCanvas.width, offCanvas.height);
+
+    triggerBlobDownload(pdfBytes, `探査報告書_${qualityMode}_${nameParts.join('_')}.pdf`);
     document.getElementById('modal-report').style.display = 'none';
   };
 
