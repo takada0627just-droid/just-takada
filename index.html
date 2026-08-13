@@ -80,6 +80,7 @@
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
     <button class="btn btn-dark" id="btn-invert-color">🌗 白黒反転</button>
     <button class="btn btn-blue" id="btn-zoom-100">📐 100%表示(実測)</button>
+    <button class="btn btn-dark" id="btn-screen-calibrate" title="モニターの物理表示補正">📏 画面定規合わせ</button>
     <button class="btn" id="btn-fit">全体表示</button>
     
     <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
@@ -270,7 +271,25 @@
   </div>
 </div>
 
-<!-- 5. クラウド保存先設定ダイアログ -->
+<!-- 5. 画面定規合わせ (モニター表示物理キャリブレーション) ダイアログ -->
+<div class="modal-overlay" id="modal-screen-calib">
+  <div class="modal-card">
+    <h3>📏 画面定規合わせ (モニター校正)</h3>
+    <p style="font-size:11px; color:#ccc;">画面下の【青色の基準バー】に手持ちの物差し（定規）をあて、定規の目盛りとぴったり重なるように長さを調整してください。</p>
+    <div id="gauge-bar" style="width: 100mm; height: 16px; background: #0088ff; border: 2px solid #fff; margin: 8px 0; border-radius: 2px;"></div>
+    <div class="modal-row">
+      <span>基準バー長 (物理ミリ):</span>
+      <input type="number" id="gauge-mm-input" value="100" style="width:80px;"> mm
+    </div>
+    <p style="font-size:10px; color:#aaa;">※この補正を行うことで、どんな液晶モニター/iPadでも100%表示時に実測1:1になります。</p>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-screen-cancel">キャンセル</button>
+      <button class="btn btn-green" id="modal-screen-ok">画面校正を記憶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6. クラウド保存先設定ダイアログ -->
 <div class="modal-overlay" id="modal-cloud">
   <div class="modal-card">
     <h3>☁️ クラウド保存先設定</h3>
@@ -296,7 +315,7 @@
   </div>
 </div>
 
-<!-- 6. 報告書作成ダイアログ -->
+<!-- 7. 報告書作成ダイアログ -->
 <div class="modal-overlay" id="modal-report">
   <div class="modal-card">
     <h3>📋 報告書PDF作成設定</h3>
@@ -358,7 +377,8 @@
 
   // 設定プリセット (LocalStorage)
   let filmPreset = JSON.parse(localStorage.getItem('filmPreset')) || { pos: 'bottom', color: '#ffffff', size: 140 };
-  let calibratedPMM = parseFloat(localStorage.getItem('calibratedPMM')) || (96.0 / 25.4); // デフォルト px/mm
+  let calibratedPMM = parseFloat(localStorage.getItem('calibratedPMM')) || (96.0 / 25.4); // 画像用 px/mm
+  let screenPMM = parseFloat(localStorage.getItem('screenPMM')) || (96.0 / 25.4); // モニター物理校正用 px/mm
   let cloudPreset = JSON.parse(localStorage.getItem('cloudPreset')) || { path: 'gdrive://JustCore/納品フィルム', target: 'pdf' };
 
   let penStyle = '実線';
@@ -366,9 +386,6 @@
   let penWidth = 6;
   let pendingStampData = null;
   let pendingConfirmData = null;
-
-  // タッチ・マウス制御競合防止フラグ
-  let isTouchActive = false;
 
   // フォーム初期セット
   document.getElementById('film-pos-select').value = filmPreset.pos;
@@ -378,7 +395,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v6';
+  const DB_NAME = 'XRayKagakiDB_v7';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -571,15 +588,14 @@
     updateCanvasTransform();
   };
 
-  // ★実測100%表示機能: 補正されたピクセル/mmをもとに、画面に手持ちの物差しをあてた時に1:1で100mmが一致するスケールへ決定
+  // ★実測100%表示機能: 画像の1ミリ当たりのピクセル数と、モニター表示のピクセル/mmを完全一致させるスケール決定
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
-    const activePMM = item.pmm || calibratedPMM;
+    const activeImgPMM = item.pmm || calibratedPMM;
 
-    // 標準的な96 DPI (3.7795 px/mm) に対する倍率
-    const standardCSSPMM = 96.0 / 25.4;
-    scale = standardCSSPMM / activePMM;
+    // モニターのCSSピクセル/mm比率との比から正確な1:1スケールを算出
+    scale = screenPMM / activeImgPMM;
 
     const img = item.imgObj;
     panX = (container.clientWidth - img.width * scale) / 2;
@@ -602,6 +618,26 @@
 
   document.getElementById('btn-fit').onclick = fitToView;
   document.getElementById('btn-zoom-100').onclick = setActualSize100;
+
+  // モニター画面定規合わせダイアログ
+  document.getElementById('btn-screen-calibrate').onclick = () => {
+    document.getElementById('modal-screen-calib').style.display = 'flex';
+  };
+  document.getElementById('modal-screen-cancel').onclick = () => {
+    document.getElementById('modal-screen-calib').style.display = 'none';
+  };
+  document.getElementById('modal-screen-ok').onclick = () => {
+    const gaugeInput = parseFloat(document.getElementById('gauge-mm-input').value);
+    if (!isNaN(gaugeInput) && gaugeInput > 0) {
+      const gaugeEl = document.getElementById('gauge-bar');
+      const cssWidthPx = gaugeEl.getBoundingClientRect().width;
+      screenPMM = cssWidthPx / gaugeInput;
+      localStorage.setItem('screenPMM', screenPMM);
+      alert(`画面のミリ表示精度を校正記憶しました。\nこれでどのインチのモニターでも[100%表示]が手物の定規と1:1でピッタリ一致します。`);
+    }
+    document.getElementById('modal-screen-calib').style.display = 'none';
+    setActualSize100();
+  };
 
   // --- 描画レンダリングエンジン ---
   const redraw = () => {
@@ -849,7 +885,7 @@
     }
   };
 
-  // --- パームリジェクション & 座標取得 ---
+  // --- 座標変換 & パームリジェクション ---
   const getCanvasCoordsFromClient = (clientX, clientY) => {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -861,88 +897,13 @@
   const isPalmTouch = (e) => {
     if (e.touches && e.touches.length > 0) {
       const t = e.touches[0];
-      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部を検知・カット
+      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部（広面積接触）を判定・カット
     }
     return false;
   };
 
-  // --- タッチ・ピンチズーム・移動・描画イベント制御 ---
-  canvas.addEventListener('touchstart', e => {
-    isTouchActive = true;
-    if (isPalmTouch(e)) { e.preventDefault(); return; }
-
-    // 二本指ピンチズーム & 二本指スワイプパニング開始
-    if (e.touches.length >= 2) {
-      if (isDrawing) { isDrawing = false; currentPath = []; startPt = null; secondPt = null; tempEndPt = null; }
-      
-      const t1 = e.touches[0];
-      const t2 = e.touches[1];
-      initialPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      initialPinchScale = scale;
-      initialCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-      initialPan = { x: panX, y: panY };
-
-      e.preventDefault();
-      return;
-    }
-
-    if (e.touches.length === 1) {
-      const t = e.touches[0];
-      handleStart(t.clientX, t.clientY);
-      e.preventDefault();
-    }
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', e => {
-    if (isPalmTouch(e)) { e.preventDefault(); return; }
-
-    if (e.touches.length >= 2 && initialPinchDist) {
-      e.preventDefault();
-      const t1 = e.touches[0];
-      const t2 = e.touches[1];
-      const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      if (currentDist === 0) return;
-
-      const currentCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-      const newScale = Math.min(4.0, Math.max(0.1, initialPinchScale * (currentDist / initialPinchDist)));
-
-      const imgPtX = (initialCenter.x - initialPan.x) / initialPinchScale;
-      const imgPtY = (initialCenter.y - initialPan.y) / initialPinchScale;
-
-      scale = newScale;
-      panX = currentCenter.x - imgPtX * scale;
-      panY = currentCenter.y - imgPtY * scale;
-
-      updateCanvasTransform();
-      return;
-    }
-
-    if (e.touches.length === 1 && !initialPinchDist) {
-      const t = e.touches[0];
-      handleMove(t.clientX, t.clientY);
-      e.preventDefault();
-    }
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', e => {
-    if (e.touches.length < 2) { initialPinchDist = null; }
-    if (e.touches.length === 0) {
-      if (e.changedTouches && e.changedTouches.length > 0) {
-        const t = e.changedTouches[0];
-        handleEnd(t.clientX, t.clientY);
-      } else {
-        handleEnd();
-      }
-      setTimeout(() => { isTouchActive = false; }, 300);
-    }
-  });
-
-  // マウスイベントハンドラ
-  canvas.addEventListener('mousedown', e => { if (!isTouchActive) handleStart(e.clientX, e.clientY); });
-  canvas.addEventListener('mousemove', e => { if (!isTouchActive) handleMove(e.clientX, e.clientY); });
-  canvas.addEventListener('mouseup', e => { if (!isTouchActive) handleEnd(e.clientX, e.clientY); });
-
-  const handleStart = (clientX, clientY) => {
+  // --- タッチ・Pointer 統一型イベントリスナーハンドラ ---
+  const onPointerStart = (clientX, clientY) => {
     const pt = getCanvasCoordsFromClient(clientX, clientY);
 
     if (currentMode === 'select' && selectedObj) {
@@ -1011,7 +972,7 @@
     }
   };
 
-  const handleMove = (clientX, clientY) => {
+  const onPointerMove = (clientX, clientY) => {
     if (isPanning) {
       panX = clientX - startPan.x;
       panY = clientY - startPan.y;
@@ -1047,7 +1008,7 @@
     }
   };
 
-  const handleEnd = (clientX, clientY) => {
+  const onPointerEnd = (clientX, clientY) => {
     if (activeTransformHandle) { activeTransformHandle = null; pushUndo(); return; }
     if (isPanning) { isPanning = false; return; }
 
@@ -1105,6 +1066,90 @@
       }
     }
   };
+
+  // --- タッチイベントリスナー (iPad・スマホ向け) ---
+  canvas.addEventListener('touchstart', e => {
+    if (isPalmTouch(e)) { e.preventDefault(); return; }
+
+    if (e.touches.length >= 2) {
+      if (isDrawing) { isDrawing = false; currentPath = []; startPt = null; secondPt = null; tempEndPt = null; }
+      
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      initialPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      initialPinchScale = scale;
+      initialCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      initialPan = { x: panX, y: panY };
+
+      e.preventDefault();
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      onPointerStart(t.clientX, t.clientY);
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    if (isPalmTouch(e)) { e.preventDefault(); return; }
+
+    if (e.touches.length >= 2 && initialPinchDist) {
+      e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      if (currentDist === 0) return;
+
+      const currentCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      const newScale = Math.min(4.0, Math.max(0.1, initialPinchScale * (currentDist / initialPinchDist)));
+
+      const imgPtX = (initialCenter.x - initialPan.x) / initialPinchScale;
+      const imgPtY = (initialCenter.y - initialPan.y) / initialPinchScale;
+
+      scale = newScale;
+      panX = currentCenter.x - imgPtX * scale;
+      panY = currentCenter.y - imgPtY * scale;
+
+      updateCanvasTransform();
+      return;
+    }
+
+    if (e.touches.length === 1 && !initialPinchDist) {
+      const t = e.touches[0];
+      onPointerMove(t.clientX, t.clientY);
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', e => {
+    if (e.touches.length < 2) { initialPinchDist = null; }
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      const t = e.changedTouches[0];
+      onPointerEnd(t.clientX, t.clientY);
+    } else {
+      onPointerEnd();
+    }
+  });
+
+  // --- マウスイベントリスナー (PC向け) ---
+  let isMouseDown = false;
+  canvas.addEventListener('mousedown', e => {
+    isMouseDown = true;
+    onPointerStart(e.clientX, e.clientY);
+  });
+  canvas.addEventListener('mousemove', e => {
+    if (isMouseDown || isPanning) {
+      onPointerMove(e.clientX, e.clientY);
+    }
+  });
+  canvas.addEventListener('mouseup', e => {
+    if (isMouseDown || isPanning) {
+      isMouseDown = false;
+      onPointerEnd(e.clientX, e.clientY);
+    }
+  });
 
   const hitTest = (pt) => {
     for (let i = objects.length - 1; i >= 0; i--) {
@@ -1243,7 +1288,7 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // --- PDF焼き付け保存機能 (エラー制御付き確実出力) ---
+  // --- PDF焼き付け保存機能 (確実出力) ---
   document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex);
 
   const savePDF = (index) => {
