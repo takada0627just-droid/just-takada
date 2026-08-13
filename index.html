@@ -104,6 +104,7 @@
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
+    <button class="btn btn-dark btn-invert-trigger">🌗 白黒反転</button>
     <button class="btn btn-blue" id="btn-zoom-100">📐 100%表示(実測)</button>
     <button class="btn" id="btn-fit">全体表示</button>
     
@@ -170,7 +171,7 @@
         <button class="btn" id="tool-shape" title="図形（タップ配置）">🔲 図形</button>
         <button class="btn" id="tool-text" title="文字（タップ配置）">📝 文字</button>
         
-        <button class="btn btn-dark" id="btn-invert-color">🌗 白黒反転</button>
+        <button class="btn btn-dark btn-invert-trigger">🌗 白黒反転</button>
         <button class="btn btn-warning" id="tool-confirm-stamp" title="確認印（タップ配置）">💮 確認印</button>
         <button class="btn" id="tool-eraser" title="消しゴム">🧹 消しゴム</button>
         <hr style="border-color:#444;">
@@ -297,7 +298,7 @@
   </div>
 </div>
 
-<!-- 4. 確認印ダイアログ (★追加機能: 縦書き・横書き選択ボタン追加) -->
+<!-- 4. 確認印ダイアログ -->
 <div class="modal-overlay" id="modal-confirm-stamp">
   <div class="modal-card">
     <h3>💮 確認印設定</h3>
@@ -339,7 +340,7 @@
   </div>
 </div>
 
-<!-- 5. ★可動式寸法補正入力フロートモーダル (画面上で自由にドラッグ移動可) -->
+<!-- 5. 可動式寸法補正入力フロートモーダル -->
 <div class="modal-overlay" id="modal-calibrate-input" style="background: transparent; pointer-events: none;">
   <div class="modal-card" id="calib-float-card" style="pointer-events: auto; position: absolute; top: 25%; left: calc(50% - 375px); box-shadow: 0 12px 40px rgba(0,0,0,0.9);">
     <h3 id="calib-drag-header" style="cursor: move; background: #3a3a3a; padding: 12px 16px; margin: -28px -28px 16px -28px; border-radius: 10px 10px 0 0;">🎯 寸法補正の数値入力 (ドラッグで移動可)</h3>
@@ -475,7 +476,7 @@
   let pinchPanStart = { x: 0, y: 0 };
 
   // 変形・回転ハンドル状態
-  let activeTransformHandle = null;
+  let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3', 'move_line', 'move_obj'
   let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, size: 140, dist: 1, p1: null, p2: null, p3: null, initialPath: null, objX: 0, objY: 0 };
 
   // 補正保留用座標保持
@@ -741,14 +742,18 @@
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
   fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
 
-  // --- 白黒反転機能 ---
-  document.getElementById('btn-invert-color').onclick = () => {
+  // ★ヘッダー側およびツールバー側の両方の白黒反転ボタン動作登録
+  const toggleInvertColor = () => {
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       imagesList[currentImgIndex].isInverted = !imagesList[currentImgIndex].isInverted;
       saveToDB(imagesList[currentImgIndex]);
       redraw();
     }
   };
+
+  document.querySelectorAll('.btn-invert-trigger').forEach(btn => {
+    btn.onclick = toggleInvertColor;
+  });
 
   // --- ズーム・実測100%表示・全体表示機能 ---
   const fitToView = () => {
@@ -768,6 +773,7 @@
     updateCanvasTransform();
   };
 
+  // 実測100%表示機能
   const setActualSize100 = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
     const item = imagesList[currentImgIndex];
@@ -1000,7 +1006,6 @@
     targetCtx.setLineDash([]);
   };
 
-  // 測定線描画 (★寸法補正線のテキストサイズは現在の半分の30pxへ変更)
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
@@ -1018,7 +1023,6 @@
     const mm1 = dist1 / activePMM;
     const txt1 = obj.isCalibration ? `[補正基準] ${obj.knownMM.toFixed(1)} mm` : `L1: ${mm1.toFixed(1)} mm`;
 
-    // ★指示変更: 寸法補正の測定線横の寸法表記テキストサイズを半分の30pxに変更
     if (obj.isCalibration) {
       targetCtx.font = 'bold 30px Arial';
     } else {
@@ -1105,7 +1109,7 @@
     }
   };
 
-  // ★確認印描画 (縦書き・横書き対応)
+  // ★確認印描画 (縦書き/横書き対応・文字サイズ1.25倍)
   const drawConfirmStamp = (targetCtx, obj) => {
     const col = obj.color || '#d9534f';
     targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
@@ -1126,7 +1130,6 @@
     targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle';
 
     if (obj.orient === 'vert') {
-      // ★縦書き印影描画
       const chars = (obj.text || "確認").split('');
       const totalH = (chars.length - 1) * fontSize * 0.95;
       const startY = obj.y - totalH / 2;
@@ -1282,7 +1285,7 @@
     }
 
     const rect = canvas.getBoundingClientRect();
-    const margin = 50; // 画面縁から50px以内
+    const margin = 50;
     let dx = 0, dy = 0;
 
     if (clientX - rect.left < margin) dx = 15;
@@ -1496,7 +1499,7 @@
     }
 
     if (isDrawing) {
-      checkEdgeAutoPan(clientX, clientY); // 画面縁自動パンチェック
+      checkEdgeAutoPan(clientX, clientY);
 
       if (currentMode === 'pen') {
         currentPath.push(pt);
@@ -1533,7 +1536,7 @@
   };
 
   const handleInputEnd = () => {
-    stopAutoPan(); // 自動パン停止
+    stopAutoPan();
     if (activeTransformHandle) { activeTransformHandle = null; pushUndo(); return; }
     if (isPanning) { isPanning = false; return; }
 
@@ -1571,7 +1574,6 @@
           const distPx = Math.hypot(tempEndPt.x - startPt.x, tempEndPt.y - startPt.y);
           pendingCalibData = { p1: { ...startPt }, p2: { ...tempEndPt }, distPx };
           
-          // ★可動式フロートカードモーダルを表示
           document.getElementById('calib-px-display').innerText = distPx.toFixed(1) + ' px';
           document.getElementById('modal-calibrate-input').style.display = 'flex';
         }
@@ -1595,7 +1597,6 @@
     }
   };
 
-  // ★フロート補正モーダルのキャンセル・決定処理
   document.getElementById('modal-calib-cancel').onclick = () => {
     document.getElementById('modal-calibrate-input').style.display = 'none';
     pendingCalibData = null;
@@ -1885,7 +1886,7 @@
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // 「納品フィルム」フォルダ自動作成・直接PDF保存処理
+  // ★「納品フィルム」フォルダ自動作成・直接PDF保存処理
   document.getElementById('btn-save-pdf').onclick = async () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) {
       alert("保存対象の画像が選択されていません。");
