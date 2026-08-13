@@ -343,6 +343,7 @@
   let isDrawing = false;
   let currentPath = [];
   let startPt = null, secondPt = null;
+  let tempEndPt = null;
   let isPanning = false, startPan = { x: 0, y: 0 };
 
   // ピンチズーム制御用
@@ -377,7 +378,7 @@
   document.getElementById('cloud-target').value = cloudPreset.target;
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v5';
+  const DB_NAME = 'XRayKagakiDB_v6';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -576,7 +577,7 @@
     const item = imagesList[currentImgIndex];
     const activePMM = item.pmm || calibratedPMM;
 
-    // ブラウザのCSS標準ピクセル定義 (96 DPI = 3.7795 px/mm)
+    // 標準的な96 DPI (3.7795 px/mm) に対する倍率
     const standardCSSPMM = 96.0 / 25.4;
     scale = standardCSSPMM / activePMM;
 
@@ -629,9 +630,34 @@
     // オブジェクト描画
     objects.forEach(obj => renderObjectToContext(ctx, obj));
 
-    // 描画中プレビュー
-    if (isDrawing && currentPath.length > 1) {
+    // フリーハンドペン描画中プレビュー
+    if (isDrawing && currentMode === 'pen' && currentPath.length > 1) {
       drawPath(ctx, { type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
+    }
+
+    // 測定・寸法補正のドラッグ中線プレビュー
+    if (isDrawing && (currentMode === 'measure' || currentMode === 'calibrate') && startPt && tempEndPt) {
+      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(startPt.x, startPt.y);
+      ctx.lineTo(tempEndPt.x, tempEndPt.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 直角測定ドラッグ中プレビュー
+    if (currentMode === 'right_measure' && startPt && tempEndPt) {
+      ctx.strokeStyle = '#0088ff';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(startPt.x, startPt.y);
+      ctx.lineTo(secondPt ? secondPt.x : tempEndPt.x, secondPt ? secondPt.y : tempEndPt.y);
+      if (secondPt) ctx.lineTo(tempEndPt.x, tempEndPt.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     ctx.restore();
@@ -835,7 +861,7 @@
   const isPalmTouch = (e) => {
     if (e.touches && e.touches.length > 0) {
       const t = e.touches[0];
-      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部（広面積接触）をカット
+      if (t.radiusX > 15 || t.radiusY > 15) return true; // 手刀部を検知・カット
     }
     return false;
   };
@@ -845,9 +871,9 @@
     isTouchActive = true;
     if (isPalmTouch(e)) { e.preventDefault(); return; }
 
-    // 二本指ピンチズーム & パニング開始
+    // 二本指ピンチズーム & 二本指スワイプパニング開始
     if (e.touches.length >= 2) {
-      if (isDrawing) { isDrawing = false; currentPath = []; startPt = null; secondPt = null; }
+      if (isDrawing) { isDrawing = false; currentPath = []; startPt = null; secondPt = null; tempEndPt = null; }
       
       const t1 = e.touches[0];
       const t2 = e.touches[1];
@@ -880,7 +906,6 @@
       const currentCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
       const newScale = Math.min(4.0, Math.max(0.1, initialPinchScale * (currentDist / initialPinchDist)));
 
-      // 二本指の中心を基準としたズーム & スワイプ移動
       const imgPtX = (initialCenter.x - initialPan.x) / initialPinchScale;
       const imgPtY = (initialCenter.y - initialPan.y) / initialPinchScale;
 
@@ -902,15 +927,20 @@
   canvas.addEventListener('touchend', e => {
     if (e.touches.length < 2) { initialPinchDist = null; }
     if (e.touches.length === 0) {
-      handleEnd();
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        const t = e.changedTouches[0];
+        handleEnd(t.clientX, t.clientY);
+      } else {
+        handleEnd();
+      }
       setTimeout(() => { isTouchActive = false; }, 300);
     }
   });
 
-  // マウスイベント（タッチ操作中でなければ発火）
+  // マウスイベントハンドラ
   canvas.addEventListener('mousedown', e => { if (!isTouchActive) handleStart(e.clientX, e.clientY); });
   canvas.addEventListener('mousemove', e => { if (!isTouchActive) handleMove(e.clientX, e.clientY); });
-  canvas.addEventListener('mouseup', e => { if (!isTouchActive) handleEnd(); });
+  canvas.addEventListener('mouseup', e => { if (!isTouchActive) handleEnd(e.clientX, e.clientY); });
 
   const handleStart = (clientX, clientY) => {
     const pt = getCanvasCoordsFromClient(clientX, clientY);
@@ -945,14 +975,15 @@
       currentPath = [pt];
     } else if (currentMode === 'measure' || currentMode === 'calibrate') {
       startPt = pt;
+      tempEndPt = pt;
       isDrawing = true;
     } else if (currentMode === 'right_measure') {
-      if (!startPt) { startPt = pt; isDrawing = true; }
-      else if (!secondPt) { secondPt = pt; isDrawing = true; }
+      if (!startPt) { startPt = pt; tempEndPt = pt; isDrawing = true; }
+      else if (!secondPt) { secondPt = pt; tempEndPt = pt; isDrawing = true; }
       else {
         // 3点目確定
         objects.push({ type: 'measure', p1: startPt, p2: secondPt, p3: pt, color: '#0088ff' });
-        startPt = null; secondPt = null; isDrawing = false;
+        startPt = null; secondPt = null; tempEndPt = null; isDrawing = false;
         pushUndo(); redraw();
       }
     } else if (currentMode === 'eraser') {
@@ -963,20 +994,20 @@
       }
     } else if (currentMode === 'pending_stamp') {
       objects.push({ type: 'stamp', ...pendingStampData, x: pt.x, y: pt.y });
-      currentMode = 'select'; pushUndo(); redraw();
+      setMode('select'); pushUndo(); redraw();
     } else if (currentMode === 'pending_text') {
       const txt = prompt("表示する文字を入力してください:");
       if (txt) {
         objects.push({ type: 'text', text: txt, x: pt.x, y: pt.y, size: filmPreset.size, color: filmPreset.color });
         pushUndo(); redraw();
       }
-      currentMode = 'select';
+      setMode('select');
     } else if (currentMode === 'pending_shape') {
       objects.push({ type: 'stamp', ...pendingStampData, x: pt.x, y: pt.y });
-      currentMode = 'select'; pushUndo(); redraw();
+      setMode('select'); pushUndo(); redraw();
     } else if (currentMode === 'pending_confirm') {
       objects.push({ type: 'confirm_stamp', ...pendingConfirmData, x: pt.x, y: pt.y });
-      currentMode = 'select'; pushUndo(); redraw();
+      setMode('select'); pushUndo(); redraw();
     }
   };
 
@@ -1008,94 +1039,69 @@
       currentPath.push(pt);
       redraw();
     } else if (isDrawing && (currentMode === 'measure' || currentMode === 'calibrate')) {
+      tempEndPt = pt;
       redraw();
-      ctx.save(); ctx.translate(panX, panY); ctx.scale(scale, scale);
-      ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(startPt.x, startPt.y); ctx.lineTo(pt.x, pt.y); ctx.stroke();
-      ctx.restore();
     } else if (currentMode === 'right_measure' && startPt) {
+      tempEndPt = pt;
       redraw();
-      ctx.save(); ctx.translate(panX, panY); ctx.scale(scale, scale);
-      ctx.strokeStyle = '#0088ff'; ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(startPt.x, startPt.y);
-      ctx.lineTo(secondPt ? secondPt.x : pt.x, secondPt ? secondPt.y : pt.y);
-      if (secondPt) ctx.lineTo(pt.x, pt.y);
-      ctx.stroke();
-      ctx.restore();
     }
   };
 
-  const handleEnd = () => {
+  const handleEnd = (clientX, clientY) => {
     if (activeTransformHandle) { activeTransformHandle = null; pushUndo(); return; }
     if (isPanning) { isPanning = false; return; }
 
+    let pt = null;
+    if (clientX !== undefined && clientY !== undefined) {
+      pt = getCanvasCoordsFromClient(clientX, clientY);
+    } else if (tempEndPt) {
+      pt = tempEndPt;
+    }
+
     if (isDrawing && currentMode === 'pen') {
       isDrawing = false;
-      objects.push({ type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
-      currentPath = []; pushUndo(); redraw();
+      if (currentPath.length > 1) {
+        objects.push({ type: 'pen', path: currentPath, style: penStyle, color: penColor, width: penWidth });
+        pushUndo(); redraw();
+      }
+      currentPath = [];
     } else if (isDrawing && currentMode === 'measure') {
       isDrawing = false;
-      if (startPt) {
-        const endPt = currentPath.length > 0 ? currentPath[currentPath.length - 1] : startPt;
-        // マウス/タッチ座標の最後を特定してオブジェクト追加
-      }
-      startPt = null; pushUndo(); redraw();
-    } else if (isDrawing && currentMode === 'calibrate') {
-      isDrawing = false;
-      // キャリブレーション終了処理
-    } else if (currentMode === 'right_measure' && startPt && !secondPt) {
-      // 1点目〜2点目ドラッグ固定
-    }
-  };
-
-  // タッチ/マウス共通のドラッグ確定ヘルパー
-  canvas.addEventListener('mouseup', e => {
-    const pt = getCanvasCoordsFromClient(e.clientX, e.clientY);
-    finishDragAction(pt);
-  });
-  canvas.addEventListener('touchend', e => {
-    if (e.changedTouches && e.touches.length === 0) {
-      const t = e.changedTouches[0];
-      const pt = getCanvasCoordsFromClient(t.clientX, t.clientY);
-      finishDragAction(pt);
-    }
-  });
-
-  const finishDragAction = (pt) => {
-    if (isDrawing && currentMode === 'measure') {
-      isDrawing = false;
-      if (startPt && Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
+      if (startPt && pt && Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
         objects.push({ type: 'measure', p1: startPt, p2: pt, color: '#ff0000' });
         pushUndo(); redraw();
       }
-      startPt = null;
+      startPt = null; tempEndPt = null;
     } else if (isDrawing && currentMode === 'calibrate') {
       isDrawing = false;
-      if (startPt) {
+      if (startPt && pt) {
         const distPx = Math.hypot(pt.x - startPt.x, pt.y - startPt.y);
         if (distPx > 5) {
-          const inputMM = prompt(`引いた線の長さ (ピクセル: ${distPx.toFixed(1)} px)\n画面上の物差しで測った既知の実測寸法(mm)を入力してください:`, "100.0");
-          if (inputMM) {
-            const knownMM = parseFloat(inputMM);
-            if (!isNaN(knownMM) && knownMM > 0) {
-              calibratedPMM = distPx / knownMM;
-              localStorage.setItem('calibratedPMM', calibratedPMM);
-              if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
-                imagesList[currentImgIndex].pmm = calibratedPMM;
-                saveToDB(imagesList[currentImgIndex]);
+          setTimeout(() => {
+            const inputMM = prompt(`引いた線の長さ (ピクセル: ${distPx.toFixed(1)} px)\n画面上の物差しで測った既知の実測寸法(mm)を入力してください:`, "100.0");
+            if (inputMM) {
+              const knownMM = parseFloat(inputMM);
+              if (!isNaN(knownMM) && knownMM > 0) {
+                calibratedPMM = distPx / knownMM;
+                localStorage.setItem('calibratedPMM', calibratedPMM);
+                if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+                  imagesList[currentImgIndex].pmm = calibratedPMM;
+                  saveToDB(imagesList[currentImgIndex]);
+                }
+                objects.push({ type: 'measure', p1: startPt, p2: pt, isCalibration: true, knownMM: knownMM, color: '#00ff00' });
+                alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
+                pushUndo(); redraw();
               }
-              objects.push({ type: 'measure', p1: startPt, p2: pt, isCalibration: true, knownMM: knownMM, color: '#00ff00' });
-              alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
-              pushUndo(); redraw();
             }
-          }
+            setMode('select');
+          }, 50);
         }
       }
-      startPt = null;
+      startPt = null; tempEndPt = null;
     } else if (currentMode === 'right_measure' && startPt && !secondPt) {
-      if (Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
-        secondPt = pt; // L1ドラッグ確定、3点目タップ待ちへ
+      if (pt && Math.hypot(pt.x - startPt.x, pt.y - startPt.y) > 5) {
+        secondPt = pt; // L1固定、次は3点目タップ待ち
+        tempEndPt = null;
       }
     }
   };
@@ -1110,7 +1116,7 @@
     return null;
   };
 
-  // --- モード切替・ボタンバインド ---
+  // --- モード切替制御 ---
   const tools = [
     { id: 'tool-select', mode: 'select', label: 'モード: 選択・変形・移動・回転' },
     { id: 'tool-viewer', mode: 'viewer', label: 'モード: ビューア(移動専用)' },
@@ -1120,13 +1126,24 @@
     { id: 'tool-eraser', mode: 'eraser', label: 'モード: 消しゴム' }
   ];
 
+  const setMode = (newMode, label) => {
+    currentMode = newMode;
+    tools.forEach(o => {
+      const btn = document.getElementById(o.id);
+      if (btn) {
+        if (o.mode === newMode) btn.classList.add('active');
+        else btn.classList.remove('active');
+      }
+    });
+    if (label) document.getElementById('mode-info').innerText = label;
+    else {
+      const matched = tools.find(t => t.mode === newMode);
+      if (matched) document.getElementById('mode-info').innerText = matched.label;
+    }
+  };
+
   tools.forEach(t => {
-    document.getElementById(t.id).onclick = () => {
-      tools.forEach(o => document.getElementById(o.id).classList.remove('active'));
-      document.getElementById(t.id).classList.add('active');
-      currentMode = t.mode;
-      document.getElementById('mode-info').innerText = t.label;
-    };
+    document.getElementById(t.id).onclick = () => setMode(t.mode, t.label);
   });
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
@@ -1138,8 +1155,7 @@
     const text = document.getElementById('confirm-stamp-text').value.trim() || '確認';
     const shape = document.getElementById('confirm-stamp-shape').value;
     pendingConfirmData = { text, shape, size: 50 };
-    currentMode = 'pending_confirm';
-    document.getElementById('mode-info').innerText = 'モード: 確認印の配置位置をタップしてください';
+    setMode('pending_confirm', 'モード: 確認印の配置位置をタップしてください');
     document.getElementById('modal-confirm-stamp').style.display = 'none';
   };
 
@@ -1149,8 +1165,7 @@
   document.getElementById('modal-stamp-ok').onclick = () => {
     const preset = document.getElementById('stamp-preset-select').value;
     pendingStampData = { text: preset };
-    currentMode = 'pending_stamp';
-    document.getElementById('mode-info').innerText = 'モード: 検出物の配置位置をタップしてください';
+    setMode('pending_stamp', 'モード: 検出物の配置位置をタップしてください');
     document.getElementById('modal-stamp').style.display = 'none';
   };
 
@@ -1160,15 +1175,13 @@
   document.getElementById('modal-shape-ok').onclick = () => {
     const shape = document.getElementById('shape-select').value;
     pendingStampData = { shape: shape };
-    currentMode = 'pending_shape';
-    document.getElementById('mode-info').innerText = 'モード: 図形の配置位置をタップしてください';
+    setMode('pending_shape', 'モード: 図形の配置位置をタップしてください');
     document.getElementById('modal-shape').style.display = 'none';
   };
 
   // 文字入力 (タップ配置)
   document.getElementById('tool-text').onclick = () => {
-    currentMode = 'pending_text';
-    document.getElementById('mode-info').innerText = 'モード: 文字の配置位置をタップしてください';
+    setMode('pending_text', 'モード: 文字の配置位置をタップしてください');
   };
 
   // フィルム№ダイアログ（ファイル名連動 & プリセット保存）
@@ -1212,8 +1225,7 @@
 
   // 寸法補正モード起動
   document.getElementById('btn-calibrate').onclick = () => {
-    currentMode = 'calibrate';
-    document.getElementById('mode-info').innerText = 'モード: 寸法補正の基準線を引いてください';
+    setMode('calibrate', 'モード: 寸法補正の基準線を引いてください');
   };
 
   // クラウド保存先設定ダイアログ
