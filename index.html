@@ -25,7 +25,7 @@
     .btn-danger { background: #d9534f; border-color: #e2706c; }
     .btn-warning { background: #ffc107; color: #000; border-color: #ffcd39; }
 
-    select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
+    select, input[type="range"], input[type="number"], input[type="text"], input[type="color"], textarea { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
 
     /* 状態表示バー */
     #status-bar { background: #181818; border-bottom: 1px solid #333; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; color: #aaa; }
@@ -69,22 +69,28 @@
 
     /* モーダルダイアログ各種 (大型2.5倍入力サイズ) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
-    .modal-card { background: #2c2c2c; border: 2px solid #666; border-radius: 12px; width: 750px; max-width: 92vw; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .modal-card { background: #2c2c2c; border: 2px solid #666; border-radius: 12px; width: 750px; max-width: 92vw; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
     .modal-card h3 { font-size: 26px; border-bottom: 2px solid #555; padding-bottom: 12px; color: #0088ff; font-weight: bold; }
     .modal-row { display: flex; align-items: center; justify-content: space-between; font-size: 22px; gap: 12px; }
     
     .modal-card input[type="text"], 
     .modal-card input[type="number"], 
-    .modal-card select { 
-      font-size: 24px; padding: 12px 16px; border-radius: 6px; border: 2px solid #666; background: #1a1a1a; color: #fff; min-height: 54px; 
-      text-transform: uppercase;
+    .modal-card select,
+    .modal-card textarea { 
+      font-size: 22px; padding: 10px 14px; border-radius: 6px; border: 2px solid #666; background: #1a1a1a; color: #fff; min-height: 50px; 
     }
     .modal-card input[type="color"] { width: 80px; height: 54px; border: none; border-radius: 6px; cursor: pointer; }
-    .modal-card label { font-size: 22px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-    .modal-card input[type="radio"], .modal-card input[type="checkbox"] { transform: scale(1.8); margin: 0 6px; }
+    .modal-card label { font-size: 20px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .modal-card input[type="radio"], .modal-card input[type="checkbox"] { transform: scale(1.6); margin: 0 6px; }
     
     .modal-buttons { display: flex; justify-content: flex-end; gap: 16px; margin-top: 16px; }
     .modal-buttons .btn { font-size: 22px; padding: 12px 28px; border-radius: 6px; }
+
+    /* 報告書グリッドテーブルスタイル */
+    .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
+    .report-table th, .report-table td { border: 1px solid #555; padding: 8px 10px; text-align: left; }
+    .report-table th { background: #383838; color: #0088ff; }
+    .report-table td input { width: 100%; min-height: 38px !important; font-size: 16px !important; border: 1px solid #444 !important; }
   </style>
 </head>
 <body>
@@ -403,22 +409,99 @@
   </div>
 </div>
 
-<!-- 8. 報告書作成ダイアログ -->
-<div class="modal-overlay" id="modal-report">
+<!-- 8. ★Digi-ray PDF Tool 準拠 報告書作成ステップダイアログ群 -->
+<!-- ステップ1: 探査報告書 作成メニュー -->
+<div class="modal-overlay" id="modal-report-step1">
   <div class="modal-card">
-    <h3>📋 報告書PDF作成設定</h3>
+    <h3>📋 探査報告書 作成メニュー</h3>
     <div class="modal-row">
-      <span>添付画像品質:</span>
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <label><input type="radio" name="report-quality" value="low"> 軽量化 (高圧縮/小容量)</label>
-        <label><input type="radio" name="report-quality" value="normal" checked> 通常 (バランス)</label>
-        <label><input type="radio" name="report-quality" value="high"> 高品質 (印刷用/高精細)</label>
+      <span>【建物名】</span>
+      <input type="text" id="rpt-building" placeholder="例: ○○ビル" style="width:480px;">
+    </div>
+    <div class="modal-row">
+      <span>【工事名】</span>
+      <input type="text" id="rpt-construction" placeholder="例: ○○改修工事" style="width:480px;">
+    </div>
+    <div class="modal-row">
+      <span>【依頼会社名】</span>
+      <input type="text" id="rpt-client" placeholder="例: 株式会社○○建設" style="width:480px;">
+    </div>
+    <div class="modal-row">
+      <span>【探査年月日】</span>
+      <input type="text" id="rpt-date" value="2026年08月17日" style="width:480px;">
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:22px;">【探査エンジニア名】</span>
+        <button class="btn btn-blue" id="btn-add-engineer" style="font-size:18px;">＋ 人数追加</button>
+      </div>
+      <div id="engineer-list-container" style="display:flex; flex-direction:column; gap:8px;">
+        <input type="text" class="rpt-engineer-input" placeholder="エンジニア 1">
       </div>
     </div>
-    <p style="font-size:18px; color:#aaa;">※「納品フィルム」状態の罫書き画像を使用して報告書PDFを作成します。</p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <span style="font-size:22px;">【探査結果に関するメモ】</span>
+      <textarea id="rpt-memo" rows="3" placeholder="特記事項など"></textarea>
+    </div>
+    <div style="background:#222; padding:12px; border-radius:6px; border:1px solid #444; font-size:16px; color:#ccc;">
+      <strong>【注意事項】</strong><br>
+      ・本報告書はエックス線探査結果を記録したものです。<br>
+      ・穿孔作業時は十分ご注意ください。
+    </div>
     <div class="modal-buttons">
-      <button class="btn" id="modal-report-cancel">キャンセル</button>
-      <button class="btn btn-warning" id="modal-report-make">報告書PDF生成</button>
+      <button class="btn" id="modal-rpt1-cancel">Cancel</button>
+      <button class="btn btn-green" id="modal-rpt1-next">次へ (探査結果一覧)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ステップ2: 探査結果一覧の確認・編集 (報告書 3ページ目) -->
+<div class="modal-overlay" id="modal-report-step2">
+  <div class="modal-card" style="width:900px; max-width:96vw;">
+    <h3>📊 探査結果一覧の確認・編集 (報告書 3ページ目)</h3>
+    <p style="font-size:16px; color:#0088ff;">💡 検出物・備考や追加項目の追記はセルを直接編集可能です。</p>
+    <div style="max-height: 50vh; overflow-y: auto;">
+      <table class="report-table" id="report-grid-table">
+        <thead>
+          <tr>
+            <th style="width:60px;">No.</th>
+            <th>探査箇所</th>
+            <th>フィルムNo.</th>
+            <th>検出物</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody id="report-grid-tbody">
+          <!-- 動的読み込み挿入 -->
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-rpt2-back">戻る</button>
+      <button class="btn btn-green" id="modal-rpt2-next">次へ (画質・完成選択)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ステップ3: 報告書PDF 完成容量・画質の選択 -->
+<div class="modal-overlay" id="modal-report-step3">
+  <div class="modal-card">
+    <h3>📊 報告書PDF 完成容量・画質の選択</h3>
+    <p style="font-size:18px; color:#ccc;">用途に合わせて作成されるPDFの品質を選択してください:</p>
+    <div style="display:flex; flex-direction:column; gap:16px; margin: 12px 0;">
+      <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #555;">
+        <input type="radio" name="report-quality" value="low"> ⚡ 軽量化 (メール添付用)
+      </label>
+      <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #0088ff;">
+        <input type="radio" name="report-quality" value="normal" checked> ⚖️ 標準 (推奨バランス)
+      </label>
+      <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #555;">
+        <input type="radio" name="report-quality" value="high"> 🎨 高品質 (無劣化/印刷用)
+      </label>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn" id="modal-rpt3-back">戻る</button>
+      <button class="btn btn-warning" id="modal-rpt3-make">探査報告書PDF生成</button>
     </div>
   </div>
 </div>
@@ -520,14 +603,86 @@ function createPdfFromJpegDataUrl(jpegDataUrl, widthPt, heightPt, pxWidth, pxHei
   return concatUint8Arrays([header, ...bodyParts, xrefBytes, trailerBytes]);
 }
 
-// 3. ★修正: 0x02014b50 (PK\x01\x02) 完全規格準拠 ZIPアーカイブ生成関数
+// 2-B. 複数ページのJPEG画像配列を1冊のマルチページPDFへ構築する完全オフライン関数
+function createMultiPagePdfFromJpegArray(pageItems) {
+  const encoder = new TextEncoder();
+  const header = encoder.encode("%PDF-1.4\n%\xE2\xE3\xD1\xD3\n");
+  const pageCount = pageItems.length;
+
+  // Obj 1: Catalog, Obj 2: Pages
+  const obj1 = encoder.encode("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  
+  let kidsStr = "";
+  for (let i = 0; i < pageCount; i++) {
+    kidsStr += `${3 + i * 3} 0 R `;
+  }
+  const obj2 = encoder.encode(`2 0 obj\n<< /Type /Pages /Kids [ ${kidsStr}] /Count ${pageCount} >>\nendobj\n`);
+
+  const objectsList = [
+    { id: 1, bytes: obj1 },
+    { id: 2, bytes: obj2 }
+  ];
+
+  let nextObjId = 3;
+
+  pageItems.forEach((item) => {
+    const pageObjId = nextObjId;
+    const contentObjId = nextObjId + 1;
+    const imageObjId = nextObjId + 2;
+    nextObjId += 3;
+
+    const base64Str = item.dataUrl.split(',')[1];
+    const binaryStr = atob(base64Str);
+    const jpegBytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) jpegBytes[i] = binaryStr.charCodeAt(i);
+
+    const pageObjBytes = encoder.encode(`${pageObjId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [ 0 0 ${item.wPt.toFixed(2)} ${item.hPt.toFixed(2)} ] /Resources << /XObject << /Im1 ${imageObjId} 0 R >> >> /Contents ${contentObjId} 0 R >>\nendobj\n`);
+
+    const contentStr = `q ${item.wPt.toFixed(2)} 0 0 ${item.hPt.toFixed(2)} 0 0 cm /Im1 Do Q\n`;
+    const contentBytes = encoder.encode(contentStr);
+    const contentObjHead = encoder.encode(`${contentObjId} 0 obj\n<< /Length ${contentBytes.length} >>\nstream\n`);
+    const contentObjTail = encoder.encode("endstream\nendobj\n");
+    const contentObjBytes = concatUint8Arrays([contentObjHead, contentBytes, contentObjTail]);
+
+    const imgObjHead = encoder.encode(`${imageObjId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${item.pxW} /Height ${item.pxH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+    const imgObjTail = encoder.encode("\nendstream\nendobj\n");
+    const imgObjBytes = concatUint8Arrays([imgObjHead, jpegBytes, imgObjTail]);
+
+    objectsList.push({ id: pageObjId, bytes: pageObjBytes });
+    objectsList.push({ id: contentObjId, bytes: contentObjBytes });
+    objectsList.push({ id: imageObjId, bytes: imgObjBytes });
+  });
+
+  let currentOffset = header.length;
+  const offsets = [];
+  const bodyParts = [];
+
+  for (const obj of objectsList) {
+    offsets.push(currentOffset);
+    bodyParts.push(obj.bytes);
+    currentOffset += obj.bytes.length;
+  }
+
+  const xrefOffset = currentOffset;
+  let xrefStr = `xref\n0 ${objectsList.length + 1}\n0000000000 65535 f \n`;
+  for (const off of offsets) {
+    xrefStr += String(off).padStart(10, '0') + " 00000 n \n";
+  }
+  const xrefBytes = encoder.encode(xrefStr);
+
+  const trailerStr = `trailer\n<< /Size ${objectsList.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  const trailerBytes = encoder.encode(trailerStr);
+
+  return concatUint8Arrays([header, ...bodyParts, xrefBytes, trailerBytes]);
+}
+
+// 3. 0x02014b50 (PK\x01\x02) 完全規格準拠 ZIPアーカイブ生成関数
 function createZipArchive(filesMap) {
   const encoder = new TextEncoder();
   const localHeaders = [];
   const centralDirs = [];
   let offset = 0;
 
-  // DOS日時: 2026-08-17 12:00:00
   const dosTime = 0x6000;
   const dosDate = 0x5d11;
 
@@ -535,9 +690,8 @@ function createZipArchive(filesMap) {
     const nameBytes = encoder.encode(filename);
     const len = data.length;
     const crc = crc32(data);
-    const flag = 0x0800; // UTF-8 Language Encoding Flag
+    const flag = 0x0800;
 
-    // Local Header (30 + nameLen + dataLen)
     const lh = new Uint8Array(30 + nameBytes.length + len);
     const view = new DataView(lh.buffer);
     view.setUint32(0, 0x04034b50, true);
@@ -554,10 +708,9 @@ function createZipArchive(filesMap) {
     lh.set(nameBytes, 30);
     lh.set(data, 30 + nameBytes.length);
 
-    // Central Directory Header (46 + nameLen) ★0x02014b50 徹底修正！
     const cd = new Uint8Array(46 + nameBytes.length);
     const cdView = new DataView(cd.buffer);
-    cdView.setUint32(0, 0x02014b50, true); // ★セントラルディレクトリシグネチャ修正
+    cdView.setUint32(0, 0x02014b50, true); // ★0x02014b50 シグネチャ修正済み
     cdView.setUint16(4, 20, true);
     cdView.setUint16(6, 20, true);
     cdView.setUint16(8, flag, true);
@@ -572,7 +725,7 @@ function createZipArchive(filesMap) {
     cdView.setUint16(32, 0, true);
     cdView.setUint16(34, 0, true);
     cdView.setUint16(36, 0, true);
-    cdView.setUint32(38, 0x20, true); // External File Attributes (FILE_ATTRIBUTE_ARCHIVE)
+    cdView.setUint32(38, 0x20, true);
     cdView.setUint32(42, offset, true);
     cd.set(nameBytes, 46);
 
@@ -601,8 +754,8 @@ function createZipArchive(filesMap) {
 }
 
 // 4. ファイル保存ダウンロードヘルパー
-function triggerBlobDownload(blobData, filename) {
-  const blob = new Blob([blobData], { type: 'application/zip' });
+function triggerBlobDownload(blobData, filename, isZip = true) {
+  const blob = new Blob([blobData], { type: isZip ? 'application/zip' : 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -652,7 +805,7 @@ function triggerBlobDownload(blobData, filename) {
   let tempEndPt = null;
   let isPanning = false, startPan = { x: 0, y: 0 };
 
-  // 自動パン（エッジスワイプ移動）用タイマー
+  // 自動パン用タイマー
   let autoPanTimer = null;
   let autoPanDir = { x: 0, y: 0 };
 
@@ -664,7 +817,7 @@ function triggerBlobDownload(blobData, filename) {
   let pinchPanStart = { x: 0, y: 0 };
 
   // 変形・回転ハンドル状態
-  let activeTransformHandle = null; // 'br', 'rot', 'p1', 'p2', 'p3', 'move_line', 'move_obj'
+  let activeTransformHandle = null;
   let transformStart = { x: 0, y: 0, w: 0, h: 0, cx: 0, cy: 0, rot: 0, size: 140, dist: 1, p1: null, p2: null, p3: null, initialPath: null, objX: 0, objY: 0 };
 
   // 補正保留用座標保持
@@ -748,7 +901,7 @@ function triggerBlobDownload(blobData, filename) {
   calibHeader.addEventListener('pointercancel', stopCardDrag);
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v20';
+  const DB_NAME = 'XRayKagakiDB_v22';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -2056,7 +2209,7 @@ function triggerBlobDownload(blobData, filename) {
   // ドロワー開閉
   document.getElementById('btn-toggle-drawer').onclick = () => document.getElementById('drawer').classList.toggle('open');
 
-  // ★「”参照フォルダ名”_納品フィルム.zip」直接PDF生成・ZIPまとめ保存処理
+  // 「”参照フォルダ名”_納品フィルム.zip」直接PDF生成・ZIPまとめ保存処理
   document.getElementById('btn-save-pdf').onclick = () => savePDF(currentImgIndex, false);
 
   const generateSinglePdfUint8Array = (item) => {
@@ -2139,7 +2292,7 @@ function triggerBlobDownload(blobData, filename) {
         }
       }
 
-      // フォールバック解決策1: 「”参照フォルダ名”_納品フィルム.zip」のZIPアーカイブを作成して保存
+      // フォールバック解決策1: ZIPアーカイブを作成して保存
       const zipMap = {};
       zipMap[pdfFileName] = pdfBytes;
 
@@ -2157,7 +2310,7 @@ function triggerBlobDownload(blobData, filename) {
     }
   };
 
-  // 一括PDF保存 (解決策1 ZIPアーカイブ一括出力)
+  // 一括PDF保存
   document.getElementById('btn-save-batch-pdf').onclick = async () => {
     if (imagesList.length === 0) {
       alert("読み込み済みの画像がありません。");
@@ -2207,49 +2360,241 @@ function triggerBlobDownload(blobData, filename) {
     }
   };
 
-  // --- 報告書PDF作成機能 ---
-  document.getElementById('btn-report').onclick = () => document.getElementById('modal-report').style.display = 'flex';
-  document.getElementById('modal-report-cancel').onclick = () => document.getElementById('modal-report').style.display = 'none';
-  
-  document.getElementById('modal-report-make').onclick = () => {
-    if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
+
+  // ★Digi-ray PDF Tool 完全準拠 報告書作成ステップモーダル制御＆マルチページPDF生成
+  const modalRpt1 = document.getElementById('modal-report-step1');
+  const modalRpt2 = document.getElementById('modal-report-step2');
+  const modalRpt3 = document.getElementById('modal-report-step3');
+
+  // 開く
+  document.getElementById('btn-report').onclick = () => {
+    if (imagesList.length === 0) {
+      alert("報告書を作成する画像がありません。先に画像を読み込んでください。");
+      return;
+    }
+    modalRpt1.style.display = 'flex';
+  };
+
+  // ステップ1: エンジニア人数追加ボタン
+  document.getElementById('btn-add-engineer').onclick = () => {
+    const container = document.getElementById('engineer-list-container');
+    const count = container.children.length + 1;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'rpt-engineer-input';
+    input.placeholder = `エンジニア ${count}`;
+    container.appendChild(input);
+  };
+
+  // ステップ1 キャンセル
+  document.getElementById('modal-rpt1-cancel').onclick = () => modalRpt1.style.display = 'none';
+
+  // ステップ1 -> ステップ2 (グリッド表生成)
+  document.getElementById('modal-rpt1-next').onclick = () => {
+    modalRpt1.style.display = 'none';
+    buildReportGridTable();
+    modalRpt2.style.display = 'flex';
+  };
+
+  // ステップ2 戻る
+  document.getElementById('modal-rpt2-back').onclick = () => {
+    modalRpt2.style.display = 'none';
+    modalRpt1.style.display = 'flex';
+  };
+
+  // ステップ2 -> ステップ3
+  document.getElementById('modal-rpt2-next').onclick = () => {
+    modalRpt2.style.display = 'none';
+    modalRpt3.style.display = 'flex';
+  };
+
+  // ステップ3 戻る
+  document.getElementById('modal-rpt3-back').onclick = () => {
+    modalRpt3.style.display = 'none';
+    modalRpt2.style.display = 'flex';
+  };
+
+  // 報告書グリッドテーブル生成
+  const buildReportGridTable = () => {
+    const tbody = document.getElementById('report-grid-tbody');
+    tbody.innerHTML = '';
+
+    imagesList.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+
+      // 検出物抽出
+      const stamps = (item.objects || []).filter(o => o.type === 'stamp' && o.text).map(o => o.text);
+      const stampStr = stamps.length > 0 ? Array.from(new Set(stamps)).join(', ') : '特になし';
+
+      tr.innerHTML = `
+        <td style="text-align:center; font-weight:bold;">${idx + 1}</td>
+        <td><input type="text" class="grid-location-input" value="${item.filmLocation || ''}" placeholder="例: 供試体, 空調機械室"></td>
+        <td><input type="text" class="grid-code-input" value="${item.filmCode || ''}" placeholder="例: 1F-W1"></td>
+        <td><input type="text" class="grid-stamp-input" value="${stampStr}"></td>
+        <td><input type="text" class="grid-memo-input" value="" placeholder="備考"></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  };
+
+  // ★ステップ3: マルチページ報告書PDF完全作成処理
+  document.getElementById('modal-rpt3-make').onclick = async () => {
     const qualityMode = document.querySelector('input[name="report-quality"]:checked').value;
-    
     let qualityRatio = 0.75;
     if (qualityMode === 'low') qualityRatio = 0.4;
     else if (qualityMode === 'high') qualityRatio = 0.98;
 
-    const item = imagesList[currentImgIndex];
+    modalRpt3.style.display = 'none';
 
-    const offCanvas = document.createElement('canvas');
-    offCanvas.width = item.imgObj.naturalWidth || item.imgObj.width;
-    offCanvas.height = item.imgObj.naturalHeight || item.imgObj.height;
-    const offCtx = offCanvas.getContext('2d');
+    // フォーム入力情報回収
+    const building = document.getElementById('rpt-building').value.trim() || "－";
+    const construction = document.getElementById('rpt-construction').value.trim() || "（工事名未設定）";
+    const client = document.getElementById('rpt-client').value.trim() || "－";
+    const dateStr = document.getElementById('rpt-date').value.trim() || "2026年08月17日";
+    const memo = document.getElementById('rpt-memo').value.trim() || "（特記事項なし）";
 
-    if (item.isInverted) offCtx.filter = 'invert(100%)';
-    offCtx.drawImage(item.imgObj, 0, 0, offCanvas.width, offCanvas.height);
-    offCtx.filter = 'none';
+    const engInputs = document.querySelectorAll('.rpt-engineer-input');
+    const engList = [];
+    engInputs.forEach(i => { if (i.value.trim()) engList.push(i.value.trim()); });
+    const engStr = engList.length > 0 ? engList.join(', ') : "－";
 
-    objects.forEach(obj => renderObjectToContext(offCtx, obj));
+    // グリッド表データ回収
+    const rows = document.querySelectorAll('#report-grid-tbody tr');
+    const gridData = [];
+    rows.forEach((tr, idx) => {
+      gridData.push({
+        no: idx + 1,
+        location: tr.querySelector('.grid-location-input').value.trim() || "－",
+        code: tr.querySelector('.grid-code-input').value.trim() || "－",
+        stamps: tr.querySelector('.grid-stamp-input').value.trim() || "特になし",
+        memo: tr.querySelector('.grid-memo-input').value.trim() || ""
+      });
+    });
 
-    const imgDataUrl = offCanvas.toDataURL('image/jpeg', qualityRatio);
-    const activePMM = item.pmm || calibratedPMM;
+    const pageItems = [];
+    const A4_W = 1240, A4_H = 1754; // px (300DPI相当)
+    const W_PT = 595.28, H_PT = 841.89;
 
-    const locStr = (item.filmLocation || '').trim();
-    const codeStr = (item.filmCode || '').trim();
-    const folderName = (item.folderName || '写真データ').trim();
+    // --- Page 1: 表紙 Canvas レンダリング ---
+    const cv1 = document.createElement('canvas'); cv1.width = A4_W; cv1.height = A4_H;
+    const c1 = cv1.getContext('2d');
+    c1.fillStyle = '#ffffff'; c1.fillRect(0, 0, A4_W, A4_H);
+    c1.fillStyle = '#000000'; c1.textAlign = 'center';
 
-    let nameParts = [];
-    if (locStr) nameParts.push(locStr);
-    if (codeStr) nameParts.push(codeStr);
-    if (folderName) nameParts.push(folderName);
+    c1.font = 'bold 54px Arial, sans-serif';
+    c1.fillText(`（${construction}）`, A4_W / 2, 600);
+    c1.font = 'bold 64px Arial, sans-serif';
+    c1.fillText('エックス線探査報告書', A4_W / 2, 700);
 
-    const pdfW = 595.28;
-    const pdfH = 841.89;
-    const pdfBytes = createPdfFromJpegDataUrl(imgDataUrl, pdfW, pdfH, offCanvas.width, offCanvas.height);
+    c1.font = '36px Arial, sans-serif';
+    c1.fillText(dateStr, A4_W / 2, 1300);
+    c1.font = 'bold 44px Arial, sans-serif';
+    c1.fillText('株式会社ジャスト', A4_W / 2, 1420);
 
-    triggerBlobDownload(pdfBytes, `探査報告書_${qualityMode}_${nameParts.join('_')}.pdf`);
-    document.getElementById('modal-report').style.display = 'none';
+    pageItems.push({ dataUrl: cv1.toDataURL('image/jpeg', qualityRatio), wPt: W_PT, hPt: H_PT, pxW: A4_W, pxH: A4_H });
+
+    // --- Page 2: 探査概要 Canvas レンダリング ---
+    const cv2 = document.createElement('canvas'); cv2.width = A4_W; cv2.height = A4_H;
+    const c2 = cv2.getContext('2d');
+    c2.fillStyle = '#ffffff'; c2.fillRect(0, 0, A4_W, A4_H);
+    c2.fillStyle = '#000000'; c2.textAlign = 'left';
+
+    c2.font = 'bold 48px Arial, sans-serif';
+    c2.fillText('【 探査概要 】', 100, 160);
+
+    c2.font = '36px Arial, sans-serif';
+    c2.fillText(`■ 建物名:         ${building}`, 120, 260);
+    c2.fillText(`■ 工事名:         ${construction}`, 120, 340);
+    c2.fillText(`■ 依頼会社名:   ${client}`, 120, 420);
+    c2.fillText(`■ 探査年月日:   ${dateStr}`, 120, 500);
+    c2.fillText(`■ 探査エンジニア: ${engStr}`, 120, 580);
+
+    c2.font = 'bold 48px Arial, sans-serif';
+    c2.fillText('【 探査結果に関するメモ 】', 100, 740);
+    c2.font = '36px Arial, sans-serif';
+    c2.fillText(memo, 120, 820);
+
+    c2.font = 'bold 48px Arial, sans-serif';
+    c2.fillText('【 注意事項 】', 100, 1100);
+    c2.font = '32px Arial, sans-serif';
+    c2.fillText('・本報告書はエックス線探査結果を記録したものです。', 120, 1180);
+    c2.fillText('・穿孔作業時は十分ご注意ください。', 120, 1240);
+
+    pageItems.push({ dataUrl: cv2.toDataURL('image/jpeg', qualityRatio), wPt: W_PT, hPt: H_PT, pxW: A4_W, pxH: A4_H });
+
+    // --- Page 3: 探査結果一覧表 Canvas レンダリング ---
+    const cv3 = document.createElement('canvas'); cv3.width = A4_W; cv3.height = A4_H;
+    const c3 = cv3.getContext('2d');
+    c3.fillStyle = '#ffffff'; c3.fillRect(0, 0, A4_W, A4_H);
+    c3.fillStyle = '#000000'; c3.textAlign = 'left';
+
+    c3.font = 'bold 48px Arial, sans-serif';
+    c3.fillText('【 エックス線探査結果一覧 】', 80, 140);
+
+    // 凡例ボックス
+    c3.strokeStyle = '#000000'; c3.lineWidth = 3;
+    c3.strokeRect(80, 180, 1080, 100);
+    c3.font = 'bold 28px Arial, sans-serif';
+    c3.fillText('凡例 :  1 F - F 1   L:番号   ( F=床  W=壁  G=梁  C=柱 )', 100, 240);
+
+    // テーブルヘッダー
+    const startY = 320, rowH = 70;
+    c3.fillStyle = '#f0f0f0'; c3.fillRect(80, startY, 1080, rowH);
+    c3.strokeRect(80, startY, 1080, rowH);
+    c3.fillStyle = '#000000'; c3.font = 'bold 30px Arial, sans-serif';
+    c3.fillText('No.', 100, startY + 45);
+    c3.fillText('探査箇所', 220, startY + 45);
+    c3.fillText('フィルムNo.', 500, startY + 45);
+    c3.fillText('検出物', 760, startY + 45);
+    c3.fillText('備考', 1000, startY + 45);
+
+    // 行描画
+    c3.font = '28px Arial, sans-serif';
+    gridData.forEach((row, idx) => {
+      const currY = startY + rowH * (idx + 1);
+      c3.strokeRect(80, currY, 1080, rowH);
+      c3.fillText(String(row.no), 100, currY + 45);
+      c3.fillText(row.location, 220, currY + 45);
+      c3.fillText(row.code, 500, currY + 45);
+      c3.fillText(row.stamps, 760, currY + 45);
+      c3.fillText(row.memo, 1000, currY + 45);
+    });
+
+    pageItems.push({ dataUrl: cv3.toDataURL('image/jpeg', qualityRatio), wPt: W_PT, hPt: H_PT, pxW: A4_W, pxH: A4_H });
+
+    // --- Page 4以降: 全画像の罫書き写真添付 ---
+    imagesList.forEach((item) => {
+      const img = item.imgObj;
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = img.naturalWidth || img.width;
+      offCanvas.height = img.naturalHeight || img.height;
+      const offCtx = offCanvas.getContext('2d');
+
+      if (item.isInverted) offCtx.filter = 'invert(100%)';
+      offCtx.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
+      offCtx.filter = 'none';
+
+      const itemObjs = item.objects || (item === imagesList[currentImgIndex] ? objects : []);
+      if (itemObjs && itemObjs.length > 0) {
+        itemObjs.forEach(obj => renderObjectToContext(offCtx, obj));
+      }
+
+      const imgDataUrl = offCanvas.toDataURL('image/jpeg', qualityRatio);
+      const activePMM = item.pmm || calibratedPMM;
+      const activeDPI = activePMM * 25.4;
+
+      const pdfW = offCanvas.width * (72 / activeDPI);
+      const pdfH = offCanvas.height * (72 / activeDPI);
+
+      pageItems.push({ dataUrl: imgDataUrl, wPt: pdfW, hPt: pdfH, pxW: offCanvas.width, pxH: offCanvas.height });
+    });
+
+    // マルチページPDF生成
+    const pdfBytes = createMultiPagePdfFromJpegArray(pageItems);
+    const reportFileName = `探査報告書_${building}_${dateStr}.pdf`.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_');
+
+    triggerBlobDownload(pdfBytes, reportFileName, false);
+    alert(`『${reportFileName}』の出力が完了しました！`);
   };
 
   // アプリ初期化
