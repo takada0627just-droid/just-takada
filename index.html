@@ -414,7 +414,7 @@
 </div>
 
 <!-- 8. Digi-ray PDF Tool 準拠 報告書作成ステップダイアログ群 -->
-<!-- ステップ1: 探査報告書 作成メニュー (★注意事項編集可能化) -->
+<!-- ステップ1: 探査報告書 作成メニュー (★拠点名変更反映済み) -->
 <div class="modal-overlay" id="modal-report-step1">
   <div class="modal-card">
     <h3>📋 探査報告書 作成メニュー</h3>
@@ -433,11 +433,12 @@
     <div class="modal-row">
       <span>【拠点名 (事業所)】</span>
       <select id="rpt-branch" style="width:480px;">
+        <option value="本社">本社</option>
+        <option value="横浜">横浜</option>
         <option value="大阪事業所" selected>大阪事業所</option>
-        <option value="東京本社">東京本社</option>
-        <option value="横浜事業所">横浜事業所</option>
         <option value="名古屋事業所">名古屋事業所</option>
-        <option value="福岡事業所">福岡事業所</option>
+        <option value="仙台営業所">仙台営業所</option>
+        <option value="福岡営業所">福岡営業所</option>
         <option value="なし">なし (指定なし)</option>
       </select>
     </div>
@@ -462,7 +463,6 @@
       <span style="font-size:22px;">【探査結果に関するメモ】</span>
       <textarea id="rpt-memo" rows="2" placeholder="特記事項など">特になし</textarea>
     </div>
-    <!-- ★指示追加1: 注意事項の編集可能化 (textarea化) -->
     <div style="display:flex; flex-direction:column; gap:8px;">
       <span style="font-size:22px; color:#0088ff;">【注意事項 (編集可)】</span>
       <textarea id="rpt-notice" rows="3">・本報告書はエックス線探査結果を記録したものです。&#10;・穿孔作業時は十分ご注意ください。</textarea>
@@ -497,14 +497,13 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt2-back">戻る</button>
-
       <button class="btn btn-blue" id="modal-rpt2-preview">👁️ プレビュー表示</button>
       <button class="btn btn-green" id="modal-rpt2-next">次へ (画質・完成選択)</button>
     </div>
   </div>
 </div>
 
-<!-- ステップ3: 報告書PDF 完成容量・画質の選択 (★指示追加: 一括PDF保存の選択トグル) -->
+<!-- ステップ3: 報告書PDF 完成容量・画質の選択 -->
 <div class="modal-overlay" id="modal-report-step3">
   <div class="modal-card">
     <h3>📊 報告書PDF 完成容量・画質の選択</h3>
@@ -520,7 +519,6 @@
         <input type="radio" name="report-quality" value="high"> 🎨 高品質 (無劣化/印刷用)
       </label>
     </div>
-    <!-- ★指示追加2: 報告書作成時に「一括PDF保存する／しない」選択肢 -->
     <div style="background:#222; padding:16px; border-radius:8px; border:1px solid #444;" class="modal-row">
       <span style="font-size:20px;">全画像の納品用罫書きPDF一括保存:</span>
       <div style="display:flex; gap:16px;">
@@ -530,14 +528,13 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt3-back">戻る</button>
-
       <button class="btn btn-blue" id="modal-rpt3-preview">👁️ プレビュー表示</button>
       <button class="btn btn-warning" id="modal-rpt3-make">探査報告書PDF生成</button>
     </div>
   </div>
 </div>
 
-<!-- ★指示追加3: 報告書 プレビュー表示専用モーダル -->
+<!-- プレビュー表示専用モーダル -->
 <div class="modal-overlay" id="modal-report-preview">
   <div class="modal-card" style="width:900px; max-width:96vw;">
     <h3>👁️ 探査報告書 プレビュー確認 (1〜3ページ目)</h3>
@@ -2141,7 +2138,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
 
-  // ★寸法補正モーダルのキャンセル・決定処理 (不具合完全修正済み)
+  // 寸法補正モーダルのキャンセル・決定処理
   document.getElementById('modal-calib-cancel').onclick = () => {
     document.getElementById('modal-calibrate-input').style.display = 'none';
     pendingCalibData = null;
@@ -2501,17 +2498,17 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     modalRpt2.style.display = 'flex';
   };
 
-  // ★報告書プレビュー表示処理（ステップ2 / ステップ3のプレビューボタン連動）
+  // 報告書プレビュー表示処理（ステップ2 / ステップ3のプレビューボタン連動）
   const showReportPreview = async () => {
     const container = document.getElementById('preview-pages-container');
     container.innerHTML = '<p style="color:#aaa;">プレビュー生成中...</p>';
     modalRptPrev.style.display = 'flex';
 
-    const qualityRatio = 0.6; // プレビュー用高速生成倍率
+    const qualityRatio = 0.6;
     const pageItems = await buildReportPageItems(qualityRatio);
 
     container.innerHTML = '';
-    pageItems.slice(0, 3).forEach((item, pIdx) => { // 1〜3ページ目（表紙・概要・結果一覧）をプレビュー
+    pageItems.slice(0, 3).forEach((item, pIdx) => {
       const img = document.createElement('img');
       img.src = item.dataUrl;
       img.title = `ページ ${pIdx + 1}`;
@@ -2526,7 +2523,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     modalRptPrev.style.display = 'none';
   };
 
-  // 報告書グリッドテーブル生成 (検出物スタンプ自動連動・重複統合ロジック適用)
+  // 報告書グリッドテーブル生成
   const buildReportGridTable = () => {
     const tbody = document.getElementById('report-grid-tbody');
     tbody.innerHTML = '';
@@ -2673,7 +2670,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     c2.font = '36px Arial, sans-serif';
     c2.fillText(memo, 120, 840);
 
-    // ★可変注意事項テキスト描画
     c2.font = 'bold 48px Arial, sans-serif';
     c2.fillText('【 注意事項 】', 100, 1100);
     c2.font = '32px Arial, sans-serif';
@@ -2838,7 +2834,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     return pageItems;
   };
 
-  // ★ステップ3: マルチページ報告書PDF完全作成処理
+  // ステップ3: マルチページ報告書PDF完全作成処理
   document.getElementById('modal-rpt3-make').onclick = async () => {
     const qualityMode = document.querySelector('input[name="report-quality"]:checked').value;
     let qualityRatio = 0.75;
@@ -2858,7 +2854,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const pdfBytes = createMultiPagePdfFromJpegArray(pageItems);
     const reportFileName = `探査報告書_${building}_${dateStr}.pdf`.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_');
 
-    // ★指示追加2: 「一括PDF保存する」が選ばれている場合は、同時に全画像の個別罫書きPDFも保存実行
     if (isBatchPdfOpt) {
       await performBatchPdfSave();
     }
