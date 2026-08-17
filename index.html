@@ -533,7 +533,7 @@
   </div>
 </div>
 
-<!-- ★フィルム含む報告書全頁 スムーズプレビュー表示専用モーダル -->
+<!-- プレビュー表示専用モーダル -->
 <div class="modal-overlay" id="modal-report-preview">
   <div class="modal-card" style="width:900px; max-width:96vw;">
     <h3>👁️ 探査報告書 全ページプレビュー確認</h3>
@@ -939,8 +939,37 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   calibHeader.addEventListener('pointerup', stopCardDrag);
   calibHeader.addEventListener('pointercancel', stopCardDrag);
 
+  // ★白黒反転オフスクリーンCanvasキャッシュ生成関数 (ピクセル直接反転)
+  const createInvertedCanvas = (img) => {
+    if (!img) return null;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) return null;
+
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const octx = off.getContext('2d');
+    octx.drawImage(img, 0, 0);
+
+    try {
+      const imgData = octx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i]     = 255 - data[i];     // R
+        data[i + 1] = 255 - data[i + 1]; // G
+        data[i + 2] = 255 - data[i + 2]; // B
+      }
+      octx.putImageData(imgData, 0, 0);
+      return off;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  };
+
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v22';
+  const DB_NAME = 'XRayKagakiDB_v23';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -1124,11 +1153,15 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
   fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
 
-  // 白黒反転機能
+  // ★白黒反転機能（ピクセル直接操作オフスクリーン方式）
   const toggleInvertColor = () => {
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
-      imagesList[currentImgIndex].isInverted = !imagesList[currentImgIndex].isInverted;
-      saveToDB(imagesList[currentImgIndex]);
+      const item = imagesList[currentImgIndex];
+      item.isInverted = !item.isInverted;
+      if (item.isInverted && !item.invertedCanvas) {
+        item.invertedCanvas = createInvertedCanvas(item.imgObj);
+      }
+      saveToDB(item);
       updateInvertButtonState();
       redraw();
     }
@@ -1235,16 +1268,21 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     ctx.translate(panX, panY);
     ctx.scale(scale, scale);
 
+    // ★白黒反転時のみフィルム画像限定で反転オフスクリーンCanvasを描画
     if (item.isInverted) {
-      ctx.filter = 'invert(100%)';
+      if (!item.invertedCanvas) {
+        item.invertedCanvas = createInvertedCanvas(img);
+      }
+      if (item.invertedCanvas) {
+        ctx.drawImage(item.invertedCanvas, 0, 0);
+      } else {
+        ctx.drawImage(img, 0, 0);
+      }
     } else {
-      ctx.filter = 'none';
+      ctx.drawImage(img, 0, 0);
     }
 
-    ctx.drawImage(img, 0, 0);
-    ctx.filter = 'none';
-
-    // 確定済みオブジェクト描画
+    // 確定済みオブジェクト（アノテーション）描画：色の反転無し！
     objects.forEach(obj => renderObjectToContext(ctx, obj));
 
     // フリーハンドペン描画中プレビュー
@@ -2296,9 +2334,18 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     offCanvas.height = img.naturalHeight || img.height;
     const offCtx = offCanvas.getContext('2d');
 
-    if (item.isInverted) offCtx.filter = 'invert(100%)';
-    offCtx.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
-    offCtx.filter = 'none';
+    if (item.isInverted) {
+      if (!item.invertedCanvas) {
+        item.invertedCanvas = createInvertedCanvas(img);
+      }
+      if (item.invertedCanvas) {
+        offCtx.drawImage(item.invertedCanvas, 0, 0, offCanvas.width, offCanvas.height);
+      } else {
+        offCtx.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
+      }
+    } else {
+      offCtx.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
+    }
 
     const itemObjs = item.objects || (item === imagesList[currentImgIndex] ? objects : []);
     if (itemObjs && itemObjs.length > 0) {
@@ -2503,8 +2550,8 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     container.innerHTML = '<p style="color:#aaa; font-size:20px; padding:20px;">全ページプレビュー生成中 (軽量モード)...</p>';
     modalRptPrev.style.display = 'flex';
 
-    // プレビュー用に解像度と画質を最適軽量化して高速生成 (isPreview = true)
-    const pageItems = await buildReportPageItems(0.35, true);
+    const qualityRatio = 0.35;
+    const pageItems = await buildReportPageItems(qualityRatio, true);
 
     container.innerHTML = '';
     pageItems.forEach((item, pIdx) => {
@@ -2595,7 +2642,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     return lines.length > 0 ? lines : [''];
   };
 
-  // 報告書全ページのキャンバス画像構築関数 (★isPreview フラグによるプレビュー高速軽量化付き)
+  // 報告書全ページのキャンバス画像構築関数
   const buildReportPageItems = async (qualityRatio, isPreview = false) => {
     const building = document.getElementById('rpt-building').value.trim() || "－";
     const construction = document.getElementById('rpt-construction').value.trim() || "（工事名未設定）";
@@ -2624,7 +2671,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     });
 
     const pageItems = [];
-    // プレビュー時はキャンバス解像度を半分(0.5)にして超高速・軽量レンダリング
     const scaleFactor = isPreview ? 0.5 : 1.0;
     const A4_W = Math.round(1240 * scaleFactor);
     const A4_H = Math.round(1754 * scaleFactor);
@@ -2816,7 +2862,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
     pageItems.push({ dataUrl: cv3.toDataURL('image/jpeg', qualityRatio), wPt: W_PT, hPt: H_PT, pxW: A4_W, pxH: A4_H });
 
-    // --- Page 4以降: 全画像の罫書き写真添付 (プレビュー時も全ページ生成) ---
+    // --- Page 4以降: 全画像の罫書き写真添付 (★白黒反転完全追従) ---
     imagesList.forEach((item) => {
       const img = item.imgObj;
       const origW = img.naturalWidth || img.width;
@@ -2833,9 +2879,19 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
         offCtx.scale(scaleFactor, scaleFactor);
       }
 
-      if (item.isInverted) offCtx.filter = 'invert(100%)';
-      offCtx.drawImage(img, 0, 0, origW, origH);
-      offCtx.filter = 'none';
+      // ★白黒反転画像がある場合は反転画像を描画
+      if (item.isInverted) {
+        if (!item.invertedCanvas) {
+          item.invertedCanvas = createInvertedCanvas(img);
+        }
+        if (item.invertedCanvas) {
+          offCtx.drawImage(item.invertedCanvas, 0, 0, origW, origH);
+        } else {
+          offCtx.drawImage(img, 0, 0, origW, origH);
+        }
+      } else {
+        offCtx.drawImage(img, 0, 0, origW, origH);
+      }
 
       const itemObjs = item.objects || (item === imagesList[currentImgIndex] ? objects : []);
       if (itemObjs && itemObjs.length > 0) {
