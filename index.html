@@ -520,7 +520,7 @@ function createPdfFromJpegDataUrl(jpegDataUrl, widthPt, heightPt, pxWidth, pxHei
   return concatUint8Arrays([header, ...bodyParts, xrefBytes, trailerBytes]);
 }
 
-// 3. ★iPadOS準拠: UTF-8フラグ (0x0800) & DOS日時 & 属性付き ZIPアーカイブ生成関数
+// 3. ★修正: 0x02014b50 (PK\x01\x02) 完全規格準拠 ZIPアーカイブ生成関数
 function createZipArchive(filesMap) {
   const encoder = new TextEncoder();
   const localHeaders = [];
@@ -535,14 +535,14 @@ function createZipArchive(filesMap) {
     const nameBytes = encoder.encode(filename);
     const len = data.length;
     const crc = crc32(data);
-    const flag = 0x0800; // ★UTF-8 Language Encoding Flag
+    const flag = 0x0800; // UTF-8 Language Encoding Flag
 
     // Local Header (30 + nameLen + dataLen)
     const lh = new Uint8Array(30 + nameBytes.length + len);
     const view = new DataView(lh.buffer);
     view.setUint32(0, 0x04034b50, true);
     view.setUint16(4, 20, true);
-    view.setUint16(6, flag, true); // UTF-8フラグ
+    view.setUint16(6, flag, true);
     view.setUint16(8, 0, true);
     view.setUint16(10, dosTime, true);
     view.setUint16(12, dosDate, true);
@@ -554,13 +554,13 @@ function createZipArchive(filesMap) {
     lh.set(nameBytes, 30);
     lh.set(data, 30 + nameBytes.length);
 
-    // Central Directory Header (46 + nameLen)
+    // Central Directory Header (46 + nameLen) ★0x02014b50 徹底修正！
     const cd = new Uint8Array(46 + nameBytes.length);
     const cdView = new DataView(cd.buffer);
-    cdView.setUint32(0, 0x02064b50, true);
+    cdView.setUint32(0, 0x02014b50, true); // ★セントラルディレクトリシグネチャ修正
     cdView.setUint16(4, 20, true);
     cdView.setUint16(6, 20, true);
-    cdView.setUint16(8, flag, true); // UTF-8フラグ
+    cdView.setUint16(8, flag, true);
     cdView.setUint16(10, 0, true);
     cdView.setUint16(12, dosTime, true);
     cdView.setUint16(14, dosDate, true);
@@ -572,7 +572,7 @@ function createZipArchive(filesMap) {
     cdView.setUint16(32, 0, true);
     cdView.setUint16(34, 0, true);
     cdView.setUint16(36, 0, true);
-    cdView.setUint32(38, 0x20, true); // ★External File Attributes (FILE_ATTRIBUTE_ARCHIVE)
+    cdView.setUint32(38, 0x20, true); // External File Attributes (FILE_ATTRIBUTE_ARCHIVE)
     cdView.setUint32(42, offset, true);
     cd.set(nameBytes, 46);
 
@@ -672,6 +672,7 @@ function triggerBlobDownload(blobData, filename) {
 
   // 納品フィルム保存先ディレクトリハンドル
   let nouhinDirHandle = null;
+  let nouhinDirName = '';
 
   // 設定プリセット (LocalStorage)
   let filmPreset = JSON.parse(localStorage.getItem('filmPreset')) || { pos: 'bottom', color: '#ffffff', size: 140 };
@@ -747,7 +748,7 @@ function triggerBlobDownload(blobData, filename) {
   calibHeader.addEventListener('pointercancel', stopCardDrag);
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v21';
+  const DB_NAME = 'XRayKagakiDB_v20';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -931,7 +932,7 @@ function triggerBlobDownload(blobData, filename) {
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
   fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
 
-  // ★白黒反転機能（ヘッダー・ツールバー双方向完全動作）
+  // 白黒反転機能
   const toggleInvertColor = () => {
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       imagesList[currentImgIndex].isInverted = !imagesList[currentImgIndex].isInverted;
@@ -1204,7 +1205,6 @@ function triggerBlobDownload(blobData, filename) {
     targetCtx.setLineDash([]);
   };
 
-  // 測定線描画
   const drawMeasure = (targetCtx, obj) => {
     const activePMM = (imagesList[currentImgIndex] && imagesList[currentImgIndex].pmm) || calibratedPMM;
     targetCtx.strokeStyle = obj.color || '#ff0000';
