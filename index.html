@@ -409,7 +409,7 @@
   </div>
 </div>
 
-<!-- 8. ★Digi-ray PDF Tool 準拠 報告書作成ステップダイアログ群 -->
+<!-- 8. Digi-ray PDF Tool 準拠 報告書作成ステップダイアログ群 -->
 <!-- ステップ1: 探査報告書 作成メニュー -->
 <div class="modal-overlay" id="modal-report-step1">
   <div class="modal-card">
@@ -609,7 +609,6 @@ function createMultiPagePdfFromJpegArray(pageItems) {
   const header = encoder.encode("%PDF-1.4\n%\xE2\xE3\xD1\xD3\n");
   const pageCount = pageItems.length;
 
-  // Obj 1: Catalog, Obj 2: Pages
   const obj1 = encoder.encode("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
   
   let kidsStr = "";
@@ -710,7 +709,7 @@ function createZipArchive(filesMap) {
 
     const cd = new Uint8Array(46 + nameBytes.length);
     const cdView = new DataView(cd.buffer);
-    cdView.setUint32(0, 0x02014b50, true); // ★0x02014b50 シグネチャ修正済み
+    cdView.setUint32(0, 0x02014b50, true);
     cdView.setUint16(4, 20, true);
     cdView.setUint16(6, 20, true);
     cdView.setUint16(8, flag, true);
@@ -772,7 +771,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
  */
 (function() {
   // 超大型3倍 96x96px 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -2098,6 +2097,48 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
 
+  // ★寸法補正モーダルのキャンセル・決定処理 (確実に消える修正済み)
+  document.getElementById('modal-calib-cancel').onclick = () => {
+    document.getElementById('modal-calibrate-input').style.display = 'none';
+    pendingCalibData = null;
+    setMode('select');
+  };
+
+  document.getElementById('modal-calib-ok').onclick = () => {
+    try {
+      if (pendingCalibData) {
+        const knownMM = parseFloat(document.getElementById('calib-mm-input').value);
+        if (!isNaN(knownMM) && knownMM > 0) {
+          calibratedPMM = pendingCalibData.distPx / knownMM;
+          localStorage.setItem('calibratedPMM', calibratedPMM);
+          if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+            imagesList[currentImgIndex].pmm = calibratedPMM;
+            saveToDB(imagesList[currentImgIndex]);
+          }
+          objects.push({ 
+            type: 'measure', 
+            p1: pendingCalibData.p1, 
+            p2: pendingCalibData.p2, 
+            isCalibration: true, 
+            knownMM: knownMM, 
+            color: '#00ff00' 
+          });
+          pushUndo(); redraw();
+          document.getElementById('modal-calibrate-input').style.display = 'none';
+          pendingCalibData = null;
+          setMode('select');
+          alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    document.getElementById('modal-calibrate-input').style.display = 'none';
+    pendingCalibData = null;
+    setMode('select');
+  };
+
   // 確認印ダイアログ
   document.getElementById('tool-confirm-stamp').onclick = () => document.getElementById('modal-confirm-stamp').style.display = 'flex';
   document.getElementById('modal-confirm-cancel').onclick = () => document.getElementById('modal-confirm-stamp').style.display = 'none';
@@ -2361,7 +2402,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   };
 
 
-  // ★Digi-ray PDF Tool 完全準拠 報告書作成ステップモーダル制御＆マルチページPDF生成
+  // Digi-ray PDF Tool 準拠 報告書作成ステップモーダル制御＆マルチページPDF生成
   const modalRpt1 = document.getElementById('modal-report-step1');
   const modalRpt2 = document.getElementById('modal-report-step2');
   const modalRpt3 = document.getElementById('modal-report-step3');
@@ -2389,7 +2430,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   // ステップ1 キャンセル
   document.getElementById('modal-rpt1-cancel').onclick = () => modalRpt1.style.display = 'none';
 
-  // ステップ1 -> ステップ2 (グリッド表生成)
+  // ステップ1 -> ステップ2 (グリッド表生成 ＆ ★検出物スタンプ自動連動・重複統合)
   document.getElementById('modal-rpt1-next').onclick = () => {
     modalRpt1.style.display = 'none';
     buildReportGridTable();
@@ -2414,7 +2455,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     modalRpt2.style.display = 'flex';
   };
 
-  // 報告書グリッドテーブル生成
+  // ★報告書グリッドテーブル生成 (検出物スタンプ自動連動・重複統合ロジック適用)
   const buildReportGridTable = () => {
     const tbody = document.getElementById('report-grid-tbody');
     tbody.innerHTML = '';
@@ -2422,9 +2463,15 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     imagesList.forEach((item, idx) => {
       const tr = document.createElement('tr');
 
-      // 検出物抽出
-      const stamps = (item.objects || []).filter(o => o.type === 'stamp' && o.text).map(o => o.text);
-      const stampStr = stamps.length > 0 ? Array.from(new Set(stamps)).join(', ') : '特になし';
+      // 編集中の最新オブジェクト配列を取得して検出物スタンプ（type === 'stamp' かつ textあり）を収集
+      const activeObjs = (idx === currentImgIndex) ? objects : (item.objects || []);
+      const stamps = activeObjs
+        .filter(o => o.type === 'stamp' && o.text)
+        .map(o => o.text.trim());
+
+      // 重複スタンプの自動統合（Set処理）
+      const uniqueStamps = Array.from(new Set(stamps)).filter(Boolean);
+      const stampStr = uniqueStamps.length > 0 ? uniqueStamps.join(', ') : '特になし';
 
       tr.innerHTML = `
         <td style="text-align:center; font-weight:bold;">${idx + 1}</td>
@@ -2437,7 +2484,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     });
   };
 
-  // ★ステップ3: マルチページ報告書PDF完全作成処理
+  // ★ステップ3: マルチページ報告書PDF完全作成処理 (★指示追加: 保存先指定ダイアログ連動)
   document.getElementById('modal-rpt3-make').onclick = async () => {
     const qualityMode = document.querySelector('input[name="report-quality"]:checked').value;
     let qualityRatio = 0.75;
@@ -2593,6 +2640,23 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const pdfBytes = createMultiPagePdfFromJpegArray(pageItems);
     const reportFileName = `探査報告書_${building}_${dateStr}.pdf`.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_');
 
+    // ★指示変更: 報告書作成時の保存先指定対応 (showDirectoryPicker利用可能時はフォルダ選択ダイアログ起動)
+    if ('showDirectoryPicker' in window) {
+      try {
+        alert(`探査報告書『${reportFileName}』を保存する宛先フォルダを選択してください。`);
+        const rptDirHandle = await window.showDirectoryPicker();
+        const fileHandle = await rptDirHandle.getFileHandle(reportFileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(pdfBytes);
+        await writable.close();
+        alert(`指定されたフォルダに『${reportFileName}』を直接出力・保存しました！`);
+        return;
+      } catch (e) {
+        console.log("フォルダ指定キャンセルまたはブラウザ非対応:", e);
+      }
+    }
+
+    // フォールバックダウンロード
     triggerBlobDownload(pdfBytes, reportFileName, false);
     alert(`『${reportFileName}』の出力が完了しました！`);
   };
