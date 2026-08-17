@@ -771,7 +771,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
  */
 (function() {
   // 超大型3倍 96x96px 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -2097,7 +2097,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   document.getElementById('pen-style-select').onchange = e => penStyle = e.target.value;
 
-  // ★寸法補正モーダルのキャンセル・決定処理 (確実に消える修正済み)
+  // 寸法補正モーダルのキャンセル・決定処理
   document.getElementById('modal-calib-cancel').onclick = () => {
     document.getElementById('modal-calibrate-input').style.display = 'none';
     pendingCalibData = null;
@@ -2430,7 +2430,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   // ステップ1 キャンセル
   document.getElementById('modal-rpt1-cancel').onclick = () => modalRpt1.style.display = 'none';
 
-  // ステップ1 -> ステップ2 (グリッド表生成 ＆ ★検出物スタンプ自動連動・重複統合)
+  // ステップ1 -> ステップ2
   document.getElementById('modal-rpt1-next').onclick = () => {
     modalRpt1.style.display = 'none';
     buildReportGridTable();
@@ -2455,7 +2455,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     modalRpt2.style.display = 'flex';
   };
 
-  // ★報告書グリッドテーブル生成 (検出物スタンプ自動連動・重複統合ロジック適用)
+  // 報告書グリッドテーブル生成
   const buildReportGridTable = () => {
     const tbody = document.getElementById('report-grid-tbody');
     tbody.innerHTML = '';
@@ -2463,13 +2463,11 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     imagesList.forEach((item, idx) => {
       const tr = document.createElement('tr');
 
-      // 編集中の最新オブジェクト配列を取得して検出物スタンプ（type === 'stamp' かつ textあり）を収集
       const activeObjs = (idx === currentImgIndex) ? objects : (item.objects || []);
       const stamps = activeObjs
         .filter(o => o.type === 'stamp' && o.text)
         .map(o => o.text.trim());
 
-      // 重複スタンプの自動統合（Set処理）
       const uniqueStamps = Array.from(new Set(stamps)).filter(Boolean);
       const stampStr = uniqueStamps.length > 0 ? uniqueStamps.join(', ') : '特になし';
 
@@ -2484,7 +2482,43 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     });
   };
 
-  // ★ステップ3: マルチページ報告書PDF完全作成処理 (★指示追加: 保存先指定ダイアログ連動)
+  // ★テキスト自動折り返し＆行数計測用ヘルパー関数
+  const wrapAndMeasureText = (context, text, maxWidth, fontSize) => {
+    context.font = `${fontSize}px Arial, sans-serif`;
+    if (!text) return [''];
+    
+    const words = text.split(/(?<=[, \-\_])/);
+    let lines = [];
+    let currentLine = '';
+
+    for (let i = 0; i < words.length; i++) {
+      let word = words[i];
+      let testLine = currentLine + word;
+      let metrics = context.measureText(testLine);
+      
+      if (metrics.width > maxWidth && currentLine !== '') {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        if (context.measureText(word).width > maxWidth) {
+          for (let char of word) {
+            if (context.measureText(currentLine + char).width > maxWidth) {
+              lines.push(currentLine);
+              currentLine = char;
+            } else {
+              currentLine += char;
+            }
+          }
+        } else {
+          currentLine = testLine;
+        }
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines.length > 0 ? lines : [''];
+  };
+
+  // ★ステップ3: マルチページ報告書PDF完全作成処理 (見本完全一致レイアウト＆自動改行実装)
   document.getElementById('modal-rpt3-make').onclick = async () => {
     const qualityMode = document.querySelector('input[name="report-quality"]:checked').value;
     let qualityRatio = 0.75;
@@ -2569,42 +2603,138 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
     pageItems.push({ dataUrl: cv2.toDataURL('image/jpeg', qualityRatio), wPt: W_PT, hPt: H_PT, pxW: A4_W, pxH: A4_H });
 
-    // --- Page 3: 探査結果一覧表 Canvas レンダリング ---
+    // --- ★Page 3: 探査結果一覧表 Canvas レンダリング (見本完全一致レイアウト＆自動改行・可動行高) ---
     const cv3 = document.createElement('canvas'); cv3.width = A4_W; cv3.height = A4_H;
     const c3 = cv3.getContext('2d');
     c3.fillStyle = '#ffffff'; c3.fillRect(0, 0, A4_W, A4_H);
-    c3.fillStyle = '#000000'; c3.textAlign = 'left';
 
-    c3.font = 'bold 48px Arial, sans-serif';
-    c3.fillText('【 エックス線探査結果一覧 】', 80, 140);
+    // タイトル見出し＆アンダーライン
+    c3.fillStyle = '#0f3675'; c3.font = 'bold 52px "Helvetica Neue", Arial, sans-serif';
+    c3.fillText('【 エックス線探査結果一覧 】', 80, 130);
+    c3.strokeStyle = '#0f3675'; c3.lineWidth = 4;
+    c3.beginPath(); c3.moveTo(80, 150); c3.lineTo(1160, 150); c3.stroke();
 
-    // 凡例ボックス
-    c3.strokeStyle = '#000000'; c3.lineWidth = 3;
-    c3.strokeRect(80, 180, 1080, 100);
+    // 凡例ボックス (見本完全一致デザイン)
+    c3.strokeStyle = '#333333'; c3.lineWidth = 2;
+    c3.strokeRect(80, 180, 1080, 110);
+    c3.fillStyle = '#000000'; c3.font = 'bold 28px Arial, sans-serif';
+    c3.fillText('凡例：', 110, 245);
+
+    // 分数スタイル「1F / 階」
+    c3.fillText('1 F', 230, 225);
+    c3.strokeStyle = '#000000'; c3.lineWidth = 2;
+    c3.beginPath(); c3.moveTo(210, 235); c3.lineTo(280, 235); c3.stroke();
+    c3.font = '22px Arial, sans-serif';
+    c3.fillText('階', 230, 265);
+
     c3.font = 'bold 28px Arial, sans-serif';
-    c3.fillText('凡例 :  1 F - F 1   L:番号   ( F=床  W=壁  G=梁  C=柱 )', 100, 240);
+    c3.fillText('–', 300, 235);
 
-    // テーブルヘッダー
-    const startY = 320, rowH = 70;
-    c3.fillStyle = '#f0f0f0'; c3.fillRect(80, startY, 1080, rowH);
-    c3.strokeRect(80, startY, 1080, rowH);
-    c3.fillStyle = '#000000'; c3.font = 'bold 30px Arial, sans-serif';
-    c3.fillText('No.', 100, startY + 45);
-    c3.fillText('探査箇所', 220, startY + 45);
-    c3.fillText('フィルムNo.', 500, startY + 45);
-    c3.fillText('検出物', 760, startY + 45);
-    c3.fillText('備考', 1000, startY + 45);
+    // 分数スタイル「F 1 / L:番号」
+    c3.fillText('F 1', 340, 225);
+    c3.beginPath(); c3.moveTo(330, 235); c3.lineTo(390, 235); c3.stroke();
+    c3.font = '20px Arial, sans-serif';
+    c3.fillText('L:番号', 330, 265);
 
-    // 行描画
-    c3.font = '28px Arial, sans-serif';
-    gridData.forEach((row, idx) => {
-      const currY = startY + rowH * (idx + 1);
-      c3.strokeRect(80, currY, 1080, rowH);
-      c3.fillText(String(row.no), 100, currY + 45);
-      c3.fillText(row.location, 220, currY + 45);
-      c3.fillText(row.code, 500, currY + 45);
-      c3.fillText(row.stamps, 760, currY + 45);
-      c3.fillText(row.memo, 1000, currY + 45);
+    // 補足注釈
+    c3.font = 'bold 26px Arial, sans-serif';
+    c3.fillText('( F=床   W=壁   G=梁   C=柱 )', 440, 245);
+
+    // テーブル構成定義
+    const colWidths = [90, 210, 310, 270, 200];
+    const colPositions = [80, 170, 380, 690, 960];
+
+    // ヘッダー描画
+    const startY = 320;
+    const headerH = 60;
+    c3.fillStyle = '#f0f4f8';
+    c3.fillRect(80, startY, 1080, headerH);
+    c3.strokeStyle = '#0f3675'; c3.lineWidth = 2;
+    c3.strokeRect(80, startY, 1080, headerH);
+
+    for(let i = 1; i < colPositions.length; i++) {
+      c3.beginPath();
+      c3.moveTo(colPositions[i], startY);
+      c3.lineTo(colPositions[i], startY + headerH);
+      c3.stroke();
+    }
+
+    c3.fillStyle = '#0f3675';
+    c3.font = 'bold 26px Arial, sans-serif';
+    c3.textAlign = 'center';
+    c3.fillText('No.', colPositions[0] + colWidths[0]/2, startY + 40);
+    c3.fillText('探査箇所', colPositions[1] + colWidths[1]/2, startY + 40);
+    c3.fillText('フィルムNo.', colPositions[2] + colWidths[2]/2, startY + 40);
+    c3.fillText('検出物', colPositions[3] + colWidths[3]/2, startY + 40);
+    c3.fillText('備考', colPositions[4] + colWidths[4]/2, startY + 40);
+
+    // 各行の動的描画（自動折り返し＆行高拡張）
+    let currentY = startY + headerH;
+    const padding = 12;
+
+    gridData.forEach((row) => {
+      const fontSize = 24;
+      c3.font = `${fontSize}px Arial, sans-serif`;
+
+      const locLines = wrapAndMeasureText(c3, row.location, colWidths[1] - padding * 2, fontSize);
+      const codeLines = wrapAndMeasureText(c3, row.code, colWidths[2] - padding * 2, fontSize);
+      const stampLines = wrapAndMeasureText(c3, row.stamps, colWidths[3] - padding * 2, fontSize);
+      const memoLines = wrapAndMeasureText(c3, row.memo, colWidths[4] - padding * 2, fontSize);
+
+      const maxLineCount = Math.max(locLines.length, codeLines.length, stampLines.length, memoLines.length, 1);
+      const lineSpacing = 32;
+      const rowH = Math.max(60, maxLineCount * lineSpacing + padding * 2);
+
+      // 外枠
+      c3.strokeStyle = '#d0d7de'; c3.lineWidth = 1;
+      c3.strokeRect(80, currentY, 1080, rowH);
+
+      // 縦区切り線
+      c3.strokeStyle = '#e1e4e8';
+      for(let i = 1; i < colPositions.length; i++) {
+        c3.beginPath();
+        c3.moveTo(colPositions[i], currentY);
+        c3.lineTo(colPositions[i], currentY + rowH);
+        c3.stroke();
+      }
+
+      // No.
+      c3.fillStyle = '#000000';
+      c3.textAlign = 'center';
+      c3.fillText(String(row.no), colPositions[0] + colWidths[0]/2, currentY + rowH/2 + 8);
+
+      // 探査箇所
+      c3.textAlign = 'left';
+      let startTextY = currentY + (rowH - (locLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + 18;
+      locLines.forEach((line, lIdx) => {
+        c3.fillText(line, colPositions[1] + padding, startTextY + lIdx * lineSpacing);
+      });
+
+      // フィルムNo.
+      startTextY = currentY + (rowH - (codeLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + 18;
+      codeLines.forEach((line, lIdx) => {
+        c3.fillText(line, colPositions[2] + padding, startTextY + lIdx * lineSpacing);
+      });
+
+      // 検出物 (見本通り「特になし」「－」以外は朱色/赤色表示)
+      if (row.stamps !== '特になし' && row.stamps !== '－') {
+        c3.fillStyle = '#d9534f';
+      } else {
+        c3.fillStyle = '#000000';
+      }
+      startTextY = currentY + (rowH - (stampLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + 18;
+      stampLines.forEach((line, lIdx) => {
+        c3.fillText(line, colPositions[3] + padding, startTextY + lIdx * lineSpacing);
+      });
+
+      // 備考
+      c3.fillStyle = '#000000';
+      startTextY = currentY + (rowH - (memoLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + 18;
+      memoLines.forEach((line, lIdx) => {
+        c3.fillText(line, colPositions[4] + padding, startTextY + lIdx * lineSpacing);
+      });
+
+      currentY += rowH;
     });
 
     pageItems.push({ dataUrl: cv3.toDataURL('image/jpeg', qualityRatio), wPt: W_PT, hPt: H_PT, pxW: A4_W, pxH: A4_H });
@@ -2640,7 +2770,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const pdfBytes = createMultiPagePdfFromJpegArray(pageItems);
     const reportFileName = `探査報告書_${building}_${dateStr}.pdf`.replace(/[\/\\\:\*\?\"\|\<\>]/g, '_');
 
-    // ★指示変更: 報告書作成時の保存先指定対応 (showDirectoryPicker利用可能時はフォルダ選択ダイアログ起動)
     if ('showDirectoryPicker' in window) {
       try {
         alert(`探査報告書『${reportFileName}』を保存する宛先フォルダを選択してください。`);
@@ -2656,7 +2785,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       }
     }
 
-    // フォールバックダウンロード
     triggerBlobDownload(pdfBytes, reportFileName, false);
     alert(`『${reportFileName}』の出力が完了しました！`);
   };
