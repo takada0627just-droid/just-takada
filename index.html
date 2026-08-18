@@ -103,11 +103,12 @@
 <input type="file" id="file-input" multiple accept="image/*" style="display:none;">
 
 <div id="app-container">
-  <!-- ヘッダーツールバー -->
+  <!-- ヘッダーツールバー (★指示追加: フィルム№ボタンの左に回転ボタン配置) -->
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
     <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
     <button class="btn btn-green" id="btn-open-file">📄 フィルム選択</button>
+    <button class="btn btn-dark" id="btn-rotate-img" title="画像を90度右回転">🔄 画像回転</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
@@ -200,7 +201,7 @@
 
 <!-- モーダル各種 -->
 
-<!-- ★新規追加: 選択オブジェクト ダブルタップ編集ダイアログ (カラー変更・テキスト修正・削除) -->
+<!-- 選択オブジェクト ダブルタップ編集ダイアログ (カラー変更・テキスト修正・削除) -->
 <div class="modal-overlay" id="modal-edit-object">
   <div class="modal-card" style="width:580px;">
     <h3>✏️ オブジェクトの編集</h3>
@@ -489,8 +490,9 @@
         <span style="font-size:22px;">【探査エンジニア名】</span>
         <button class="btn btn-blue" id="btn-add-engineer" style="font-size:18px;">＋ 人数追加</button>
       </div>
+      <!-- ★指示変更: デフォルト空欄＆プリセット記憶コンテナ -->
       <div id="engineer-list-container" style="display:flex; flex-direction:column; gap:8px;">
-        <input type="text" class="rpt-engineer-input" value="高田陽介" placeholder="エンジニア 1">
+        <!-- JS動的読み込み -->
       </div>
     </div>
     <div class="modal-row">
@@ -919,6 +921,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   let cloudPreset = JSON.parse(localStorage.getItem('cloudPreset')) || { path: 'gdrive://JustCore/納品フィルム', target: 'pdf' };
 
   let confirmStampPreset = JSON.parse(localStorage.getItem('confirmStampPreset')) || { text: '確認', shape: 'circle', sizeLevel: 'mid', orient: 'horiz', color: '#d9534f' };
+  let engineerPreset = JSON.parse(localStorage.getItem('engineerPreset')) || [""];
 
   let penStyle = '実線';
   let penColor = '#ff0000';
@@ -941,6 +944,21 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   if (sizeRadio) sizeRadio.checked = true;
   const orientRadio = document.querySelector(`input[name="confirm-stamp-orient"][value="${confirmStampPreset.orient || 'horiz'}"]`);
   if (orientRadio) orientRadio.checked = true;
+
+  // エンジニア名プリセット復元レンダリング
+  const renderEngineerInputs = () => {
+    const container = document.getElementById('engineer-list-container');
+    container.innerHTML = '';
+    engineerPreset.forEach((name, idx) => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'rpt-engineer-input';
+      input.value = name || '';
+      input.placeholder = `エンジニア ${idx + 1}`;
+      container.appendChild(input);
+    });
+  };
+  renderEngineerInputs();
 
   const penColorPicker = document.getElementById('pen-color-picker');
   penColorPicker.value = penColor;
@@ -1018,7 +1036,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   };
 
   // --- IndexedDB 端末内一時保存 ---
-  const DB_NAME = 'XRayKagakiDB_v23';
+  const DB_NAME = 'XRayKagakiDB_v24';
   let db = null;
   const initDB = () => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -1043,6 +1061,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       objects: item.objects || [],
       pmm: item.pmm || calibratedPMM,
       isInverted: item.isInverted || false,
+      angle: item.angle || 0,
       filmCode: item.filmCode || '',
       filmLocation: item.filmLocation || '',
       folderName: item.folderName || '写真データ'
@@ -1074,7 +1093,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   };
 
   const checkStorageCapacity = async () => {
-    if (navigator.storage && navigator.storage.estimate) {
+    if (navigator.storage && navigator.storage estimate) {
       const { quota, usage } = await navigator.storage.estimate();
       const remainingMB = (quota - usage) / (1024 * 1024);
       const estCount = Math.max(0, Math.floor(remainingMB / 5));
@@ -1236,6 +1255,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
             objects: [],
             pmm: calibratedPMM,
             isInverted: false,
+            angle: 0,
             filmCode: '',
             filmLocation: ''
           };
@@ -1306,20 +1326,37 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     btn.onclick = toggleInvertColor;
   });
 
+  // ★画像回転ボタン（時計回り90度回転）
+  document.getElementById('btn-rotate-img').onclick = () => {
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+      const item = imagesList[currentImgIndex];
+      item.angle = ((item.angle || 0) + 90) % 360;
+      saveToDB(item);
+      fitToView();
+      redraw();
+    }
+  };
+
   // --- ズーム・実測100%表示・全体表示機能 ---
   const fitToView = () => {
     if (currentImgIndex < 0 || !imagesList[currentImgIndex]) return;
-    const img = imagesList[currentImgIndex].imgObj;
+    const item = imagesList[currentImgIndex];
+    const img = item.imgObj;
     const cw = container.clientWidth || window.innerWidth;
     const ch = container.clientHeight || window.innerHeight;
     
     if (!img.width || !img.height) return;
 
-    const scaleX = cw / img.width;
-    const scaleY = ch / img.height;
+    const angle = item.angle || 0;
+    const isRotated = (angle % 180 !== 0);
+    const w = isRotated ? img.height : img.width;
+    const h = isRotated ? img.width : img.height;
+
+    const scaleX = cw / w;
+    const scaleY = ch / h;
     scale = Math.min(scaleX, scaleY) * 0.95;
-    panX = (cw - img.width * scale) / 2;
-    panY = (ch - img.height * scale) / 2;
+    panX = (cw - w * scale) / 2;
+    panY = (ch - h * scale) / 2;
 
     updateCanvasTransform();
   };
@@ -1335,8 +1372,14 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const img = item.imgObj;
     const cw = container.clientWidth || window.innerWidth;
     const ch = container.clientHeight || window.innerHeight;
-    panX = (cw - img.width * scale) / 2;
-    panY = (ch - img.height * scale) / 2;
+
+    const angle = item.angle || 0;
+    const isRotated = (angle % 180 !== 0);
+    const w = isRotated ? img.height : img.width;
+    const h = isRotated ? img.width : img.height;
+
+    panX = (cw - w * scale) / 2;
+    panY = (ch - h * scale) / 2;
 
     updateCanvasTransform();
   };
@@ -1395,6 +1438,25 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     ctx.translate(panX, panY);
     ctx.scale(scale, scale);
 
+    const angle = item.angle || 0;
+    const origW = img.naturalWidth || img.width;
+    const origH = img.naturalHeight || img.height;
+
+    // ★画像全体の回転座標トランスフォーム処理（アノテーションも連動）
+    if (angle !== 0) {
+      if (angle === 90) {
+        ctx.translate(origH, 0);
+        ctx.rotate(90 * Math.PI / 180);
+      } else if (angle === 180) {
+        ctx.translate(origW, origH);
+        ctx.rotate(180 * Math.PI / 180);
+      } else if (angle === 270) {
+        ctx.translate(0, origW);
+        ctx.rotate(270 * Math.PI / 180);
+      }
+    }
+
+    // 白黒反転画像または通常画像描画
     if (item.isInverted) {
       if (!item.invertedCanvas) {
         item.invertedCanvas = createInvertedCanvas(img);
@@ -1781,6 +1843,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     }
   };
 
+  // ★回転適用時のキャンバスローカル座標変換（画像回転考慮）
   const getCanvasCoordsFromClient = (clientX, clientY) => {
     const rect = canvas.getBoundingClientRect();
     let cx = (clientX - rect.left - panX) / scale;
@@ -1788,6 +1851,26 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
     if (['measure', 'right_measure', 'calibrate'].includes(currentMode)) {
       cy -= (20 / scale);
+    }
+
+    if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
+      const img = imagesList[currentImgIndex].imgObj;
+      const angle = imagesList[currentImgIndex].angle || 0;
+      const origW = img.naturalWidth || img.width;
+      const origH = img.naturalHeight || img.height;
+
+      if (angle === 90) {
+        let tx = cx;
+        cx = cy;
+        cy = origH - tx;
+      } else if (angle === 180) {
+        cx = origW - cx;
+        cy = origH - cy;
+      } else if (angle === 270) {
+        let tx = cx;
+        cx = origW - cy;
+        cy = tx;
+      }
     }
 
     return { x: cx, y: cy };
@@ -1830,7 +1913,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     return null;
   };
 
-  // ★修正: 下方向オートパン判定ロジック (指入力位置が下端手前80px以内に達した場合に発動)
+  // 下方向オートパン判定ロジック (指入力位置が下端手前80px以内に達した場合に発動)
   const checkEdgeAutoPan = (clientX, clientY) => {
     if (!isDrawing || !['measure', 'right_measure', 'straight', 'calibrate'].includes(currentMode)) {
       stopAutoPan();
@@ -1841,13 +1924,10 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const margin = 50;
     let dx = 0, dy = 0;
 
-    // 左右
     if (clientX - rect.left < margin) dx = 15;
     else if (rect.right - clientX < margin) dx = -15;
 
-    // 上方向
     if (clientY - rect.top < margin) dy = 15;
-    // 下方向 (指位置 clientY が画面下端前 80px 以内に達した場合)
     else if (rect.bottom - clientY < margin + 30) dy = -15;
 
     if (dx !== 0 || dy !== 0) {
@@ -1871,7 +1951,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     }
   };
 
-  // ★新規追加: オブジェクトダブルタップ編集モーダル制御
+  // オブジェクトダブルタップ編集モーダル制御
   const openObjectEditModal = (obj) => {
     editingTargetObj = obj;
     const modal = document.getElementById('modal-edit-object');
@@ -1932,7 +2012,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     if (currentMode === 'select') {
       const hit = hitTest(pt);
 
-      // ★ダブルタップ検出 (300ms以内の同一オブジェクトタップ)
       if (hit) {
         const now = Date.now();
         if (lastTapObj === hit && (now - lastTapTime) < 300) {
@@ -2008,7 +2087,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
         }
       }
 
-      // ★指示修正: オブジェクト以外をタップしたら選択解除 ＆ パン移動開始
       selectedObj = hit;
       if (!hit) {
         isPanning = true;
@@ -2737,8 +2815,17 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   // ステップ1 キャンセル
   document.getElementById('modal-rpt1-cancel').onclick = () => modalRpt1.style.display = 'none';
 
-  // ステップ1 -> ステップ2
+  // ステップ1 -> ステップ2 (★エンジニア名プリセット保存処理追加)
   document.getElementById('modal-rpt1-next').onclick = () => {
+    const engInputs = document.querySelectorAll('.rpt-engineer-input');
+    const newEngList = [];
+    engInputs.forEach(input => {
+      const v = input.value.trim();
+      if (v) newEngList.push(v);
+    });
+    engineerPreset = newEngList.length > 0 ? newEngList : [""];
+    localStorage.setItem('engineerPreset', JSON.stringify(engineerPreset));
+
     modalRpt1.style.display = 'none';
     buildReportGridTable();
     modalRpt2.style.display = 'flex';
@@ -3088,8 +3175,14 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       const img = item.imgObj;
       const origW = img.naturalWidth || img.width;
       const origH = img.naturalHeight || img.height;
-      const targetW = Math.round(origW * scaleFactor);
-      const targetH = Math.round(origH * scaleFactor);
+      const angle = item.angle || 0;
+      const isRotated = (angle % 180 !== 0);
+
+      const unscaledW = isRotated ? origH : origW;
+      const unscaledH = isRotated ? origW : origH;
+
+      const targetW = Math.round(unscaledW * scaleFactor);
+      const targetH = Math.round(unscaledH * scaleFactor);
 
       const offCanvas = document.createElement('canvas');
       offCanvas.width = targetW;
@@ -3098,6 +3191,22 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
       if (scaleFactor !== 1.0) {
         offCtx.scale(scaleFactor, scaleFactor);
+      }
+
+      offCtx.save();
+
+      // 回転適用
+      if (angle !== 0) {
+        if (angle === 90) {
+          offCtx.translate(origH, 0);
+          offCtx.rotate(90 * Math.PI / 180);
+        } else if (angle === 180) {
+          offCtx.translate(origW, origH);
+          offCtx.rotate(180 * Math.PI / 180);
+        } else if (angle === 270) {
+          offCtx.translate(0, origW);
+          offCtx.rotate(270 * Math.PI / 180);
+        }
       }
 
       if (item.isInverted) {
@@ -3113,18 +3222,19 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
         offCtx.drawImage(img, 0, 0, origW, origH);
       }
 
-      // 最新アノテーション同期読み出し
       const itemObjs = (imgIndex === currentImgIndex) ? objects : (item.objects || []);
       if (itemObjs && itemObjs.length > 0) {
         itemObjs.forEach(obj => renderObjectToContext(offCtx, obj));
       }
 
+      offCtx.restore();
+
       const imgDataUrl = offCanvas.toDataURL('image/jpeg', qualityRatio);
       const activePMM = item.pmm || calibratedPMM;
       const activeDPI = activePMM * 25.4;
 
-      const pdfW = origW * (72 / activeDPI);
-      const pdfH = origH * (72 / activeDPI);
+      const pdfW = unscaledW * (72 / activeDPI);
+      const pdfH = unscaledH * (72 / activeDPI);
 
       pageItems.push({ dataUrl: imgDataUrl, wPt: pdfW, hPt: pdfH, pxW: targetW, pxH: targetH });
     });
