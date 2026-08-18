@@ -107,7 +107,7 @@
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
     <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
-    <button class="btn btn-green" id="btn-open-file">📄 写真選択</button>
+    <button class="btn btn-green" id="btn-open-file">📄 フィルム選択</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
     <button class="btn btn-green" id="btn-calibrate">🎯 寸法補正</button>
@@ -121,10 +121,10 @@
       <span id="zoom-text">100%</span>
     </label>
 
-    <button class="btn btn-danger" id="btn-save-pdf">💾 罫書きPDF保存</button>
-    <button class="btn btn-danger" id="btn-save-batch-pdf">📦 PDF一括保存</button>
+    <button class="btn btn-danger" id="btn-save-pdf">💾 PDF変換保存</button>
+    <button class="btn btn-danger" id="btn-save-batch-pdf">📦 PDF一括変換保存</button>
     <button class="btn btn-warning" id="btn-report">📋 報告書作成</button>
-    <button class="btn" id="btn-cloud-settings">☁️ クラウド保存先</button>
+    <button class="btn" id="btn-cloud-settings">☁️ クラウド保存先（工事中）</button>
   </header>
 
   <!-- サブステータスバー -->
@@ -143,8 +143,8 @@
           <button class="btn btn-danger" id="btn-clear-images" style="font-size:10px; padding:2px 6px;">🗑️ クリア</button>
         </div>
         <div id="drawer-actions">
-          <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">📂 フォルダ選択</button>
-          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 写真選択</button>
+          <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">📂 フォルダ読み込み</button>
+          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 フィルム選択</button>
         </div>
       </div>
       <div id="virtual-thumb-container">
@@ -287,7 +287,7 @@
     </div>
     <div class="modal-row">
       <span>文字色:</span>
-      <input type="color" id="stamp-color-input" value="#00a8ff">
+      <input type="color" id="stamp-color-input" value="#ffffff">
     </div>
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
@@ -312,7 +312,7 @@
     </div>
     <div class="modal-row">
       <span>枠色:</span>
-      <input type="color" id="shape-color-input" value="#00a8ff">
+      <input type="color" id="shape-color-input" value="#ffffff">
     </div>
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
@@ -354,7 +354,7 @@
     </div>
     <div class="modal-row">
       <span>印影色:</span>
-      <input type="color" id="confirm-stamp-color-input" value="#d9534f">
+      <input type="color" id="confirm-stamp-color-input" value="#ffffff">
     </div>
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
@@ -553,7 +553,7 @@
 <!-- プレビュー表示専用モーダル -->
 <div class="modal-overlay" id="modal-report-preview">
   <div class="modal-card" style="width:900px; max-width:96vw;">
-    <h3>👁️ 探査報告書 全ページプレビュー確認</h3>
+    <h3> 探査報告書 全ページプレビュー確認</h3>
     <div id="preview-pages-container">
       <!-- レンダリングされた全ページ画像が動的挿入 -->
     </div>
@@ -1425,7 +1425,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       }
     }
 
-    // 測定系モード：照準カーソルをペン/指先の真上（画面上20pxオフセット）に表示
+    // 測定系モード：照準カーソルをペン/指先の真上（画面上30pxオフセット）に表示
     if (['measure', 'right_measure', 'calibrate'].includes(currentMode) && tempEndPt) {
       drawLargeTargetCursor(ctx, tempEndPt);
     }
