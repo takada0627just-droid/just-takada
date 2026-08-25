@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>ジャスト社 探査コア部専用 罫書きWEBアプリ</title>
+  <title>J-DigiRay - 探査コア部専用 罫書きWEBアプリ</title>
   <meta name="theme-color" content="#0056b3">
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22罫書きWEBアプリ%22,%22short_name%22:%22罫書き%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#ffffff%22,%22theme_color%22:%22#0056b3%22}">
+  <!-- iOS全画面化 ＆ PWA設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="J-DigiRay">
+  <link rel="apple-touch-icon" id="dynamic-apple-icon">
+  <link rel="icon" id="dynamic-favicon">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22J-DigiRay%22,%22short_name%22:%22J-DigiRay%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#1e1e1e%22,%22theme_color%22:%22#0056b3%22}">
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -28,8 +34,9 @@
     select, input[type="range"], input[type="number"], input[type="text"], input[type="color"], textarea { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
 
     /* 状態表示バー */
-    #status-bar { background: #181818; border-bottom: 1px solid #333; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; color: #aaa; }
+    #status-bar { background: #181818; border-bottom: 1px solid #333; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; color: #aaa; }
     #storage-alert { color: #ffbe3b; font-weight: bold; }
+    .creator-badge { color: #00a8ff; font-weight: bold; font-size: 11px; }
 
     /* ワークスペース (サイドバー + キャンバス) */
     #workspace { flex: 1; display: flex; position: relative; overflow: hidden; }
@@ -46,11 +53,13 @@
     .thumb-item.active { border-color: #0088ff; background: #1e3a5f; }
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
+    
+    #drawer-footer { padding: 8px 10px; border-top: 1px solid #333; background: #1a1a1a; font-size: 10px; color: #888; text-align: center; }
 
     /* メインキャンバスエリア (超大型96x96px 精密赤点照準 SVG カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
-      cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
+      cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
     }
     canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
@@ -142,11 +151,12 @@
     <button class="btn" id="btn-cloud-settings">☁️ クラウド保存先（工事中）</button>
   </header>
 
-  <!-- サブステータスバー -->
+  <!-- サブステータスバー (★製作者クレジット刻印) -->
   <div id="status-bar">
     <span id="file-info">📄 編集中: なし</span>
     <span id="mode-info">モード: 選択・変形・移動</span>
     <span id="storage-alert">残り約 -- 枚作業可能</span>
+    <span class="creator-badge" id="app-creator-tag">🏆 Designed & Created by 高田陽介</span>
   </div>
 
   <div id="workspace">
@@ -164,6 +174,11 @@
       </div>
       <div id="virtual-thumb-container">
         <div id="virtual-thumb-spacer"></div>
+      </div>
+      <!-- ★ドロワー最下部製作者クレジット -->
+      <div id="drawer-footer">
+        J-DigiRay WEB Tool<br>
+        <span style="color:#00a8ff; font-weight:bold;">Created with Pride by 高田陽介</span>
       </div>
     </div>
 
@@ -216,7 +231,7 @@
 
 <!-- モーダル各種 -->
 
-<!-- ★修正: 選択オブジェクト ダブルタップ編集ダイアログ (コンパクトサイズ化) -->
+<!-- 選択オブジェクト ダブルタップ編集ダイアログ (コンパクトサイズ化) -->
 <div class="modal-overlay" id="modal-edit-object">
   <div class="modal-card" style="width: 440px; max-width: 90vw; padding: 20px; gap: 14px;">
     <h3 style="font-size: 20px; padding-bottom: 8px;">✏️ オブジェクトの編集</h3>
@@ -606,6 +621,55 @@
  * ★完全オフライン対応 純粋JavaScript用 CRC32 / PDF 1.4 バイナリ生成器 / ZIPアーカイブ生成エンジン
  */
 
+// ★制作者クレジット名設定定数（変更可能）
+const CREATOR_NAME = "高田陽介";
+
+// ★アプリ起動時に「J-DigiRay」デザインアイコン（192x192）を動的生成・適用する関数
+function initDynamicAppIcon() {
+  const iconCanvas = document.createElement('canvas');
+  iconCanvas.width = 192;
+  iconCanvas.height = 192;
+  const icx = iconCanvas.getContext('2d');
+
+  // グラデーション背景
+  const grad = icx.createLinearGradient(0, 0, 192, 192);
+  grad.addColorStop(0, '#001d3d');
+  grad.addColorStop(1, '#0056b3');
+  icx.fillStyle = grad;
+  icx.fillRect(0, 0, 192, 192);
+
+  // X線探査風ターゲットリング
+  icx.strokeStyle = 'rgba(0, 168, 255, 0.4)';
+  icx.lineWidth = 3;
+  icx.beginPath(); icx.arc(96, 96, 65, 0, Math.PI * 2); icx.stroke();
+  icx.beginPath(); icx.arc(96, 96, 40, 0, Math.PI * 2); icx.stroke();
+
+  // クロスヘア
+  icx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  icx.lineWidth = 2;
+  icx.beginPath(); icx.moveTo(96, 15); icx.lineTo(96, 177); icx.stroke();
+  icx.beginPath(); icx.moveTo(15, 96); icx.lineTo(177, 96); icx.stroke();
+
+  // 中心レッドドット
+  icx.fillStyle = '#ff3344';
+  icx.beginPath(); icx.arc(96, 96, 6, 0, Math.PI * 2); icx.fill();
+
+  // 「J-DigiRay」英字ロゴテキスト
+  icx.fillStyle = '#ffffff';
+  icx.font = 'bold 32px Arial, sans-serif';
+  icx.textAlign = 'center';
+  icx.textBaseline = 'middle';
+  icx.shadowColor = 'rgba(0,0,0,0.8)';
+  icx.shadowBlur = 8;
+  icx.fillText('J-DigiRay', 96, 96);
+
+  const iconDataUrl = iconCanvas.toDataURL('image/png');
+  const appleIconLink = document.getElementById('dynamic-apple-icon');
+  const faviconLink = document.getElementById('dynamic-favicon');
+  if (appleIconLink) appleIconLink.href = iconDataUrl;
+  if (faviconLink) faviconLink.href = iconDataUrl;
+}
+
 // 1. 純粋JS CRC32計算関数
 function crc32(uint8Array) {
   let table = window._crc32Table;
@@ -865,6 +929,9 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
  * 罫書きWEBアプリ コアアプリケーションロジック
  */
 (function() {
+  // アイコン初期生成実行
+  initDynamicAppIcon();
+
   // 超大型3倍 96x96px 精密照準SVGカスタムカーソル
   const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
@@ -949,6 +1016,9 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   document.getElementById('film-size-input').value = filmPreset.size;
   document.getElementById('cloud-path-input').value = cloudPreset.path;
   document.getElementById('cloud-target').value = cloudPreset.target;
+
+  // クレジット表示初期設定
+  document.getElementById('app-creator-tag').innerText = `🏆 Designed & Created by ${CREATOR_NAME}`;
 
   // 確認印ダイアログの初期値プリセット反映
   document.getElementById('confirm-stamp-text').value = confirmStampPreset.text || '確認';
@@ -2439,7 +2509,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   const viewerLockBtn = document.getElementById('viewer-lock-btn');
   const viewerExitBtn = document.getElementById('viewer-exit-btn');
 
-  // ★修正: 全画面Viewerモード制御（CSSクラス追加＆戻るボタン制御）
+  // 全画面Viewerモード制御（CSSクラス追加＆戻るボタン制御）
   const setMode = (newMode, label) => {
     currentMode = newMode;
     measureStep = 0; startPt = null; secondPt = null; tempEndPt = null;
@@ -2483,7 +2553,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     }
   };
 
-  // ★Viewerモード「🔙 編集に戻る」ボタン処理
+  // Viewerモード「🔙 編集に戻る」ボタン処理
   viewerExitBtn.onclick = () => {
     setMode('select');
   };
