@@ -122,9 +122,7 @@
 <body>
 
 <!-- 非表示のファイル・フォルダ読み込み用input要素 -->
-<!-- ★フォルダ読み込み: 純粋なフォルダ選択(directory)仕様 -->
 <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-<!-- フィルム選択: 画像ファイル複数選択(accept="image/*") -->
 <input type="file" id="file-input" multiple accept="image/*" style="display:none;">
 
 <div id="app-container">
@@ -934,7 +932,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   initDynamicAppIcon();
 
   // 超大型3倍 96x96px 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -1287,6 +1285,13 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   // --- ファイル・フォルダ読み込み処理 (入替モードと追加モードの二択対応) ---
   const folderInput = document.getElementById('folder-input');
   const fileInput = document.getElementById('file-input');
+
+  // ★iPadOS / iOS 判定：iPadOSで webkitdirectory 属性があるとフォルダ・ファイル選択が不能になるため、iOS端末では属性を除去してファイルアプリを直接起動させる
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    folderInput.removeAttribute('webkitdirectory');
+    folderInput.removeAttribute('directory');
+  }
 
   document.getElementById('btn-open-folder').onclick = () => folderInput.click();
   document.getElementById('btn-drawer-folder').onclick = () => folderInput.click();
@@ -2487,7 +2492,6 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
     if (activePointers.size === 0) {
       isPinching = false;
-      // ★修正: 測定描画中の pointerup を正常通過させ、測定点確定処理を実行する
       handleInputEnd();
     }
   };
