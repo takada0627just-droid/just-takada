@@ -121,16 +121,16 @@
 </head>
 <body>
 
-<!-- 非表示のファイル・フォルダ読み込み用input要素 -->
+<!-- 非表示のファイル・フォルダ読み込み用input要素 (クラウド・外付け・ローカル対応) -->
 <input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*" style="display:none;">
-<input type="file" id="file-input" multiple accept="image/*" style="display:none;">
+<input type="file" id="file-input" multiple accept="image/*,.heic,.heif" style="display:none;">
 
 <div id="app-container">
   <!-- ヘッダーツールバー -->
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
-    <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
-    <button class="btn btn-green" id="btn-open-file">📄 フィルム選択</button>
+    <button class="btn btn-blue" id="btn-open-folder" title="端末内 フォルダごと読み込み">📂 フォルダ読み込み</button>
+    <button class="btn btn-green" id="btn-open-file" title="クラウド(OneDrive/Drive等)・外付け・端末内写真 一括読み込み">📄 フィルム選択(クラウド・複数可)</button>
     <button class="btn btn-dark" id="btn-rotate-img" title="画像を90度右回転">🔄 画像回転</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
@@ -169,7 +169,7 @@
         </div>
         <div id="drawer-actions">
           <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">📂 フォルダ読み込み</button>
-          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 フィルム選択</button>
+          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 フィルム選択(クラウド等)</button>
         </div>
       </div>
       <div id="virtual-thumb-container">
@@ -1296,7 +1296,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   const handleFilesRead = (files) => {
     const fileArray = Array.from(files);
-    const validFiles = fileArray.filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(f.name));
+    const validFiles = fileArray.filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp|heic|heif)$/i.test(f.name));
     if (validFiles.length === 0) return;
 
     if (imagesList.length > 0) {
