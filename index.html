@@ -132,14 +132,14 @@
 
 <!-- 非表示のファイル・フォルダ読み込み用input要素 (クラウド・外付け・ローカル対応) -->
 <input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*" style="display:none;">
-<input type="file" id="file-input" multiple accept="image/*,.heic,.heif" style="display:none;">
+<input type="file" id="file-input" multiple accept="image/*,.heic,.heif,.jpg,.jpeg,.png" style="display:none;">
 
 <div id="app-container">
   <!-- ヘッダーツールバー -->
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
-    <button class="btn btn-blue" id="btn-open-folder" title="端末内 フォルダごと読み込み">📂 フォルダ読み込み</button>
-    <button class="btn btn-green" id="btn-open-file" title="クラウド(OneDrive/Drive等)・外付け・端末内写真 一括読み込み">📄 フィルム選択(クラウド・複数可)</button>
+    <button class="btn btn-blue" id="btn-open-folder" title="端末内(このiPad内)のフォルダごと読み込み">📂 フォルダ読み込み</button>
+    <button class="btn btn-green" id="btn-open-file" title="クラウド(OneDrive/Drive等)・外付け・端末内写真 一括読み込み">📄 フィルム選択(クラウド等)</button>
     <button class="btn btn-dark" id="btn-rotate-img" title="画像を90度右回転">🔄 画像回転</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
@@ -900,7 +900,7 @@ function createZipArchive(filesMap) {
     cdView.setUint16(8, flag, true);
     cdView.setUint16(10, 0, true);
     cdView.setUint16(12, dosTime, true);
-    cdView.setUint14(14, dosDate, true);
+    cdView.setUint16(14, dosDate, true);
     cdView.setUint32(16, crc, true);
     cdView.setUint32(20, len, true);
     cdView.setUint32(24, len, true);
@@ -972,7 +972,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   let scale = 1.0;
   let panX = 0, panY = 0;
-  let currentMode = 'select'; // select, viewer, measure, right_measure, pen, straight, eraser, calibrate, pending_stamp, pending_text, pending_shape, pending_confirm
+  let currentMode = 'select';
 
   // Viewerモード中の画面固定フラグ
   let isViewerLocked = false;
@@ -1313,8 +1313,16 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   const folderInput = document.getElementById('folder-input');
   const fileInput = document.getElementById('file-input');
 
-  document.getElementById('btn-open-folder').onclick = () => folderInput.click();
-  document.getElementById('btn-drawer-folder').onclick = () => folderInput.click();
+  document.getElementById('btn-open-folder').onclick = () => {
+    // ユーザーに一言アラートで案内（クラウド制限について）
+    if (!sessionStorage.getItem('folderWarned')) {
+      alert("【重要】iPadの制限により、OneDriveなどの「クラウドフォルダ」は選択できない場合があります。\n\nクラウドの写真を読み込む場合は、隣の緑色の「フィルム選択」ボタンからフォルダ内の写真を『すべて選択』して開いてください。");
+      sessionStorage.setItem('folderWarned', 'true');
+    }
+    folderInput.click();
+  };
+  document.getElementById('btn-drawer-folder').onclick = () => document.getElementById('btn-open-folder').click();
+  
   document.getElementById('btn-open-file').onclick = () => fileInput.click();
   document.getElementById('btn-drawer-file').onclick = () => fileInput.click();
 
@@ -1440,7 +1448,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
   fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
 
-  // --- ドラッグ＆ドロップ（Split View/ファイルアプリからのドロップ）対応 ---
+  // --- ドラッグ＆ドロップ（Split View/ファイルアプリからのドロップ）完全対応 ---
   const dropOverlay = document.getElementById('drop-overlay');
 
   window.addEventListener('dragover', e => {
@@ -1454,10 +1462,46 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     }
   });
 
-  window.addEventListener('drop', e => {
+  window.addEventListener('drop', async e => {
     e.preventDefault();
     if (dropOverlay) dropOverlay.style.display = 'none';
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+
+    if (e.dataTransfer && e.dataTransfer.items) {
+      const files = [];
+      const promises = [];
+
+      // フォルダ構造を再帰的に読み込む処理
+      const readEntry = async (entry, path = "") => {
+        if (entry.isFile) {
+          const file = await new Promise(resolve => entry.file(resolve));
+          // ファイルにパス情報を付与（フォルダ名を保持するため）
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: path + file.name, writable: false
+          });
+          files.push(file);
+        } else if (entry.isDirectory) {
+          const dirReader = entry.createReader();
+          const entries = await new Promise(resolve => dirReader.readEntries(resolve));
+          for (let i = 0; i < entries.length; i++) {
+            await readEntry(entries[i], path + entry.name + "/");
+          }
+        }
+      };
+
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        const item = e.dataTransfer.items[i];
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+          if (entry) {
+            promises.push(readEntry(entry, ""));
+          } else {
+            files.push(item.getAsFile());
+          }
+        }
+      }
+      await Promise.all(promises);
+      handleFilesRead(files);
+    } else if (e.dataTransfer && e.dataTransfer.files) {
       handleFilesRead(e.dataTransfer.files);
     }
   });
