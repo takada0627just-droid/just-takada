@@ -13,6 +13,14 @@
   <link rel="icon" id="dynamic-favicon">
   <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22J-DigiRay%22,%22short_name%22:%22J-DigiRay%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#1e1e1e%22,%22theme_color%22:%22#0056b3%22}">
 
+  <!-- PDF読み込み用ライブラリ (PDF.js) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
     body, html { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #1e1e1e; color: #fff; overscroll-behavior: none; }
@@ -59,18 +67,9 @@
     /* メインキャンバスエリア (超大型96x96px 精密赤点照準 SVG カスタムカーソル) */
     #canvas-container { 
       flex: 1; position: relative; background: #111; overflow: hidden; touch-action: none; 
-      cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
+      cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==') 48 48, crosshair;
     }
     canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
-
-    /* ドラッグ＆ドロップ誘導オーバーレイ */
-    #drop-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 102, 204, 0.4); border: 4px dashed #0088ff;
-      display: none; justify-content: center; align-items: center;
-      z-index: 50; pointer-events: none; color: #fff; font-size: 24px; font-weight: bold;
-      backdrop-filter: blur(2px);
-    }
 
     /* 左側フローティングツールパネルコンテナ */
     #floating-toolbar-container { position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
@@ -130,16 +129,16 @@
 </head>
 <body>
 
-<!-- 非表示のファイル・フォルダ読み込み用input要素 (クラウド・外付け・ローカル対応) -->
-<input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*" style="display:none;">
-<input type="file" id="file-input" multiple accept="image/*,.heic,.heif,.jpg,.jpeg,.png" style="display:none;">
+<!-- 非表示のファイル・フォルダ読み込み用input要素 (PDF読み込み対応拡張) -->
+<input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*,application/pdf,.pdf" style="display:none;">
+<input type="file" id="file-input" multiple accept="image/*,application/pdf,.pdf" style="display:none;">
 
 <div id="app-container">
   <!-- ヘッダーツールバー -->
   <header>
     <button class="btn" id="btn-toggle-drawer">≡ 一覧</button>
-    <button class="btn btn-blue" id="btn-open-folder" title="端末内(このiPad内)のフォルダごと読み込み">📂 フォルダ読み込み</button>
-    <button class="btn btn-green" id="btn-open-file" title="クラウド(OneDrive/Drive等)・外付け・端末内写真 一括読み込み">📄 フィルム選択(クラウド等)</button>
+    <button class="btn btn-blue" id="btn-open-folder">📂 フォルダ読み込み</button>
+    <button class="btn btn-green" id="btn-open-file">📄 フィルム選択</button>
     <button class="btn btn-dark" id="btn-rotate-img" title="画像を90度右回転">🔄 画像回転</button>
     <button class="btn btn-purple" id="btn-film-code">🏷️ フィルム№</button>
     <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">📏 画面定規合わせ</button>
@@ -178,7 +177,7 @@
         </div>
         <div id="drawer-actions">
           <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">📂 フォルダ読み込み</button>
-          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 フィルム選択(クラウド等)</button>
+          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">📄 フィルム選択</button>
         </div>
       </div>
       <div id="virtual-thumb-container">
@@ -232,30 +231,12 @@
 
     <!-- メインキャンバス -->
     <div id="canvas-container">
-      <div id="drop-overlay">📁 ここに写真またはフォルダをドロップ</div>
       <canvas id="main-canvas"></canvas>
     </div>
   </div>
 </div>
 
 <!-- モーダル各種 -->
-
-<!-- クラウド一括読み込み時 フォルダ名（現場名）入力モーダル -->
-<div class="modal-overlay" id="modal-folder-name">
-  <div class="modal-card" style="width: 520px;">
-    <h3>📁 フォルダ名（現場名）の確認</h3>
-    <p style="font-size: 16px; color: #ccc; line-height: 1.4;">
-      読み込んだ写真のフォルダ名（現場名）を設定してください。<br>※納品用PDFや一括保存のフォルダ名に使用されます。
-    </p>
-    <div class="modal-row">
-      <span>フォルダ名:</span>
-      <input type="text" id="custom-foldername-input" placeholder="例: 大阪〇〇〇ビル" style="width: 320px;">
-    </div>
-    <div class="modal-buttons">
-      <button class="btn btn-green" id="btn-foldername-ok">決定して読み込み</button>
-    </div>
-  </div>
-</div>
 
 <!-- 選択オブジェクト ダブルタップ編集ダイアログ (コンパクトサイズ化) -->
 <div class="modal-overlay" id="modal-edit-object">
@@ -959,7 +940,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   initDynamicAppIcon();
 
   // 超大型3倍 96x96px 精密照準SVGカスタムカーソル
-  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
+  const LARGE_CROSS_CURSOR = 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij48bGluZSB4MT0iNDgiIHkxPSI2IiB4Mj0iNDgiIHkyPSIzMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjYiIHgyPSI0OCIgeTI9IjMwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY6IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI0OCIgeTE9IjY2IiB4Mj0iNDgiIHkyPSI5MCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48bGluZSB4MT0iNiIgeTE9IjQ4IiB4Mj0iMzAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2IiB4Mj0iMzAiIHkxPSI0OCIgeTI9IjQ4IiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS4yNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxsaW5lIHgxPSI2NiIgeTE9IjQ4IiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuMjUiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjQ4IiByPSIyIiBmaWxsPSIjZmYwMDAwIi8+PGNpcmNsZSBjeD0iNDgiIGN5PSI0OCIgcj0iMy41IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==\') 48 48, crosshair';
 
   // --- アプリケーション状態変数 ---
   let imagesList = []; 
@@ -972,7 +953,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   let scale = 1.0;
   let panX = 0, panY = 0;
-  let currentMode = 'select';
+  let currentMode = 'select'; // select, viewer, measure, right_measure, pen, straight, eraser, calibrate, pending_stamp, pending_text, pending_shape, pending_confirm
 
   // Viewerモード中の画面固定フラグ
   let isViewerLocked = false;
@@ -1309,125 +1290,145 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     }
   };
 
-  // --- ファイル・フォルダ読み込み処理 (入替モードと追加モードの二択対応) ---
+  // --- ファイル・フォルダ読み込み処理 (画像・PDF両対応 & 入替モード/追加モード) ---
   const folderInput = document.getElementById('folder-input');
   const fileInput = document.getElementById('file-input');
 
-  document.getElementById('btn-open-folder').onclick = () => {
-    // ユーザーに一言アラートで案内（クラウド制限について）
-    if (!sessionStorage.getItem('folderWarned')) {
-      alert("【重要】iPadの制限により、OneDriveなどの「クラウドフォルダ」は選択できない場合があります。\n\nクラウドの写真を読み込む場合は、隣の緑色の「フィルム選択」ボタンからフォルダ内の写真を『すべて選択』して開いてください。");
-      sessionStorage.setItem('folderWarned', 'true');
-    }
-    folderInput.click();
-  };
-  document.getElementById('btn-drawer-folder').onclick = () => document.getElementById('btn-open-folder').click();
-  
+  document.getElementById('btn-open-folder').onclick = () => folderInput.click();
+  document.getElementById('btn-drawer-folder').onclick = () => folderInput.click();
   document.getElementById('btn-open-file').onclick = () => fileInput.click();
   document.getElementById('btn-drawer-file').onclick = () => fileInput.click();
 
   // 画像一覧クリアボタン設定
   document.getElementById('btn-clear-images').onclick = () => clearAllImagesData(true);
 
-  // ファイル受取時の共通分岐
   const handleFilesRead = (files) => {
     const fileArray = Array.from(files);
-    const validFiles = fileArray.filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp|heic|heif)$/i.test(f.name));
+    // 画像またはPDFファイルのみを抽出
+    const validFiles = fileArray.filter(f => f.type.startsWith('image/') || f.type === 'application/pdf' || /\.(jpg|jpeg|png|webp|gif|bmp|pdf)$/i.test(f.name));
     if (validFiles.length === 0) return;
 
     if (imagesList.length > 0) {
       pendingReadFiles = validFiles;
       document.getElementById('modal-load-mode').style.display = 'flex';
     } else {
-      checkAndPromptFolderName(validFiles, 'replace');
+      processFilesRead(validFiles, 'replace');
     }
 
     folderInput.value = ''; fileInput.value = '';
   };
 
-  // クラウド一括選択時などのフォルダ名事前問合せ制御
-  const checkAndPromptFolderName = (validFiles, mode) => {
-    let extractedFolder = "";
-    for (const f of validFiles) {
-      if (f.webkitRelativePath && f.webkitRelativePath.includes('/')) {
-        extractedFolder = f.webkitRelativePath.split('/')[0];
-        break;
-      }
-    }
-
-    // パス情報が取れない（クラウド等から一括選択）の場合、ダイアログで確認
-    if (!extractedFolder) {
-      const inputEl = document.getElementById('custom-foldername-input');
-      inputEl.value = (imagesList.length > 0 && imagesList[0].folderName) ? imagesList[0].folderName : "写真データ";
-      
-      const modal = document.getElementById('modal-folder-name');
-      modal.style.display = 'flex';
-
-      document.getElementById('btn-foldername-ok').onclick = () => {
-        modal.style.display = 'none';
-        const customName = inputEl.value.trim() || "写真データ";
-        processFilesRead(validFiles, mode, customName);
-      };
-    } else {
-      processFilesRead(validFiles, mode, extractedFolder);
-    }
-  };
-
-  const processFilesRead = (validFiles, mode, folderNameOverride = "") => {
+  const processFilesRead = async (validFiles, mode) => {
     if (mode === 'replace') {
       clearAllImagesData(false);
     }
 
     validFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
-    let loadedCount = 0;
     const initialIndex = (mode === 'replace') ? 0 : imagesList.length;
 
-    validFiles.forEach(file => {
-      let folderName = folderNameOverride || "写真データ";
-      if (!folderNameOverride && file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
+    for (const file of validFiles) {
+      let folderName = "写真データ";
+      if (file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
         folderName = file.webkitRelativePath.split('/')[0];
       }
 
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const srcData = ev.target.result;
-        const imgObj = new Image();
-        imgObj.onload = () => {
-          const item = {
-            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            name: file.name,
-            folderName: folderName,
-            src: srcData,
-            imgObj: imgObj,
-            objects: [],
-            pmm: calibratedPMM,
-            isInverted: false,
-            angle: 0,
-            filmCode: '',
-            filmLocation: ''
-          };
-          imagesList.push(item);
-          saveToDB(item);
-          loadedCount++;
-          if (loadedCount === validFiles.length) {
-            updateVirtualScroll();
-            if (currentImgIndex === -1 && imagesList.length > 0) selectImage(initialIndex);
-            else redraw();
-            checkStorageCapacity();
+      const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+
+      if (isPdf && window.pdfjsLib) {
+        // PDFファイル読み込み：各ページを高解像度画像にレンダリングして登録
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const numPages = pdfDoc.numPages;
+
+          for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            const page = await pdfDoc.getPage(pageNum);
+            // 精密な罫書き・探査フィルム表示のため高解像度 2.0 倍率でレンダリング
+            const viewport = page.getViewport({ scale: 2.0 });
+            const renderCanvas = document.createElement('canvas');
+            renderCanvas.width = Math.round(viewport.width);
+            renderCanvas.height = Math.round(viewport.height);
+            const rCtx = renderCanvas.getContext('2d');
+
+            // 透過背景PDF対策：下地を白で塗りつぶし
+            rCtx.fillStyle = '#ffffff';
+            rCtx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+
+            await page.render({ canvasContext: rCtx, viewport: viewport }).promise;
+            const srcData = renderCanvas.toDataURL('image/jpeg', 0.95);
+
+            await new Promise((resolve) => {
+              const imgObj = new Image();
+              imgObj.onload = () => {
+                const baseName = file.name.replace(/\.pdf$/i, '');
+                const displayName = numPages > 1 ? `${baseName}_P${pageNum}.pdf` : file.name;
+                const item = {
+                  id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                  name: displayName,
+                  folderName: folderName,
+                  src: srcData,
+                  imgObj: imgObj,
+                  objects: [],
+                  pmm: calibratedPMM,
+                  isInverted: false,
+                  angle: 0,
+                  filmCode: '',
+                  filmLocation: ''
+                };
+                imagesList.push(item);
+                saveToDB(item);
+                resolve();
+              };
+              imgObj.src = srcData;
+            });
           }
-        };
-        imgObj.src = srcData;
-      };
-      reader.readAsDataURL(file);
-    });
+        } catch (pdfErr) {
+          console.error("PDF読み込みエラー:", file.name, pdfErr);
+        }
+      } else {
+        // 通常の画像ファイル (JPG, PNG等) 読み込み
+        await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const srcData = ev.target.result;
+            const imgObj = new Image();
+            imgObj.onload = () => {
+              const item = {
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                name: file.name,
+                folderName: folderName,
+                src: srcData,
+                imgObj: imgObj,
+                objects: [],
+                pmm: calibratedPMM,
+                isInverted: false,
+                angle: 0,
+                filmCode: '',
+                filmLocation: ''
+              };
+              imagesList.push(item);
+              saveToDB(item);
+              resolve();
+            };
+            imgObj.src = srcData;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    }
+
+    updateVirtualScroll();
+    if (currentImgIndex === -1 && imagesList.length > 0) selectImage(initialIndex);
+    else redraw();
+    checkStorageCapacity();
   };
 
   // 画像読み込みモード モーダル ボタンイベント
   document.getElementById('btn-load-replace').onclick = () => {
     document.getElementById('modal-load-mode').style.display = 'none';
     if (pendingReadFiles) {
-      checkAndPromptFolderName(pendingReadFiles, 'replace');
+      processFilesRead(pendingReadFiles, 'replace');
       pendingReadFiles = null;
     }
   };
@@ -1435,7 +1436,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   document.getElementById('btn-load-append').onclick = () => {
     document.getElementById('modal-load-mode').style.display = 'none';
     if (pendingReadFiles) {
-      checkAndPromptFolderName(pendingReadFiles, 'append');
+      processFilesRead(pendingReadFiles, 'append');
       pendingReadFiles = null;
     }
   };
@@ -1448,65 +1449,11 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   folderInput.addEventListener('change', e => handleFilesRead(e.target.files));
   fileInput.addEventListener('change', e => handleFilesRead(e.target.files));
 
-  // --- ドラッグ＆ドロップ（Split View/ファイルアプリからのドロップ）完全対応 ---
-  const dropOverlay = document.getElementById('drop-overlay');
-
-  window.addEventListener('dragover', e => {
-    e.preventDefault();
-    if (dropOverlay) dropOverlay.style.display = 'flex';
-  });
-
-  window.addEventListener('dragleave', e => {
-    if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
-      if (dropOverlay) dropOverlay.style.display = 'none';
-    }
-  });
-
-  window.addEventListener('drop', async e => {
-    e.preventDefault();
-    if (dropOverlay) dropOverlay.style.display = 'none';
-
-    if (e.dataTransfer && e.dataTransfer.items) {
-      const files = [];
-      const promises = [];
-
-      // フォルダ構造を再帰的に読み込む処理
-      const readEntry = async (entry, path = "") => {
-        if (entry.isFile) {
-          const file = await new Promise(resolve => entry.file(resolve));
-          // ファイルにパス情報を付与（フォルダ名を保持するため）
-          Object.defineProperty(file, 'webkitRelativePath', {
-            value: path + file.name, writable: false
-          });
-          files.push(file);
-        } else if (entry.isDirectory) {
-          const dirReader = entry.createReader();
-          const entries = await new Promise(resolve => dirReader.readEntries(resolve));
-          for (let i = 0; i < entries.length; i++) {
-            await readEntry(entries[i], path + entry.name + "/");
-          }
-        }
-      };
-
-      for (let i = 0; i < e.dataTransfer.items.length; i++) {
-        const item = e.dataTransfer.items[i];
-        if (item.kind === 'file') {
-          const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-          if (entry) {
-            promises.push(readEntry(entry, ""));
-          } else {
-            files.push(item.getAsFile());
-          }
-        }
-      }
-      await Promise.all(promises);
-      handleFilesRead(files);
-    } else if (e.dataTransfer && e.dataTransfer.files) {
-      handleFilesRead(e.dataTransfer.files);
-    }
-  });
-
-  // 白黒反転機能
+  // ====================================================================
+  // 【分割境界線】パート1 はここまでです。
+  // パート2 は以下の行からそのまま結合してください。
+  // ====================================================================
+ // 白黒反転機能
   const toggleInvertColor = () => {
     if (currentImgIndex >= 0 && imagesList[currentImgIndex]) {
       const item = imagesList[currentImgIndex];
@@ -3304,11 +3251,11 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const fullCompanyStr = (branch && branch !== 'なし') ? `株式会社ジャスト ${branch}` : '株式会社ジャスト';
 
     c2.font = `${Math.round(36 * scaleFactor)}px Arial, sans-serif`;
-    c2.fillText(`■ 建物名:         ${building}`, Math.round(120 * scaleFactor), Math.round(250 * scaleFactor));
-    c2.fillText(`■ 工事名:         ${construction}`, Math.round(120 * scaleFactor), Math.round(320 * scaleFactor));
-    c2.fillText(`■ 依頼会社名:   ${client}`, Math.round(120 * scaleFactor), Math.round(390 * scaleFactor));
+    c2.fillText(`■ 建物名:          ${building}`, Math.round(120 * scaleFactor), Math.round(250 * scaleFactor));
+    c2.fillText(`■ 工事名:          ${construction}`, Math.round(120 * scaleFactor), Math.round(320 * scaleFactor));
+    c2.fillText(`■ 依頼会社名:    ${client}`, Math.round(120 * scaleFactor), Math.round(390 * scaleFactor));
     c2.fillText(`■ 探査実施会社: ${fullCompanyStr}`, Math.round(120 * scaleFactor), Math.round(460 * scaleFactor));
-    c2.fillText(`■ 探査年月日:   ${dateStr}`, Math.round(120 * scaleFactor), Math.round(530 * scaleFactor));
+    c2.fillText(`■ 探査年月日:    ${dateStr}`, Math.round(120 * scaleFactor), Math.round(530 * scaleFactor));
     c2.fillText(`■ 探査エンジニア: ${engStr}`, Math.round(120 * scaleFactor), Math.round(600 * scaleFactor));
 
     c2.font = `bold ${Math.round(48 * scaleFactor)}px Arial, sans-serif`;
