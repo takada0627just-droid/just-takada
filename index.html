@@ -205,9 +205,18 @@
           <option value="破線大">破線大</option>
           <option value="一点鎖線">一点鎖線</option>
         </select>
-        <div style="display:flex; align-items:center; gap:4px;" title="ペン・直線・文字の描画色">
-          <span style="font-size:10px;">🎨色:</span>
-          <input type="color" id="pen-color-picker" value="#ff0000" style="width:45px; height:26px; border:1px solid #555; border-radius:3px; cursor:pointer;">
+        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;" title="ペン・直線の描画色と線径">
+          <span style="font-size:10px;">色:</span>
+          <input type="color" id="pen-color-picker" value="#ff0000" style="width:36px; height:24px; border:1px solid #555; border-radius:3px; cursor:pointer;">
+          <span style="font-size:10px;">線径:</span>
+          <select id="pen-width-select" style="width:52px; font-size:11px; padding:2px;">
+            <option value="2">2px</option>
+            <option value="4">4px</option>
+            <option value="6" selected>6px</option>
+            <option value="8">8px</option>
+            <option value="12">12px</option>
+            <option value="16">16px</option>
+          </select>
         </div>
         <button class="btn" id="tool-pen" title="ペン描画">✏️ ペン</button>
         <button class="btn" id="tool-straight" title="直線描画">📏 直線</button>
@@ -319,7 +328,7 @@
   </div>
 </div>
 
-<!-- 2. 検出物選択ダイアログ -->
+<!-- 2. 検出物選択ダイアログ (梁・壁・配管・床・木・塩ビ管追加 ＆ 直接入力枠新設) -->
 <div class="modal-overlay" id="modal-stamp">
   <div class="modal-card">
     <h3>検出物 選択</h3>
@@ -327,16 +336,25 @@
       <span>項目:</span>
       <select id="stamp-preset-select" style="width:360px;">
         <option value="鉄筋">鉄筋</option>
+        <option value="梁">梁</option>
+        <option value="壁">壁</option>
+        <option value="配管">配管</option>
+        <option value="床">床</option>
+        <option value="木">木</option>
+        <option value="塩ビ管">塩ビ管</option>
         <option value="障害物">障害物</option>
         <option value="電気配管">電気配管</option>
         <option value="CD管">CD管</option>
         <option value="電気配線">電気配線</option>
         <option value="電気BOX">電気BOX</option>
-        <option value="塩ビ管">塩ビ管</option>
         <option value="番線">番線</option>
         <option value="異形鉄筋">異形鉄筋</option>
         <option value="丸鋼">丸鋼</option>
       </select>
+    </div>
+    <div class="modal-row">
+      <span>直接入力:</span>
+      <input type="text" id="stamp-custom-input" placeholder="プリセット以外の検出物名" style="width:360px;" autocapitalize="characters">
     </div>
     <div class="modal-row">
       <span>方向:</span>
@@ -349,7 +367,7 @@
       <span>文字色:</span>
       <input type="color" id="stamp-color-input" value="#ffffff">
     </div>
-    <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
+    <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。（直接入力がある場合はそちらが優先されます）</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-stamp-cancel">キャンセル</button>
       <button class="btn btn-green" id="modal-stamp-ok">確定（タップ配置）</button>
@@ -357,7 +375,7 @@
   </div>
 </div>
 
-<!-- 3. 図形選択ダイアログ -->
+<!-- 3. 図形選択ダイアログ (→, ↔ 追加 ＆ 線太さ変更対応) -->
 <div class="modal-overlay" id="modal-shape">
   <div class="modal-card">
     <h3>🔲 図形選択</h3>
@@ -368,6 +386,18 @@
         <option value="△">△ (三角形)</option>
         <option value="〇">〇 (円形)</option>
         <option value="☓">☓ (バツ印)</option>
+        <option value="→">→ (片矢印)</option>
+        <option value="↔">↔ (両矢印)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <span>線の太さ:</span>
+      <select id="shape-width-select" style="width:360px;">
+        <option value="2">2px (細い)</option>
+        <option value="4" selected>4px (標準)</option>
+        <option value="6">6px (太い)</option>
+        <option value="8">8px (極太)</option>
+        <option value="12">12px (超極太)</option>
       </select>
     </div>
     <div class="modal-row">
@@ -659,7 +689,7 @@ function initDynamicAppIcon() {
 
   // 中心レッドドット
   icx.fillStyle = '#ff3344';
-  icx.beginPath(); icx.arc(96, 96, 6, 0, Math.PI * 2); icx.fill();
+  icx.beginPath(); icx.arc(96, 96, 66, 0, Math.PI * 2); icx.fill();
 
   // 「J-DigiRay」英字ロゴテキスト
   icx.fillStyle = '#ffffff';
@@ -1057,6 +1087,14 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   penColorPicker.addEventListener('input', e => {
     penColor = e.target.value;
   });
+
+  const penWidthSelect = document.getElementById('pen-width-select');
+  if (penWidthSelect) {
+    penWidthSelect.value = penWidth;
+    penWidthSelect.addEventListener('change', e => {
+      penWidth = parseInt(e.target.value) || 6;
+    });
+  }
 
   // 全テキスト入力欄の自動英大文字変換
   document.querySelectorAll('input[type="text"]').forEach(input => {
@@ -1876,9 +1914,11 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     targetCtx.fillText(obj.text, obj.x, obj.y);
   };
 
+  // 検出物および図形描画（線太さ変更対応 ＆ 矢印「→」「↔」追加）
   const drawStamp = (targetCtx, obj) => {
     const col = obj.color || '#00a8ff';
-    targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
+    targetCtx.strokeStyle = col; targetCtx.fillStyle = col; 
+    targetCtx.lineWidth = obj.lineWidth || obj.width || 4;
     const s = obj.size || 60;
 
     if (obj.shape === '□') targetCtx.strokeRect(obj.x - s/2, obj.y - s/2, s, s);
@@ -1888,6 +1928,35 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     } else if (obj.shape === '☓') {
       targetCtx.beginPath(); targetCtx.moveTo(obj.x - s/2, obj.y - s/2); targetCtx.lineTo(obj.x + s/2, obj.y + s/2);
       targetCtx.moveTo(obj.x + s/2, obj.y - s/2); targetCtx.lineTo(obj.x - s/2, obj.y + s/2); targetCtx.stroke();
+    } else if (obj.shape === '→') {
+      const headLen = Math.min(s * 0.35, 26);
+      targetCtx.beginPath();
+      targetCtx.moveTo(obj.x - s/2, obj.y);
+      targetCtx.lineTo(obj.x + s/2, obj.y);
+      targetCtx.stroke();
+      targetCtx.beginPath();
+      targetCtx.moveTo(obj.x + s/2 - headLen, obj.y - headLen * 0.6);
+      targetCtx.lineTo(obj.x + s/2, obj.y);
+      targetCtx.lineTo(obj.x + s/2 - headLen, obj.y + headLen * 0.6);
+      targetCtx.stroke();
+    } else if (obj.shape === '↔') {
+      const headLen = Math.min(s * 0.35, 26);
+      targetCtx.beginPath();
+      targetCtx.moveTo(obj.x - s/2, obj.y);
+      targetCtx.lineTo(obj.x + s/2, obj.y);
+      targetCtx.stroke();
+      // 右矢じり
+      targetCtx.beginPath();
+      targetCtx.moveTo(obj.x + s/2 - headLen, obj.y - headLen * 0.6);
+      targetCtx.lineTo(obj.x + s/2, obj.y);
+      targetCtx.lineTo(obj.x + s/2 - headLen, obj.y + headLen * 0.6);
+      targetCtx.stroke();
+      // 左矢じり
+      targetCtx.beginPath();
+      targetCtx.moveTo(obj.x - s/2 + headLen, obj.y - headLen * 0.6);
+      targetCtx.lineTo(obj.x - s/2, obj.y);
+      targetCtx.lineTo(obj.x - s/2 + headLen, obj.y + headLen * 0.6);
+      targetCtx.stroke();
     } else {
       const fontSize = s * 0.8;
       targetCtx.font = `bold ${fontSize}px Arial`;
@@ -2714,25 +2783,28 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     document.getElementById('modal-confirm-stamp').style.display = 'none';
   };
 
-  // 検出物ダイアログ (タップ配置)
+  // 検出物ダイアログ (直接入力優先 ＆ タップ配置)
   document.getElementById('tool-stamp').onclick = () => document.getElementById('modal-stamp').style.display = 'flex';
   document.getElementById('modal-stamp-cancel').onclick = () => document.getElementById('modal-stamp').style.display = 'none';
   document.getElementById('modal-stamp-ok').onclick = () => {
+    const customText = document.getElementById('stamp-custom-input').value.trim();
     const preset = document.getElementById('stamp-preset-select').value;
+    const text = customText ? customText : preset;
     const orient = document.querySelector('input[name="stamp-orient"]:checked').value;
     const color = document.getElementById('stamp-color-input').value;
-    pendingStampData = { text: preset, orient: orient, color: color };
+    pendingStampData = { text: text, orient: orient, color: color };
     setMode('pending_stamp', 'モード: 検出物の配置位置をタップしてください');
     document.getElementById('modal-stamp').style.display = 'none';
   };
 
-  // 図形ダイアログ (タップ配置)
+  // 図形ダイアログ (線の太さ対応 ＆ タップ配置)
   document.getElementById('tool-shape').onclick = () => document.getElementById('modal-shape').style.display = 'flex';
   document.getElementById('modal-shape-cancel').onclick = () => document.getElementById('modal-shape').style.display = 'none';
   document.getElementById('modal-shape-ok').onclick = () => {
     const shape = document.getElementById('shape-select').value;
+    const lineWidth = parseInt(document.getElementById('shape-width-select').value) || 4;
     const color = document.getElementById('shape-color-input').value;
-    pendingStampData = { shape: shape, color: color };
+    pendingStampData = { shape: shape, color: color, lineWidth: lineWidth };
     setMode('pending_shape', 'モード: 図形の配置位置をタップしてください');
     document.getElementById('modal-shape').style.display = 'none';
   };
