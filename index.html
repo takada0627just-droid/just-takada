@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>J-DigiRay - 探査コア部専用 罫書きWEBアプリ</title>
-  <meta name="theme-color" content="#0056b3">
+  <meta name="theme-color" content="#1e1e1e">
   <!-- iOS全画面化 ＆ PWA設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="J-DigiRay">
   <link rel="apple-touch-icon" id="dynamic-apple-icon">
   <link rel="icon" id="dynamic-favicon">
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22J-DigiRay%22,%22short_name%22:%22J-DigiRay%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#1e1e1e%22,%22theme_color%22:%22#0056b3%22}">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22J-DigiRay%22,%22short_name%22:%22J-DigiRay%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#1e1e1e%22,%22theme_color%22:%22#1e1e1e%22}">
 
   <!-- PDF読み込み用ライブラリ (PDF.js) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -29,21 +29,25 @@
     #app-container { display: flex; flex-direction: column; width: 100vw; height: 100vh; position: relative; }
 
     /* メインヘッダー / ツールバー */
-    header { background: #2c2c2c; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; align-items: center; z-index: 10; }
-    .btn { background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; }
-    .btn:active, .btn.active { background: #0066cc; border-color: #0088ff; }
-    .btn-blue { background: #0066cc; border-color: #0088ff; }
-    .btn-purple { background: #6f42c1; border-color: #8553e6; }
-    .btn-green { background: #28a745; border-color: #34ce57; }
-    .btn-dark { background: #444; border-color: #666; }
-    .btn-danger { background: #d9534f; border-color: #e2706c; }
-    .btn-warning { background: #ffc107; color: #000; border-color: #ffcd39; }
+    header { background: #262626; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; align-items: center; z-index: 10; }
+    
+    /* モノクロ統一ボタンスタイル */
+    .btn { background: #3a3a3a; color: #ffffff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; transition: background 0.15s, border-color 0.15s; }
+    .btn:active, .btn.active { background: #555555; border-color: #888888; color: #ffffff; }
+    
+    /* モノクロ反転ボタンスタイル (白背景・黒文字) */
+    .btn-mono-invert { background: #e6e6e6; color: #111111; border: 1px solid #cccccc; }
+    .btn-mono-invert:active, .btn-mono-invert.active { background: #ffffff; border-color: #ffffff; color: #000000; }
+
+    /* 汎用ボタンスタイル (すべてモノクロトーンへ統一) */
+    .btn-blue, .btn-purple, .btn-green, .btn-dark, .btn-danger, .btn-warning { background: #3a3a3a; color: #ffffff; border-color: #555; }
+    .btn-blue:active, .btn-purple:active, .btn-green:active, .btn-dark:active, .btn-danger:active, .btn-warning:active { background: #555555; border-color: #888888; color: #ffffff; }
 
     select, input[type="range"], input[type="number"], input[type="text"], input[type="color"], textarea { background: #222; color: #fff; border: 1px solid #555; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
 
     /* 状態表示バー */
     #status-bar { background: #181818; border-bottom: 1px solid #333; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; color: #aaa; }
-    #storage-alert { color: #ffbe3b; font-weight: bold; }
+    #storage-alert { color: #ccc; font-weight: bold; }
     .creator-badge { color: #777777; font-weight: normal; font-size: 9px; opacity: 0.8; }
 
     /* ワークスペース (サイドバー + キャンバス) */
@@ -58,7 +62,7 @@
     #virtual-thumb-container { flex: 1; overflow-y: auto; position: relative; }
     #virtual-thumb-spacer { width: 100%; position: relative; }
     .thumb-item { position: absolute; left: 10px; width: 240px; height: 140px; background: #333; border: 2px solid #555; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
-    .thumb-item.active { border-color: #0088ff; background: #1e3a5f; }
+    .thumb-item.active { border-color: #ffffff; background: #444; }
     .thumb-item img { max-width: 100%; max-height: 100px; object-fit: contain; }
     .thumb-item span { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90%; text-align: center; }
     
@@ -71,7 +75,7 @@
     }
     canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
-    /* 左側フローティングツールパネルコンテナ (スリム化レイアウト) */
+    /* 左側フローティングツールパネルコンテナ (スリム化・縦並び) */
     #floating-toolbar-container { position: absolute; top: 10px; left: 10px; z-index: 5; display: flex; flex-direction: column; gap: 4px; }
     #floating-toolbar { background: rgba(35,35,35,0.92); backdrop-filter: blur(4px); border: 1px solid #555; border-radius: 6px; padding: 4px; display: flex; flex-direction: column; gap: 4px; width: 78px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
     #floating-toolbar .btn { padding: 5px 2px; font-size: 11px; width: 100%; justify-content: center; }
@@ -80,20 +84,33 @@
     .pen-settings-box { display: flex; flex-direction: column; gap: 4px; padding: 4px 2px; border-top: 1px solid #444; border-bottom: 1px solid #444; background: rgba(20,20,20,0.5); border-radius: 3px; }
     .pen-settings-box .setting-row { display: flex; align-items: center; justify-content: space-between; font-size: 10px; gap: 2px; }
 
-    /* Viewerモード専用 全画面フロートボタン各種 */
+    /* 縦型ズームコントロールコンテナ */
+    .zoom-vertical-box { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; border-top: 1px solid #444; }
+    #zoom-slider {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      -webkit-appearance: slider-vertical;
+      width: 20px;
+      height: 70px;
+      padding: 0;
+      margin: 2px 0;
+      cursor: pointer;
+    }
+
+    /* Viewerモード専用 全画面フロートボタン各種 (モノクロ化) */
     #viewer-exit-btn {
       position: absolute; top: 12px; left: 16px; z-index: 6; display: none;
-      background: #28a745; color: #fff; border: 2px solid #fff; border-radius: 20px;
+      background: #333333; color: #ffffff; border: 2px solid #888888; border-radius: 20px;
       padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     #viewer-lock-btn {
       position: absolute; top: 12px; right: 16px; z-index: 6; display: none;
-      background: #0066cc; color: #fff; border: 2px solid #fff; border-radius: 20px;
+      background: #333333; color: #ffffff; border: 2px solid #888888; border-radius: 20px;
       padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    #viewer-lock-btn.locked { background: #d9534f; }
+    #viewer-lock-btn.locked { background: #e6e6e6; color: #111111; border-color: #ffffff; }
 
     /* Viewerモード時の全画面表示CSSコントロール */
     body.viewer-mode header,
@@ -106,7 +123,7 @@
     /* モーダルダイアログ各種 */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
     .modal-card { background: #2c2c2c; border: 2px solid #666; border-radius: 12px; width: 750px; max-width: 92vw; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
-    .modal-card h3 { font-size: 26px; border-bottom: 2px solid #555; padding-bottom: 12px; color: #0088ff; font-weight: bold; }
+    .modal-card h3 { font-size: 26px; border-bottom: 2px solid #555; padding-bottom: 12px; color: #ffffff; font-weight: bold; }
     .modal-row { display: flex; align-items: center; justify-content: space-between; font-size: 22px; gap: 12px; }
     
     .modal-card input[type="text"], 
@@ -125,7 +142,7 @@
     /* 報告書グリッドテーブルスタイル */
     .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
     .report-table th, .report-table td { border: 1px solid #555; padding: 8px 10px; text-align: left; }
-    .report-table th { background: #383838; color: #0088ff; }
+    .report-table th { background: #383838; color: #ffffff; }
     .report-table td input { width: 100%; min-height: 38px !important; font-size: 16px !important; border: 1px solid #444 !important; }
 
     /* プレビュー画面のスクロール領域 */
@@ -139,28 +156,19 @@
 <input type="file" id="file-input" multiple accept="image/*,application/pdf,.pdf" style="display:none;">
 
 <div id="app-container">
-  <!-- ヘッダーツールバー -->
+  <!-- ヘッダーツールバー (指定ボタンは反転色、白黒反転・ズーム・全体・100%は左ツールバーへ移動) -->
   <header>
-    <button class="btn" id="btn-toggle-drawer">一覧</button>
-    <button class="btn btn-blue" id="btn-open-folder">フォルダ読み込み</button>
-    <button class="btn btn-green" id="btn-open-file">フィルム選択</button>
-    <button class="btn btn-dark" id="btn-rotate-img" title="画像を90度右回転">画像回転</button>
-    <button class="btn btn-purple" id="btn-film-code">フィルム№</button>
-    <button class="btn btn-dark" id="btn-screen-calibrate" title="モニター表示の定規位置補正">画面定規合わせ</button>
-    <button class="btn btn-green" id="btn-calibrate">寸法補正</button>
-    <button class="btn btn-dark btn-invert-trigger" id="btn-invert-header">白黒反転</button>
-    <button class="btn btn-blue" id="btn-zoom-100">100%表示(実測)</button>
-    <button class="btn" id="btn-fit">全体表示</button>
-    
-    <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-      ズーム:
-      <input type="range" id="zoom-slider" min="10" max="400" value="100" style="width:80px;">
-      <span id="zoom-text">100%</span>
-    </label>
+    <button class="btn btn-mono-invert" id="btn-toggle-drawer">一覧</button>
+    <button class="btn btn-mono-invert" id="btn-open-folder">フォルダ読み込み</button>
+    <button class="btn btn-mono-invert" id="btn-open-file">フィルム選択</button>
+    <button class="btn" id="btn-rotate-img" title="画像を90度右回転">画像回転</button>
+    <button class="btn" id="btn-film-code">フィルム№</button>
+    <button class="btn" id="btn-screen-calibrate" title="モニター表示の定規位置補正">画面定規合わせ</button>
+    <button class="btn" id="btn-calibrate">寸法補正</button>
 
-    <button class="btn btn-danger" id="btn-save-pdf">PDF変換保存</button>
-    <button class="btn btn-danger" id="btn-save-batch-pdf">PDF一括変換保存</button>
-    <button class="btn btn-warning" id="btn-report">報告書作成</button>
+    <button class="btn btn-mono-invert" id="btn-save-pdf">PDF変換保存</button>
+    <button class="btn btn-mono-invert" id="btn-save-batch-pdf">PDF一括変換保存</button>
+    <button class="btn btn-mono-invert" id="btn-report">報告書作成</button>
     <button class="btn" id="btn-cloud-settings">クラウド保存先（工事中）</button>
   </header>
 
@@ -178,11 +186,11 @@
       <div id="drawer-header">
         <div id="drawer-title">
           <span>画像一覧 (100枚対応)</span>
-          <button class="btn btn-danger" id="btn-clear-images" style="font-size:10px; padding:2px 6px;">クリア</button>
+          <button class="btn" id="btn-clear-images" style="font-size:10px; padding:2px 6px;">クリア</button>
         </div>
         <div id="drawer-actions">
-          <button class="btn btn-blue" id="btn-drawer-folder" style="font-size:10px; flex:1;">フォルダ読み込み</button>
-          <button class="btn btn-green" id="btn-drawer-file" style="font-size:10px; flex:1;">フィルム選択</button>
+          <button class="btn btn-mono-invert" id="btn-drawer-folder" style="font-size:10px; flex:1;">フォルダ読み込み</button>
+          <button class="btn btn-mono-invert" id="btn-drawer-file" style="font-size:10px; flex:1;">フィルム選択</button>
         </div>
       </div>
       <div id="virtual-thumb-container">
@@ -194,7 +202,7 @@
       </div>
     </div>
 
-    <!-- 左浮き出し描画ツールパネル (スリム化・縦並び) -->
+    <!-- 左浮き出し描画ツールパネル (スリム化・縦並び・ズーム＆表示系下部集約) -->
     <div id="floating-toolbar-container">
       <button class="btn" id="tool-viewer" title="ビューアモード(全画面表示/100%固定)" style="padding:6px 2px; width:100%; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.4); font-size:11px;">Viewer</button>
       
@@ -236,12 +244,21 @@
         <button class="btn" id="tool-shape" title="図形（タップ配置）">図形</button>
         <button class="btn" id="tool-text" title="文字（タップ配置）">文字</button>
         
-        <button class="btn btn-dark btn-invert-trigger" id="btn-invert-toolbar">白黒反転</button>
-        <button class="btn btn-warning" id="tool-confirm-stamp" title="確認印（タップ配置）">確認印</button>
+        <button class="btn btn-invert-trigger" id="btn-invert-toolbar">白黒反転</button>
+        <button class="btn" id="tool-confirm-stamp" title="確認印（タップ配置）">確認印</button>
         <button class="btn" id="tool-eraser" title="消しゴム">消しゴム</button>
         <hr style="border-color:#444; margin:2px 0;">
         <button class="btn" id="btn-undo">戻る</button>
         <button class="btn" id="btn-redo">進む</button>
+
+        <!-- 画面上部から移動した 表示操作＆縦型ズームコントロール群 -->
+        <hr style="border-color:#444; margin:2px 0;">
+        <button class="btn" id="btn-zoom-100" title="100%表示(実測)">100%</button>
+        <button class="btn" id="btn-fit" title="全体表示">全体</button>
+        <div class="zoom-vertical-box" title="ズーム調節">
+          <span id="zoom-text" style="font-size:9px; color:#aaa;">100%</span>
+          <input type="range" id="zoom-slider" min="10" max="400" value="100" orient="vertical">
+        </div>
       </div>
     </div>
 
@@ -271,10 +288,10 @@
       <input type="color" id="edit-obj-color-input" value="#ffffff" style="width: 60px; height: 40px;">
     </div>
     <div class="modal-buttons" style="justify-content: space-between; margin-top: 10px;">
-      <button class="btn btn-danger" id="modal-edit-obj-delete" style="font-size: 14px; padding: 8px 16px;">削除</button>
+      <button class="btn" id="modal-edit-obj-delete" style="font-size: 14px; padding: 8px 16px;">削除</button>
       <div style="display: flex; gap: 8px;">
         <button class="btn" id="modal-edit-obj-cancel" style="font-size: 14px; padding: 8px 16px;">キャンセル</button>
-        <button class="btn btn-green" id="modal-edit-obj-save" style="font-size: 14px; padding: 8px 16px;">適用保存</button>
+        <button class="btn btn-mono-invert" id="modal-edit-obj-save" style="font-size: 14px; padding: 8px 16px;">適用保存</button>
       </div>
     </div>
   </div>
@@ -286,8 +303,8 @@
     <h3>画像読み込みモードの選択</h3>
     <p style="font-size:18px; color:#ccc; line-height:1.4;">既に画像が読み込まれています。読み込み方法を選択してください。</p>
     <div style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
-      <button class="btn btn-blue" id="btn-load-replace" style="font-size:20px; padding:14px; justify-content:center;">一覧を消して入れ替える (入替モード)</button>
-      <button class="btn btn-green" id="btn-load-append" style="font-size:20px; padding:14px; justify-content:center;">既存の一覧に追加する (追加モード)</button>
+      <button class="btn btn-mono-invert" id="btn-load-replace" style="font-size:18px; padding:14px; justify-content:center;">一覧を消して入れ替える (入替モード)</button>
+      <button class="btn btn-mono-invert" id="btn-load-append" style="font-size:18px; padding:14px; justify-content:center;">既存の一覧に追加する (追加モード)</button>
     </div>
     <div class="modal-buttons" style="margin-top:10px;">
       <button class="btn" id="btn-load-cancel">キャンセル</button>
@@ -334,7 +351,7 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-film-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-film-ok">確定設定</button>
+      <button class="btn btn-mono-invert" id="modal-film-ok">確定設定</button>
     </div>
   </div>
 </div>
@@ -381,7 +398,7 @@
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。（直接入力がある場合はそちらが優先されます）</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-stamp-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-stamp-ok">確定（タップ配置）</button>
+      <button class="btn btn-mono-invert" id="modal-stamp-ok">確定（タップ配置）</button>
     </div>
   </div>
 </div>
@@ -418,7 +435,7 @@
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-shape-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-shape-ok">確定（タップ配置）</button>
+      <button class="btn btn-mono-invert" id="modal-shape-ok">確定（タップ配置）</button>
     </div>
   </div>
 </div>
@@ -460,7 +477,7 @@
     <p style="font-size:18px; color:#aaa;">※確定後、キャンバス上の配置したい場所をタップしてください。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-confirm-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-confirm-ok">確定（タップ配置）</button>
+      <button class="btn btn-mono-invert" id="modal-confirm-ok">確定（タップ配置）</button>
     </div>
   </div>
 </div>
@@ -471,7 +488,7 @@
     <h3 id="calib-drag-header" style="cursor: move; background: #3a3a3a; padding: 12px 16px; margin: -28px -28px 16px -28px; border-radius: 10px 10px 0 0;">寸法補正の数値入力 (ドラッグで移動可)</h3>
     <div class="modal-row">
       <span>引いた基準線の長さ:</span>
-      <span id="calib-px-display" style="font-weight:bold; color:#00ff00; font-size:26px;">0.0 px</span>
+      <span id="calib-px-display" style="font-weight:bold; color:#ffffff; font-size:26px;">0.0 px</span>
     </div>
     <div class="modal-row">
       <span>画面上の物差しの実測寸法 (mm):</span>
@@ -479,7 +496,7 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-calib-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-calib-ok">補正設定を記憶</button>
+      <button class="btn btn-mono-invert" id="modal-calib-ok">補正設定を記憶</button>
     </div>
   </div>
 </div>
@@ -489,7 +506,7 @@
   <div class="modal-card">
     <h3>画面定規合わせ (モニター物理校正)</h3>
     <p style="font-size:18px; color:#ccc; line-height:1.4;">基準バー長さを測って実測長さを入力してください</p>
-    <div id="gauge-bar" style="width: 100mm; height: 30px; background: #0088ff; border: none; margin: 12px 0; border-radius: 0;"></div>
+    <div id="gauge-bar" style="width: 100mm; height: 30px; background: #ffffff; border: none; margin: 12px 0; border-radius: 0;"></div>
     <div class="modal-row">
       <span>基準バーの画面実測値:</span>
       <div>
@@ -499,7 +516,7 @@
     <p style="font-size:16px; color:#aaa;">※校正記憶すればどの液晶モニター/iPadでも100%表示時に実測1:1になります。</p>
     <div class="modal-buttons">
       <button class="btn" id="modal-screen-cancel">キャンセル</button>
-      <button class="btn btn-green" id="modal-screen-ok">画面校正を記憶</button>
+      <button class="btn btn-mono-invert" id="modal-screen-ok">画面校正を記憶</button>
     </div>
   </div>
 </div>
@@ -525,7 +542,7 @@
       </select>
     </div>
     <div class="modal-buttons">
-      <button class="btn btn-green" id="modal-cloud-save">プリセット保存</button>
+      <button class="btn btn-mono-invert" id="modal-cloud-save">プリセット保存</button>
     </div>
   </div>
 </div>
@@ -566,7 +583,7 @@
     <div style="display:flex; flex-direction:column; gap:8px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:22px;">【探査エンジニア名】</span>
-        <button class="btn btn-blue" id="btn-add-engineer" style="font-size:18px;">＋ 人数追加</button>
+        <button class="btn btn-mono-invert" id="btn-add-engineer" style="font-size:16px;">＋ 人数追加</button>
       </div>
       <div id="engineer-list-container" style="display:flex; flex-direction:column; gap:8px;">
         <!-- JS動的読み込み -->
@@ -581,12 +598,12 @@
       <textarea id="rpt-memo" rows="2" placeholder="特記事項など">特になし</textarea>
     </div>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <span style="font-size:22px; color:#0088ff;">【注意事項 (編集可)】</span>
+      <span style="font-size:22px; color:#ffffff;">【注意事項 (編集可)】</span>
       <textarea id="rpt-notice" rows="3">・本報告書はエックス線探査結果を記録したものです。&#10;・穿孔作業時は十分ご注意ください。</textarea>
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt1-cancel">Cancel</button>
-      <button class="btn btn-green" id="modal-rpt1-next">次へ (探査結果一覧)</button>
+      <button class="btn btn-mono-invert" id="modal-rpt1-next">次へ (探査結果一覧)</button>
     </div>
   </div>
 </div>
@@ -595,7 +612,7 @@
 <div class="modal-overlay" id="modal-report-step2">
   <div class="modal-card" style="width:900px; max-width:96vw;">
     <h3>探査結果一覧の確認・編集 (報告書 3ページ目)</h3>
-    <p style="font-size:16px; color:#0088ff;">※ 検出物・備考や追加項目の追記はセルを直接編集可能です。</p>
+    <p style="font-size:16px; color:#cccccc;">※ 検出物・備考や追加項目の追記はセルを直接編集可能です。</p>
     <div style="max-height: 50vh; overflow-y: auto;">
       <table class="report-table" id="report-grid-table">
         <thead>
@@ -614,8 +631,8 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt2-back">戻る</button>
-      <button class="btn btn-blue" id="modal-rpt2-preview">プレビュー表示</button>
-      <button class="btn btn-green" id="modal-rpt2-next">次へ (画質・完成選択)</button>
+      <button class="btn" id="modal-rpt2-preview">プレビュー表示</button>
+      <button class="btn btn-mono-invert" id="modal-rpt2-next">次へ (画質・完成選択)</button>
     </div>
   </div>
 </div>
@@ -629,7 +646,7 @@
       <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #555;">
         <input type="radio" name="report-quality" value="low"> 軽量化 (メール添付用)
       </label>
-      <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #0088ff;">
+      <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #ffffff;">
         <input type="radio" name="report-quality" value="normal" checked> 標準 (推奨バランス)
       </label>
       <label style="background:#202020; padding:16px; border-radius:8px; border:2px solid #555;">
@@ -645,8 +662,8 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt3-back">戻る</button>
-      <button class="btn btn-blue" id="modal-rpt3-preview">プレビュー表示</button>
-      <button class="btn btn-warning" id="modal-rpt3-make">探査報告書PDF生成</button>
+      <button class="btn" id="modal-rpt3-preview">プレビュー表示</button>
+      <button class="btn btn-mono-invert" id="modal-rpt3-make">探査報告書PDF生成</button>
     </div>
   </div>
 </div>
@@ -659,7 +676,7 @@
       <!-- レンダリングされた全ページ画像が動的挿入 -->
     </div>
     <div class="modal-buttons">
-      <button class="btn btn-green" id="modal-rpt-prev-close">確認完了 (閉じる)</button>
+      <button class="btn btn-mono-invert" id="modal-rpt-prev-close">確認完了 (閉じる)</button>
     </div>
   </div>
 </div>
@@ -679,15 +696,15 @@ function initDynamicAppIcon() {
   iconCanvas.height = 192;
   const icx = iconCanvas.getContext('2d');
 
-  // グラデーション背景
+  // グラデーション背景 (モノクロトーン)
   const grad = icx.createLinearGradient(0, 0, 192, 192);
-  grad.addColorStop(0, '#001d3d');
-  grad.addColorStop(1, '#0056b3');
+  grad.addColorStop(0, '#111111');
+  grad.addColorStop(1, '#333333');
   icx.fillStyle = grad;
   icx.fillRect(0, 0, 192, 192);
 
   // X線探査風ターゲットリング
-  icx.strokeStyle = 'rgba(0, 168, 255, 0.4)';
+  icx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
   icx.lineWidth = 3;
   icx.beginPath(); icx.arc(96, 96, 65, 0, Math.PI * 2); icx.stroke();
   icx.beginPath(); icx.arc(96, 96, 40, 0, Math.PI * 2); icx.stroke();
@@ -1484,7 +1501,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     objects = cur.objects ? JSON.parse(JSON.stringify(cur.objects)) : [];
     selectedObj = null;
 
-    // フィルムごとのUndo/Redo履歴を復元（他フィルムの編集履歴を一切持ち越さない）
+    // フィルムごとのUndo/Redo履歴を復元（他フィルムの編集履歴を持ち越さない）
     undoStack = (cur.undoStack && cur.undoStack.length > 0) ? [...cur.undoStack] : [JSON.stringify(objects)];
     redoStack = (cur.redoStack && cur.redoStack.length > 0) ? [...cur.redoStack] : [];
     
@@ -1629,7 +1646,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       const cssWidthPx = gaugeEl.getBoundingClientRect().width;
       screenPMM = cssWidthPx / gaugeInput;
       localStorage.setItem('screenPMM', screenPMM);
-      alert(`画面ミリ表示精度を校正記憶しました。\nこれでどのインチのモニターでも[100%表示]が定規と1:1でピッタリ一致します。`);
+      alert("画面ミリ表示精度を校正記憶しました。\nこれでどのインチのモニターでも[100%表示]が定規と1:1でピッタリ一致します。");
     }
     document.getElementById('modal-screen-calib').style.display = 'none';
     setActualSize100();
@@ -1699,7 +1716,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     if (isDrawing && tempEndPt) {
       if (currentMode === 'calibrate' || currentMode === 'measure') {
         if (startPt) {
-          ctx.strokeStyle = currentMode === 'calibrate' ? '#00ff00' : '#ff0000';
+          ctx.strokeStyle = currentMode === 'calibrate' ? '#ffffff' : '#ffffff';
           ctx.lineWidth = 3;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
@@ -1709,7 +1726,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
           ctx.setLineDash([]);
         }
       } else if (currentMode === 'right_measure') {
-        ctx.strokeStyle = '#0088ff';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 3;
         ctx.setLineDash([4, 4]);
         if (measureStep <= 1 && startPt) {
@@ -1780,7 +1797,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     targetCtx.stroke();
 
     const fingerY = targetY + (20 / scale);
-    targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+    targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
     targetCtx.lineWidth = 1.5 / scale;
     targetCtx.setLineDash([3 / scale, 3 / scale]);
     targetCtx.beginPath();
@@ -1915,7 +1932,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       const ang2 = Math.atan2(obj.p3.y - obj.p2.y, obj.p3.x - obj.p2.x);
       let deg = Math.abs(ang1 - ang2) * (180 / Math.PI);
       if (deg > 180) deg = 360 - deg;
-      targetCtx.fillStyle = '#0056b3';
+      targetCtx.fillStyle = '#ffffff';
       targetCtx.font = 'bold 60px Arial';
       targetCtx.fillText(`∠ ${deg.toFixed(1)}°`, obj.p2.x + 35, obj.p2.y - 35);
     }
@@ -2027,16 +2044,16 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   const drawSelectionBounds = (obj) => {
     if (obj.type === 'measure') {
-      ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5;
       const r = 14;
       ctx.beginPath(); ctx.arc(obj.p1.x, obj.p1.y, r, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.arc(obj.p2.x, obj.p2.y, r, 0, Math.PI * 2); ctx.stroke();
       if (obj.p3) {
-        ctx.strokeStyle = '#00ffff';
+        ctx.strokeStyle = '#cccccc';
         ctx.beginPath(); ctx.arc(obj.p3.x, obj.p3.y, r, 0, Math.PI * 2); ctx.stroke();
       }
     } else if (obj.type === 'pen' && obj.path.length >= 2) {
-      ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5;
       const r = 14;
       const pStart = obj.path[0];
       const pEnd = obj.path[obj.path.length - 1];
@@ -2049,12 +2066,12 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       ctx.setLineDash([]);
     } else {
       const b = getRawBounds(obj);
-      ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
       ctx.strokeRect(b.x, b.y, b.w, b.h);
       ctx.setLineDash([]);
 
-      ctx.fillStyle = '#00ff00'; ctx.fillRect(b.x + b.w - 10, b.y + b.h - 10, 20, 20); 
-      ctx.fillStyle = '#ffff00'; ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 25, 10, 0, Math.PI*2); ctx.fill(); 
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(b.x + b.w - 10, b.y + b.h - 10, 20, 20); 
+      ctx.fillStyle = '#cccccc'; ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y - 25, 10, 0, Math.PI*2); ctx.fill(); 
     }
   };
 
@@ -2784,7 +2801,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     document.getElementById('modal-calibrate-input').style.display = 'none';
     pendingCalibData = null;
     setMode('select');
-    alert(`寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。`);
+    alert("寸法補正完了！\n[100%表示] ボタンを押すと、画面に当てた物差しと1:1で一致します。");
   };
 
   // 確認印ダイアログ
@@ -2939,7 +2956,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     drawerEl.classList.remove('open');
   });
 
-  // 「”参照フォルダ名”_納品フィルム.zip」直接PDF生成・ZIPまとめ保存処理
+  // 納品フィルムPDF生成・ZIPまとめ保存処理
   document.getElementById('btn-save-pdf').onclick = () => {
     syncCurrentObjects();
     savePDF(currentImgIndex, false);
@@ -3110,7 +3127,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   };
 
 
-  // Digi-ray PDF Tool 準拠 報告書作成ステップモーダル制御＆マルチページPDF生成
+  // 報告書作成ステップモーダル制御＆マルチページPDF生成
   const modalRpt1 = document.getElementById('modal-report-step1');
   const modalRpt2 = document.getElementById('modal-report-step2');
   const modalRpt3 = document.getElementById('modal-report-step3');
@@ -3190,7 +3207,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       pageWrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; margin-bottom:12px;';
       
       const label = document.createElement('span');
-      label.style.cssText = 'font-size:16px; color:#0088ff; font-weight:bold;';
+      label.style.cssText = 'font-size:16px; color:#cccccc; font-weight:bold;';
       label.innerText = `― ページ ${pIdx + 1} / ${pageItems.length} ―`;
 
       const img = document.createElement('img');
@@ -3376,9 +3393,9 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const c3 = cv3.getContext('2d');
     c3.fillStyle = '#ffffff'; c3.fillRect(0, 0, A4_W, A4_H);
 
-    c3.fillStyle = '#0f3675'; c3.font = `bold ${Math.round(52 * scaleFactor)}px "Helvetica Neue", Arial, sans-serif`;
+    c3.fillStyle = '#111111'; c3.font = `bold ${Math.round(52 * scaleFactor)}px "Helvetica Neue", Arial, sans-serif`;
     c3.fillText('【 エックス線探査結果一覧 】', Math.round(80 * scaleFactor), Math.round(130 * scaleFactor));
-    c3.strokeStyle = '#0f3675'; c3.lineWidth = Math.round(4 * scaleFactor);
+    c3.strokeStyle = '#333333'; c3.lineWidth = Math.round(4 * scaleFactor);
     c3.beginPath(); c3.moveTo(Math.round(80 * scaleFactor), Math.round(150 * scaleFactor)); c3.lineTo(Math.round(1160 * scaleFactor), Math.round(150 * scaleFactor)); c3.stroke();
 
     let startY = Math.round(180 * scaleFactor);
@@ -3411,9 +3428,9 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     const colPositions = [80, 170, 380, 690, 960].map(v => Math.round(v * scaleFactor));
 
     const headerH = Math.round(60 * scaleFactor);
-    c3.fillStyle = '#f0f4f8';
+    c3.fillStyle = '#e8e8e8';
     c3.fillRect(Math.round(80 * scaleFactor), startY, Math.round(1080 * scaleFactor), headerH);
-    c3.strokeStyle = '#0f3675'; c3.lineWidth = Math.round(2 * scaleFactor);
+    c3.strokeStyle = '#333333'; c3.lineWidth = Math.round(2 * scaleFactor);
     c3.strokeRect(Math.round(80 * scaleFactor), startY, Math.round(1080 * scaleFactor), headerH);
 
     for(let i = 1; i < colPositions.length; i++) {
@@ -3423,7 +3440,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       c3.stroke();
     }
 
-    c3.fillStyle = '#0f3675';
+    c3.fillStyle = '#111111';
     c3.font = `bold ${Math.round(26 * scaleFactor)}px Arial, sans-serif`;
     c3.textAlign = 'center';
     c3.fillText('No.', colPositions[0] + colWidths[0]/2, startY + Math.round(40 * scaleFactor));
@@ -3448,10 +3465,10 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       const lineSpacing = Math.round(32 * scaleFactor);
       const rowH = Math.max(Math.round(60 * scaleFactor), maxLineCount * lineSpacing + padding * 2);
 
-      c3.strokeStyle = '#d0d7de'; c3.lineWidth = 1;
+      c3.strokeStyle = '#cccccc'; c3.lineWidth = 1;
       c3.strokeRect(Math.round(80 * scaleFactor), currentY, Math.round(1080 * scaleFactor), rowH);
 
-      c3.strokeStyle = '#e1e4e8';
+      c3.strokeStyle = '#dddddd';
       for(let i = 1; i < colPositions.length; i++) {
         c3.beginPath();
         c3.moveTo(colPositions[i], currentY);
@@ -3474,17 +3491,12 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
         c3.fillText(line, colPositions[2] + padding, startTextY + lIdx * lineSpacing);
       });
 
-      if (row.stamps !== '特になし' && row.stamps !== '－') {
-        c3.fillStyle = '#d9534f';
-      } else {
-        c3.fillStyle = '#000000';
-      }
+      c3.fillStyle = '#000000';
       startTextY = currentY + (rowH - (stampLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + Math.round(18 * scaleFactor);
       stampLines.forEach((line, lIdx) => {
         c3.fillText(line, colPositions[3] + padding, startTextY + lIdx * lineSpacing);
       });
 
-      c3.fillStyle = '#000000';
       startTextY = currentY + (rowH - (memoLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + Math.round(18 * scaleFactor);
       memoLines.forEach((line, lIdx) => {
         c3.fillText(line, colPositions[4] + padding, startTextY + lIdx * lineSpacing);
