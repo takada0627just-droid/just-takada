@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>J-DigiRay - 探査コア部専用 罫書きWEBアプリ</title>
   <meta name="theme-color" content="#1e1e1e">
   <!-- iOS全画面化 ＆ PWA設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="J-DigiRay">
   <link rel="apple-touch-icon" id="dynamic-apple-icon">
   <link rel="icon" id="dynamic-favicon">
@@ -28,8 +28,8 @@
     /* 全体レイアウト */
     #app-container { display: flex; flex-direction: column; width: 100vw; height: 100vh; position: relative; }
 
-    /* メインヘッダー / ツールバー */
-    header { background: #262626; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; align-items: center; z-index: 10; }
+    /* メインヘッダー / ツールバー (最上部セーフエリア余白追加) */
+    header { background: #262626; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); align-items: center; z-index: 10; }
     
     /* モノクロ統一ボタンスタイル */
     .btn { background: #3a3a3a; color: #ffffff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; transition: background 0.15s, border-color 0.15s; }
@@ -56,7 +56,7 @@
     /* 左側スライドドロワー (サムネイル一覧) */
     #drawer { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #252525; border-right: 1px solid #444; transition: left 0.25s ease; z-index: 20; display: flex; flex-direction: column; }
     #drawer.open { left: 0; }
-    #drawer-header { padding: 10px; border-bottom: 1px solid #444; display: flex; flex-direction: column; gap: 8px; }
+    #drawer-header { padding: 10px; border-bottom: 1px solid #444; padding-top: max(10px, env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 8px; }
     #drawer-title { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; }
     #drawer-actions { display: flex; gap: 6px; }
     #virtual-thumb-container { flex: 1; overflow-y: auto; position: relative; }
@@ -97,15 +97,15 @@
       cursor: pointer;
     }
 
-    /* Viewerモード専用 全画面フロートボタン各種 (モノクロ化) */
+    /* Viewerモード専用 全画面フロートボタン各種 (セーフエリア対応) */
     #viewer-exit-btn {
-      position: absolute; top: 12px; left: 16px; z-index: 6; display: none;
+      position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; z-index: 6; display: none;
       background: #333333; color: #ffffff; border: 2px solid #888888; border-radius: 20px;
       padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     #viewer-lock-btn {
-      position: absolute; top: 12px; right: 16px; z-index: 6; display: none;
+      position: absolute; top: max(12px, env(safe-area-inset-top)); right: 16px; z-index: 6; display: none;
       background: #333333; color: #ffffff; border: 2px solid #888888; border-radius: 20px;
       padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -156,7 +156,7 @@
 <input type="file" id="file-input" multiple accept="image/*,application/pdf,.pdf" style="display:none;">
 
 <div id="app-container">
-  <!-- ヘッダーツールバー (指定ボタンは反転色、白黒反転・ズーム・全体・100%は左ツールバーへ移動) -->
+  <!-- ヘッダーツールバー -->
   <header>
     <button class="btn btn-mono-invert" id="btn-toggle-drawer">一覧</button>
     <button class="btn btn-mono-invert" id="btn-open-folder">フォルダ読み込み</button>
@@ -202,7 +202,7 @@
       </div>
     </div>
 
-    <!-- 左浮き出し描画ツールパネル (スリム化・縦並び・ズーム＆表示系下部集約) -->
+    <!-- 左浮き出し描画ツールパネル -->
     <div id="floating-toolbar-container">
       <button class="btn" id="tool-viewer" title="ビューアモード(全画面表示/100%固定)" style="padding:6px 2px; width:100%; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.4); font-size:11px;">Viewer</button>
       
@@ -251,7 +251,7 @@
         <button class="btn" id="btn-undo">戻る</button>
         <button class="btn" id="btn-redo">進む</button>
 
-        <!-- 画面上部から移動した 表示操作＆縦型ズームコントロール群 -->
+        <!-- 表示操作＆縦型ズームコントロール群 -->
         <hr style="border-color:#444; margin:2px 0;">
         <button class="btn" id="btn-zoom-100" title="100%表示(実測)">100%</button>
         <button class="btn" id="btn-fit" title="全体表示">全体</button>
@@ -275,7 +275,7 @@
 
 <!-- モーダル各種 -->
 
-<!-- 選択オブジェクト ダブルタップ編集ダイアログ (コンパクトサイズ化) -->
+<!-- 選択オブジェクト ダブルタップ編集ダイアログ -->
 <div class="modal-overlay" id="modal-edit-object">
   <div class="modal-card" style="width: 440px; max-width: 90vw; padding: 20px; gap: 14px;">
     <h3 style="font-size: 20px; padding-bottom: 8px;">オブジェクトの編集</h3>
@@ -297,7 +297,7 @@
   </div>
 </div>
 
-<!-- 画像読み込みモード選択モーダル (入替モード/追加モード) -->
+<!-- 画像読み込みモード選択モーダル -->
 <div class="modal-overlay" id="modal-load-mode">
   <div class="modal-card" style="width:540px;">
     <h3>画像読み込みモードの選択</h3>
@@ -356,7 +356,7 @@
   </div>
 </div>
 
-<!-- 2. 検出物選択ダイアログ (梁・壁・配管・床・木・塩ビ管追加 ＆ 直接入力枠新設) -->
+<!-- 2. 検出物選択ダイアログ -->
 <div class="modal-overlay" id="modal-stamp">
   <div class="modal-card">
     <h3>検出物 選択</h3>
@@ -403,7 +403,7 @@
   </div>
 </div>
 
-<!-- 3. 図形選択ダイアログ (→, ↔ 追加 ＆ 線太さ変更対応) -->
+<!-- 3. 図形選択ダイアログ -->
 <div class="modal-overlay" id="modal-shape">
   <div class="modal-card">
     <h3>図形選択</h3>
@@ -631,7 +631,7 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt2-back">戻る</button>
-      <button class="btn" id="modal-rpt2-preview">プレビュー表示</button>
+      <button class="btn btn-blue" id="modal-rpt2-preview">プレビュー表示</button>
       <button class="btn btn-mono-invert" id="modal-rpt2-next">次へ (画質・完成選択)</button>
     </div>
   </div>
@@ -662,7 +662,7 @@
     </div>
     <div class="modal-buttons">
       <button class="btn" id="modal-rpt3-back">戻る</button>
-      <button class="btn" id="modal-rpt3-preview">プレビュー表示</button>
+      <button class="btn btn-blue" id="modal-rpt3-preview">プレビュー表示</button>
       <button class="btn btn-mono-invert" id="modal-rpt3-make">探査報告書PDF生成</button>
     </div>
   </div>
@@ -1716,7 +1716,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     if (isDrawing && tempEndPt) {
       if (currentMode === 'calibrate' || currentMode === 'measure') {
         if (startPt) {
-          ctx.strokeStyle = currentMode === 'calibrate' ? '#ffffff' : '#ffffff';
+          ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 3;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
@@ -1914,7 +1914,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     drawParallelText(targetCtx, obj.p1, obj.p2, txt1, fontSize1, obj.color || '#ff0000', offsetDist1, activeImgAngle);
 
     if (obj.p3) {
-      targetCtx.strokeStyle = obj.color || '#0088ff';
+      targetCtx.strokeStyle = obj.color || '#ffffff';
       targetCtx.lineWidth = 3;
 
       targetCtx.beginPath();
@@ -1926,7 +1926,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
       const dist2 = Math.hypot(obj.p3.x - obj.p2.x, obj.p3.y - obj.p2.y);
       const mm2 = dist2 / activePMM;
 
-      drawParallelText(targetCtx, obj.p2, obj.p3, `L2: ${mm2.toFixed(1)} mm`, 60, obj.color || '#0088ff', 35, activeImgAngle);
+      drawParallelText(targetCtx, obj.p2, obj.p3, `L2: ${mm2.toFixed(1)} mm`, 60, obj.color || '#ffffff', 35, activeImgAngle);
 
       const ang1 = Math.atan2(obj.p1.y - obj.p2.y, obj.p1.x - obj.p2.x);
       const ang2 = Math.atan2(obj.p3.y - obj.p2.y, obj.p3.x - obj.p2.x);
@@ -1954,7 +1954,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
 
   // 検出物および図形描画（線太さ変更対応 ＆ 矢印「→」「↔」追加）
   const drawStamp = (targetCtx, obj) => {
-    const col = obj.color || '#00a8ff';
+    const col = obj.color || '#ffffff';
     targetCtx.strokeStyle = col; targetCtx.fillStyle = col; 
     targetCtx.lineWidth = obj.lineWidth || obj.width || 4;
     const s = obj.size || 60;
@@ -2011,7 +2011,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   };
 
   const drawConfirmStamp = (targetCtx, obj) => {
-    const col = obj.color || '#d9534f';
+    const col = obj.color || '#ffffff';
     targetCtx.strokeStyle = col; targetCtx.fillStyle = col; targetCtx.lineWidth = 4;
     const r = obj.size || 50;
 
@@ -3491,12 +3491,17 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
         c3.fillText(line, colPositions[2] + padding, startTextY + lIdx * lineSpacing);
       });
 
-      c3.fillStyle = '#000000';
+      if (row.stamps !== '特になし' && row.stamps !== '－') {
+        c3.fillStyle = '#d9534f';
+      } else {
+        c3.fillStyle = '#000000';
+      }
       startTextY = currentY + (rowH - (stampLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + Math.round(18 * scaleFactor);
       stampLines.forEach((line, lIdx) => {
         c3.fillText(line, colPositions[3] + padding, startTextY + lIdx * lineSpacing);
       });
 
+      c3.fillStyle = '#000000';
       startTextY = currentY + (rowH - (memoLines.length * lineSpacing - (lineSpacing - fontSize))) / 2 + Math.round(18 * scaleFactor);
       memoLines.forEach((line, lIdx) => {
         c3.fillText(line, colPositions[4] + padding, startTextY + lIdx * lineSpacing);
