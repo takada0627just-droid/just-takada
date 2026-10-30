@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>J-DigiRay - 探査コア部専用 罫書きWEBアプリ</title>
-  <meta name="theme-color" content="#1e1e1e">
-  <!-- iOS全画面化 ＆ PWA設定 -->
+  <meta name="theme-color" content="#262626">
+  <!-- iOS全画面化 ＆ PWA設定 (すりガラス防止: default設定) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="J-DigiRay">
   <link rel="apple-touch-icon" id="dynamic-apple-icon">
   <link rel="icon" id="dynamic-favicon">
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22J-DigiRay%22,%22short_name%22:%22J-DigiRay%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#1e1e1e%22,%22theme_color%22:%22#1e1e1e%22}">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22J-DigiRay%22,%22short_name%22:%22J-DigiRay%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#262626%22,%22theme_color%22:%22#262626%22}">
 
   <!-- PDF読み込み用ライブラリ (PDF.js) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -28,8 +28,20 @@
     /* 全体レイアウト */
     #app-container { display: flex; flex-direction: column; width: 100vw; height: 100vh; position: relative; }
 
-    /* メインヘッダー / ツールバー (最上部セーフエリア余白追加) */
-    header { background: #262626; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); align-items: center; z-index: 10; }
+    /* iPad / iOS ステータスバーのすりガラス(ブラー)を強制解除する完全ソリッド帯 */
+    #ios-status-bar-fix {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top, 0px);
+      background: #262626;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    /* メインヘッダー / ツールバー */
+    header { background: #262626; border-bottom: 1px solid #444; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); align-items: center; z-index: 10; position: sticky; top: 0; }
     
     /* モノクロ統一ボタンスタイル */
     .btn { background: #3a3a3a; color: #ffffff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; transition: background 0.15s, border-color 0.15s; }
@@ -39,7 +51,7 @@
     .btn-mono-invert { background: #e6e6e6; color: #111111; border: 1px solid #cccccc; }
     .btn-mono-invert:active, .btn-mono-invert.active { background: #ffffff; border-color: #ffffff; color: #000000; }
 
-    /* 汎用ボタンスタイル (すべてモノクロトーンへ統一) */
+    /* 汎用ボタンスタイル */
     .btn-blue, .btn-purple, .btn-green, .btn-dark, .btn-danger, .btn-warning { background: #3a3a3a; color: #ffffff; border-color: #555; }
     .btn-blue:active, .btn-purple:active, .btn-green:active, .btn-dark:active, .btn-danger:active, .btn-warning:active { background: #555555; border-color: #888888; color: #ffffff; }
 
@@ -97,7 +109,7 @@
       cursor: pointer;
     }
 
-    /* Viewerモード専用 全画面フロートボタン各種 (セーフエリア対応) */
+    /* Viewerモード専用 全画面フロートボタン各種 */
     #viewer-exit-btn {
       position: absolute; top: max(12px, env(safe-area-inset-top)); left: 16px; z-index: 6; display: none;
       background: #333333; color: #ffffff; border: 2px solid #888888; border-radius: 20px;
@@ -151,7 +163,10 @@
 </head>
 <body>
 
-<!-- 非表示のファイル・フォルダ読み込み用input要素 (PDF読み込み対応拡張) -->
+<!-- iPadOS / iOS 最上部ステータスバーすりガラス防止ソリッドカバー -->
+<div id="ios-status-bar-fix"></div>
+
+<!-- 非表示のファイル・フォルダ読み込み用input要素 -->
 <input type="file" id="folder-input" webkitdirectory directory multiple accept="image/*,application/pdf,.pdf" style="display:none;">
 <input type="file" id="file-input" multiple accept="image/*,application/pdf,.pdf" style="display:none;">
 
@@ -2684,7 +2699,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
     return null;
   };
 
-  // --- モード切替制御 (絵文字完全削除) ---
+  // --- モード切替制御 ---
   const tools = [
     { id: 'tool-select', mode: 'select', label: 'モード: 選択・変形・移動・回転' },
     { id: 'tool-viewer', mode: 'viewer', label: 'モード: ビューア(全画面表示/100%固定)' },
@@ -2698,7 +2713,7 @@ function triggerBlobDownload(blobData, filename, isZip = true) {
   const viewerLockBtn = document.getElementById('viewer-lock-btn');
   const viewerExitBtn = document.getElementById('viewer-exit-btn');
 
-  // 全画面Viewerモード制御（CSSクラス追加＆戻るボタン制御）
+  // 全画面Viewerモード制御
   const setMode = (newMode, label) => {
     currentMode = newMode;
     measureStep = 0; startPt = null; secondPt = null; tempEndPt = null;
